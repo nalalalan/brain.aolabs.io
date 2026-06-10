@@ -1,0 +1,13 @@
+{
+  "name": "brain-aolabs-io",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Brain PDF bank for documents, text, files, and images.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

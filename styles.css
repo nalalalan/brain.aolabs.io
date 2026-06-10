@@ -267,6 +267,15 @@ input {
   font-weight: 650;
 }
 
+.sync-status {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: lowercase;
+}
+
 .vault-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
