@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>brain.aolabs.io</title>
+  <meta name="description" content="Brain PDF bank for autism, ADHD, and relationship-context notes." />
+  <link rel="canonical" href="https://aolabs.io/brain/" />
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AO Labs">
+  <meta property="og:title" content="brain">
+  <meta property="og:description" content="Brain PDF bank for autism, ADHD, and relationship-context notes.">
+  <meta property="og:url" content="https://aolabs.io/brain/">
+  <meta property="og:image" content="https://aolabs.io/brain/autism-evaluation-page-1.png">
+  <meta property="og:image:secure_url" content="https://aolabs.io/brain/autism-evaluation-page-1.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="Autism evaluation PDF cover preview.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="brain">
+  <meta name="twitter:description" content="Brain PDF bank for autism, ADHD, and relationship-context notes.">
+  <meta name="twitter:image" content="https://aolabs.io/brain/autism-evaluation-page-1.png">
+  <meta name="twitter:image:alt" content="Autism evaluation PDF cover preview.">
+  <link rel="icon" href="./favicon.svg?v=20260610-brain" type="image/svg+xml">
+  <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
+  <link rel="stylesheet" href="./styles.css?v=20260610-brain-documents">
+  <script src="./app.js?v=20260610-local-upload" defer></script>
+</head>
+<body>
+  <header class="suite-topbar" aria-label="brain navigation">
+    <div class="suite-brand-cluster">
+      <a class="suite-ao-home" href="https://aolabs.io/" aria-label="aolabs.io">
+        <img src="https://aolabs.io/marks/ao-ink.svg?v=20260516-suite-bloom" alt="">
+      </a>
+      <a class="suite-app-brand" href="./" aria-label="brain home">
+        <img class="suite-app-mark" src="./favicon.svg?v=20260610-brain" alt="">
+        <span class="suite-app-name">brain.aolabs.io</span>
+      </a>
+    </div>
+    <div class="suite-topbar-actions" aria-label="brain actions">
+      <a href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf">autism pdf</a>
+      <a href="./ADHDLetter.pdf">adhd pdf</a>
+      <a href="./link-sending-note.pdf">note pdf</a>
+    </div>
+  </header>
+
+  <main class="shell document-shell">
+    <section class="document-intro" aria-label="document summary">
+      <p>Brain PDF bank for documents, text, files, and images.</p>
+    </section>
+    <section class="local-intake" aria-label="local upload bank">
+      <div class="intake-copy">
+        <h2>local upload</h2>
+        <p>Files and images save in this browser. Text becomes a local PDF as soon as it is pasted or typed.</p>
+      </div>
+      <div class="dropzone" data-role="dropzone">
+        <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
+        <div class="intake-controls">
+          <label class="file-inline">
+            <span>files / images</span>
+            <input id="brain-files" type="file" multiple>
+          </label>
+          <button id="brain-save" type="button">save to vault</button>
+        </div>
+        <div id="brain-pending" class="pending-list" aria-live="polite"></div>
+      </div>
+      <div id="brain-vault" class="vault-list" aria-live="polite"></div>
+    </section>
+    <section class="viewer" aria-label="autism evaluation preview">
+      <a class="document-link" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf" aria-label="Open autism diagnostic evaluation PDF">
+        <img src="./autism-evaluation-page-1.png" alt="First page preview of the autism diagnostic evaluation PDF.">
+      </a>
+    </section>
+    <section class="secondary-documents" aria-label="additional documents">
+      <a class="secondary-document" href="./ADHDLetter.pdf" aria-label="Open ADHD letter PDF">
+        <img src="./adhd-letter-page-1.png" alt="Preview of the ADHD letter PDF.">
+        <span>
+          <strong>adhd letter</strong>
+          <span>1 page · open pdf</span>
+        </span>
+      </a>
+      <a class="secondary-document" href="./link-sending-note.pdf" aria-label="Open link-sending note PDF">
+        <img src="./link-sending-note-page-1.png" alt="Preview of the link-sending note PDF.">
+        <span>
+          <strong>link-sending note</strong>
+          <span>6 pages · open pdf</span>
+        </span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

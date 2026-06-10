@@ -1,0 +1,375 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f0e8;
+  --panel: #fffdfa;
+  --ink: #1e2724;
+  --muted: #65716c;
+  --line: #d9d4c9;
+  --accent: #4f817c;
+  --accent-2: #c97e66;
+  --shadow: 0 18px 44px rgba(30, 39, 36, .08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+.shell {
+  width: calc(100% - 32px);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 0 44px;
+}
+
+.document-intro {
+  margin-bottom: 18px;
+}
+
+.document-intro p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.viewer {
+  overflow: hidden;
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.document-link {
+  display: block;
+  padding: clamp(10px, 2vw, 22px);
+  background: #e9e4da;
+}
+
+.document-link img {
+  display: block;
+  width: min(100%, 860px);
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(30, 39, 36, .12);
+}
+
+.secondary-documents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.secondary-document {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 360px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(30, 39, 36, .06);
+}
+
+.secondary-document img {
+  width: 74px;
+  height: 96px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.secondary-document span {
+  display: grid;
+  gap: 3px;
+}
+
+.secondary-document strong {
+  font-size: 15px;
+  line-height: 1.2;
+  text-transform: lowercase;
+}
+
+.secondary-document span span {
+  color: var(--accent-2);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: lowercase;
+}
+
+.local-intake {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgba(30, 39, 36, .05);
+}
+
+.intake-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.intake-copy h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.intake-copy p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.dropzone {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 42%, var(--line));
+  border-radius: 7px;
+  background: #f8f5ee;
+}
+
+.dropzone.drag-active,
+.dropzone:focus-within {
+  border-color: var(--accent);
+  background: #f4f1ea;
+}
+
+.dropzone textarea {
+  width: 100%;
+  min-height: 104px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 11px 12px;
+  background: #fffdfa;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.dropzone textarea::placeholder {
+  color: #7f8884;
+}
+
+.intake-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-inline,
+.intake-controls button,
+.vault-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdfa;
+  color: var(--ink);
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.intake-controls button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.file-inline input {
+  display: none;
+}
+
+.pending-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 0;
+}
+
+.pending-list span,
+.pending-action {
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #ebe6dc;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.pending-action {
+  background: #fffdfa;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.vault-list {
+  display: grid;
+  gap: 10px;
+}
+
+.vault-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.vault-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdfa;
+}
+
+.vault-thumb {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f2eee6;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.vault-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vault-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.vault-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.vault-meta,
+.vault-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.vault-text {
+  max-width: 760px;
+}
+
+.vault-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vault-actions button {
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+
+.vault-actions .danger {
+  color: #9d4f46;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    width: min(calc(100vw - 24px), 360px);
+    max-width: min(calc(100vw - 24px), 360px);
+    margin-left: 12px;
+    margin-right: auto;
+    padding-top: 28px;
+    overflow-x: hidden;
+  }
+
+  .document-link {
+    padding: 8px;
+  }
+
+  .secondary-document {
+    width: 100%;
+    max-width: none;
+  }
+
+  .local-intake {
+    padding: 12px;
+  }
+
+  .vault-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .vault-actions {
+    grid-column: 1 / -1;
+  }
+}
