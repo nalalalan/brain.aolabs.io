@@ -328,36 +328,23 @@ input {
   text-transform: lowercase;
 }
 
-.citation-grid {
+.basis-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
-  gap: 10px;
-}
-
-.citation-item {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-  padding: 11px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #fffdfa;
-}
-
-.citation-item strong {
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.citation-item span,
-.citation-item a {
+  gap: 8px;
+  max-width: 1040px;
+  margin: 0;
+  padding-left: 22px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
-  line-height: 1.28;
+  line-height: 1.38;
 }
 
-.citation-item a {
+.basis-list li {
+  padding-left: 3px;
+}
+
+.basis-list a {
   color: #315d58;
   font-weight: 850;
   text-decoration-thickness: 1px;

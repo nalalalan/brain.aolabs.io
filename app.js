@@ -691,6 +691,7 @@ function autismExplanationForRecord(item) {
 
 function analyzeAutismText(value) {
   const text = normalizeForPdf(value).toLowerCase();
+  const readableText = text.replace(/\s+/g, " ").trim();
   const support = matchStats(text, /\blevel 3\b|\brequir(?:es|ing) very substantial support\b|\bvery substantial support\b|\bsevere autism\b|\bextreme support\b|\bhigh support needs\b/g);
   const formal = matchStats(text, /\bautism diagnostic evaluation\b|\bdiagnos(?:ed|is) (?:with|of) (?:autism|asd|autism spectrum disorder)\b|\bmeets criteria for (?:autism|asd|autism spectrum disorder)\b|\bautism spectrum disorder\b/g);
   const direct = matchStats(text, /\bautis(?:m|tic)\b|\basd\b|\bautism spectrum\b|\bspectrum disorder\b/g);
@@ -772,26 +773,11 @@ function analyzeAutismText(value) {
     capReason = "ADHD/executive-function language is neurodivergent context, not autism-specific evidence";
   }
 
-  const finalScore = clampAutismScore(Math.min(rawScore, cap));
-  const parts = [];
-  addScorePart(parts, "support-level/severity wording", supportPoints, support);
-  addScorePart(parts, "formal autism wording", formalPoints, formal);
-  addScorePart(parts, "direct autism wording", directPoints, direct);
-  addScorePart(parts, "evaluation/report context", diagnosticPoints, diagnostic);
-  addScorePart(parts, "DSM social-communication signal", socialPoints, social);
-  addScorePart(parts, "DSM sameness/transition signal", samenessPoints, sameness);
-  addScorePart(parts, "DSM sensory-reactivity signal", sensoryPoints, sensory);
-  addScorePart(parts, "DSM restricted/fixated-interest signal", focusedPoints, focused);
-  addScorePart(parts, "masking/camouflaging signal", maskingPoints, masking);
-  addScorePart(parts, "predictability/concrete-certainty signal", predictabilityPoints, predictability);
-  addScorePart(parts, "regulation/distress-load signal", regulationPoints, regulation);
-  addScorePart(parts, "functional-impact/support signal", functioningPoints, functioning);
-  addScorePart(parts, "ADHD/executive context", adhdPoints, adhd);
-  const breakdown = parts.length ? parts.join(" + ") : "0 matched autism-context evidence";
-  const capText = rawScore > finalScore ? `raw ${rawScore} capped at ${cap}` : `raw ${rawScore}, cap ${cap} not reached`;
+  const baselineScore = readableText.length >= 20 ? 12 : 8;
+  const finalScore = clampAutismScore(Math.max(baselineScore, Math.min(rawScore, cap)));
   return {
     score: finalScore,
-    explanation: humanAutismExplanation(finalScore, {
+    explanation: autismAnalysisText(finalScore, {
       support,
       formal,
       direct,
@@ -805,50 +791,58 @@ function analyzeAutismText(value) {
       functioning,
       adhd,
       evidenceDomains,
-      capReason,
-      capText,
-      breakdown,
+      hasReadableText: readableText.length >= 20,
     }),
   };
 }
 
-function humanAutismExplanation(score, evidence) {
-  if (score <= 5) {
-    return "Picked this low because the readable text does not really show autism-diagnosis language, social confusion, routine needs, sensory issues, masking, predictability needs, or overwhelm.";
+function autismAnalysisText(score, evidence) {
+  if (score <= 14) {
+    if (!evidence.hasReadableText) {
+      return "This file has almost no readable text for me to judge. I am leaving it as a low baseline, not calling it 0 or saying there are no autistic traits.";
+    }
+    return "This entry has only faint autism-specific signal. I would not read that as neurotypical proof; it just does not give me much autism-relevant material to score from.";
   }
 
   const reasons = [];
-  if (evidence.formal.count) reasons.push("the text says there was an autism diagnosis or evaluation");
-  else if (evidence.direct.count) reasons.push("the text directly mentions autism");
-  if (evidence.social.count) reasons.push("people, conversation, or relationships are hard to read");
-  if (evidence.sameness.count) reasons.push("switching or changes seem hard");
-  if (evidence.sensory.count) reasons.push("sound, comfort, safety, or body feel matter a lot");
-  if (evidence.focused.count) reasons.push("there are very fixed preferences or intense focus");
-  if (evidence.masking.count) reasons.push("masking or social-mode switching shows up");
-  if (evidence.predictability.count) reasons.push("there is a strong need for proof, predictability, or if-then certainty");
-  if (evidence.regulation.count) reasons.push("overwhelm or stress is a big part of it");
-  if (evidence.functioning.count) reasons.push("it affects work, safety, support, or daily functioning");
-  if (evidence.adhd.count && reasons.length < 3) reasons.push("there is ADHD or executive-function context");
+  if (evidence.formal.count) reasons.push("the diagnosis or evaluation language");
+  else if (evidence.direct.count) reasons.push("direct autism language");
+  if (evidence.social.count) reasons.push("people, conversation, or relationships feeling hard to read");
+  if (evidence.sameness.count) reasons.push("switching or changes seeming hard");
+  if (evidence.sensory.count) reasons.push("sound, comfort, safety, or body feel mattering a lot");
+  if (evidence.focused.count) reasons.push("fixed preferences or intense focus");
+  if (evidence.masking.count) reasons.push("masking or social-mode switching");
+  if (evidence.predictability.count) reasons.push("a strong need for proof, predictability, or if-then certainty");
+  if (evidence.regulation.count) reasons.push("overwhelm or stress carrying a lot of weight");
+  if (evidence.functioning.count) reasons.push("effects on work, safety, support, or daily functioning");
+  if (evidence.adhd.count && reasons.length < 3) reasons.push("ADHD or executive-function context");
 
   const mainReason = reasons.length
     ? humanJoin(reasons.slice(0, 4))
     : "there is some autism-adjacent context, but not much strong evidence";
+  const lead = score >= 94
+    ? "This entry reads as very strong autism evidence."
+    : score >= 80
+      ? "This entry reads as strongly autism-shaped."
+      : score >= 50
+        ? "This entry has a real autism-trait signal."
+        : "This entry has a light autism-trait signal.";
   let boundary = "";
   if (evidence.support.count) {
-    boundary = "I only put it this high because the text also says high-support or severe autism.";
+    boundary = "I treat it as very high because support or severity is named too.";
   } else if (score >= 94) {
-    boundary = "I kept it under 100 because it does not say Level 3 or high-support autism.";
+    boundary = "I stop short of 100 because it does not say Level 3 or high-support autism.";
   } else if (!evidence.formal.count && !evidence.direct.count && score >= 80) {
-    boundary = "I still scored it high without the word autism because those patterns keep stacking up.";
+    boundary = "It can still score high without the word autism because those patterns keep stacking up.";
   } else if (evidence.adhd.count && score < 50) {
-    boundary = "I kept it lower because ADHD by itself is not enough for a high autism score.";
+    boundary = "ADHD counts as neurodivergent context here, but it is not enough by itself to make this high.";
   } else if (score < 40) {
-    boundary = "I kept it low because there is only a little autism-specific evidence.";
+    boundary = "That makes it low-signal, not a statement that there are no autistic traits.";
   } else {
     boundary = "That is why it lands in the middle instead of the very top band.";
   }
 
-  return `Picked this score because ${mainReason}. ${boundary}`;
+  return `${lead} The clearest pieces are ${mainReason}. ${boundary}`;
 }
 
 function humanJoin(items) {
@@ -887,13 +881,6 @@ function displayMatchedTerm(value) {
 function scoreDimension(stats, maxPoints) {
   if (!stats.count) return 0;
   return Math.min(maxPoints, 6 + stats.count * 3 + stats.terms.length * 2);
-}
-
-function addScorePart(parts, label, points, stats) {
-  if (!points) return;
-  const terms = stats.terms.length ? `: ${stats.terms.join(", ")}` : "";
-  const count = stats.count === 1 ? "1 hit" : `${stats.count} hits`;
-  parts.push(`${points} ${label} (${count}${terms})`);
 }
 
 function sortRecords(records) {
