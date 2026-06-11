@@ -10,7 +10,6 @@ const publicDir = __dirname;
 const storageRoot = path.resolve(process.env.BRAIN_STORAGE_DIR || path.join(os.homedir(), "Documents", "brain-pdf-bank"));
 const indexPath = path.join(storageRoot, ".brain-files.json");
 const maxUploadBytes = Number(process.env.BRAIN_MAX_UPLOAD_MB || 100) * 1024 * 1024;
-const writeToken = process.env.BRAIN_WRITE_TOKEN || "";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -31,21 +30,13 @@ const mimeTypes = {
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type,X-Brain-Token");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 function sendJson(res, status, payload) {
   setCors(res);
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
   res.end(JSON.stringify(payload));
-}
-
-function requireAccess(req, res, requestUrl) {
-  if (!writeToken) return true;
-  if (req.headers["x-brain-token"] === writeToken) return true;
-  if (requestUrl?.searchParams?.get("token") === writeToken) return true;
-  sendJson(res, 401, { error: "Bank code required" });
-  return false;
 }
 
 async function readBody(req) {
@@ -141,7 +132,6 @@ async function findEntry(id) {
 }
 
 async function serveStoredFile(req, res, requestUrl, id, mode) {
-  if (!requireAccess(req, res, requestUrl)) return;
   const { entry } = await findEntry(id);
   if (!entry) {
     sendJson(res, 404, { error: "File not found" });
@@ -162,7 +152,6 @@ async function serveStoredFile(req, res, requestUrl, id, mode) {
 }
 
 async function deleteStoredFile(req, res, id) {
-  if (!requireAccess(req, res)) return;
   const { files, entry } = await findEntry(id);
   if (!entry) {
     sendJson(res, 404, { error: "File not found" });
@@ -213,19 +202,17 @@ const server = http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
     if (requestUrl.pathname === "/api/health" && req.method === "GET") {
-      sendJson(res, 200, { ok: true, app: "brain", storage: storageRoot, auth: Boolean(writeToken) });
+      sendJson(res, 200, { ok: true, app: "brain", storage: storageRoot });
       return;
     }
 
     if (requestUrl.pathname === "/api/files" && req.method === "GET") {
-      if (!requireAccess(req, res, requestUrl)) return;
       const files = (await readIndex()).map(publicEntry);
       sendJson(res, 200, { files });
       return;
     }
 
     if (requestUrl.pathname === "/api/files" && req.method === "POST") {
-      if (!requireAccess(req, res, requestUrl)) return;
       const entry = await saveUploadedFile(await readJson(req));
       sendJson(res, 200, { file: publicEntry(entry) });
       return;

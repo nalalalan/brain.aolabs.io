@@ -1,5 +1,4 @@
 const stateKey = "brain-pdf-bank-v1";
-const tokenKey = "brain-pdf-bank-token-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 
@@ -12,7 +11,6 @@ let openUrls = [];
 const sync = {
   base: resolveApiBase(),
   status: "checking",
-  auth: false,
 };
 
 const noteInput = document.getElementById("brain-note");
@@ -29,9 +27,6 @@ fileInput?.addEventListener("change", () => {
   fileInput.value = "";
 });
 saveButton?.addEventListener("click", () => savePending());
-syncStatus?.addEventListener("click", (event) => {
-  if (event.target?.matches("[data-action='unlock-sync']")) unlockSync();
-});
 
 dropzone?.addEventListener("dragover", (event) => {
   event.preventDefault();
@@ -73,11 +68,10 @@ async function initSync() {
   try {
     const response = await fetch(`${sync.base}/api/health`, { cache: "no-store" });
     if (!response.ok) throw new Error(`health ${response.status}`);
-    const json = await response.json();
-    sync.auth = Boolean(json.auth);
-    sync.status = sync.auth && !localStorage.getItem(tokenKey) ? "locked" : "connected";
+    await response.json();
+    sync.status = "connected";
     renderSyncStatus();
-    if (sync.status === "connected") await refreshSyncFiles();
+    await refreshSyncFiles();
   } catch {
     markSyncLocal();
   }
@@ -90,32 +84,13 @@ function markSyncLocal() {
 
 function renderSyncStatus() {
   if (!syncStatus) return;
-  syncStatus.replaceChildren();
   if (sync.status === "connected") {
     syncStatus.textContent = "sync connected - entries are shared";
-  } else if (sync.status === "locked") {
-    syncStatus.append(document.createTextNode("sync locked - "));
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "sync-unlock";
-    button.dataset.action = "unlock-sync";
-    button.textContent = "enter bank code";
-    syncStatus.append(button);
   } else if (sync.status === "checking") {
     syncStatus.textContent = "checking sync";
   } else {
     syncStatus.textContent = "sync not connected - saved on this device";
   }
-}
-
-async function unlockSync() {
-  if (!requestBankCode()) return;
-  sync.status = "connected";
-  renderSyncStatus();
-  await refreshSyncFiles().catch(() => {
-    sync.status = "locked";
-    renderSyncStatus();
-  });
 }
 
 function loadState() {
@@ -202,10 +177,6 @@ async function savePending() {
 }
 
 async function saveFileLike(file) {
-  if (sync.status === "locked" && requestBankCode()) {
-    sync.status = "connected";
-    renderSyncStatus();
-  }
   if (sync.status === "connected") {
     try {
       return await uploadToSync(file);
@@ -400,17 +371,7 @@ async function syncLocalRecord(item) {
 }
 
 async function refreshSyncFiles() {
-  const response = await fetch(`${sync.base}/api/files`, { cache: "no-store", headers: authHeaders() });
-  if (response.status === 401) {
-    sync.status = "locked";
-    renderSyncStatus();
-    if (requestBankCode()) {
-      sync.status = "connected";
-      renderSyncStatus();
-      return refreshSyncFiles();
-    }
-    return;
-  }
+  const response = await fetch(`${sync.base}/api/files`, { cache: "no-store" });
   if (!response.ok) throw new Error(`files ${response.status}`);
   const json = await response.json();
   const synced = Array.isArray(json.files) ? json.files.map(normalizeSyncFile) : [];
@@ -435,47 +396,28 @@ function normalizeSyncFile(file) {
   };
 }
 
-async function postJson(url, payload, retry = true) {
+async function postJson(url, payload) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      ...authHeaders(),
     },
     body: JSON.stringify(payload),
   });
-  if (response.status === 401 && retry && requestBankCode()) return postJson(url, payload, false);
   const json = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(json.error || `request ${response.status}`);
   return json;
 }
 
-async function deleteSyncFile(id, retry = true) {
+async function deleteSyncFile(id) {
   const response = await fetch(`${sync.base}/api/files/${encodeURIComponent(id)}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
-  if (response.status === 401 && retry && requestBankCode()) return deleteSyncFile(id, false);
   return response.ok;
 }
 
-function authHeaders() {
-  const token = localStorage.getItem(tokenKey);
-  return token ? { "x-brain-token": token } : {};
-}
-
 function syncFileUrl(id, mode) {
-  const token = localStorage.getItem(tokenKey);
-  const url = new URL(`${sync.base}/api/files/${encodeURIComponent(id)}/${mode}`);
-  if (token) url.searchParams.set("token", token);
-  return url.toString();
-}
-
-function requestBankCode() {
-  const value = window.prompt("bank code");
-  if (!value) return false;
-  localStorage.setItem(tokenKey, value);
-  return true;
+  return `${sync.base}/api/files/${encodeURIComponent(id)}/${mode}`;
 }
 
 function createTextPdf(text) {
