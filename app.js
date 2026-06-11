@@ -118,17 +118,17 @@ function scheduleTextPdf() {
 
 function convertTextToPendingPdf() {
   const text = noteInput?.value || "";
-  const paragraph = textPdfParagraph(text);
-  if (!paragraph) {
+  const sourceText = textPdfSource(text);
+  if (!sourceText) {
     pendingTextPdf = null;
     renderPending();
     return;
   }
   const createdAt = new Date().toISOString();
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
-  const result = createTextPdf(paragraph, createdAt);
-  const previewDataUrl = createTextPreviewDataUrl(paragraph, createdAt);
-  const autismScore = scoreAutismText(paragraph);
+  const result = createTextPdf(sourceText, createdAt);
+  const previewDataUrl = createTextPreviewDataUrl(sourceText, createdAt);
+  const autismScore = scoreAutismText(sourceText);
   pendingTextPdf = {
     id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
@@ -472,7 +472,7 @@ function createTextPdf(text, createdAt) {
   const fontSize = 10.5;
   const leading = 15;
   const maxChars = 88;
-  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...wrapText(textPdfParagraph(text), maxChars)];
+  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...formattedPdfLines(text, maxChars)];
   const maxLines = Math.floor((height - margin * 2) / leading);
   const pages = [];
   for (let i = 0; i < lines.length; i += maxLines) {
@@ -509,7 +509,7 @@ function createTextPreviewDataUrl(text, createdAt) {
   context.textBaseline = "top";
   const margin = 54;
   const leading = 24;
-  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...wrapText(textPdfParagraph(text), 70)];
+  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...formattedPdfLines(text, 70)];
   lines.slice(0, 27).forEach((line, index) => {
     context.fillText(line, margin, margin + index * leading);
   });
@@ -568,8 +568,30 @@ function wrapText(text, maxChars) {
   return lines.length ? lines : [""];
 }
 
-function textPdfParagraph(value) {
-  return normalizeForPdf(value).replace(/\s+/g, " ").trim();
+function textPdfSource(value) {
+  return normalizeForPdf(value)
+    .replace(/^(?:[ \t]*\n)+/, "")
+    .replace(/(?:\n[ \t]*)+$/, "");
+}
+
+function formattedPdfLines(value, maxChars) {
+  const source = textPdfSource(value);
+  if (!source.trim()) return [""];
+  const lines = [];
+  source.split("\n").forEach((rawLine) => {
+    const line = rawLine.replace(/[ \t]+$/g, "");
+    if (!line.trim()) {
+      lines.push("");
+      return;
+    }
+    const indent = line.match(/^[ ]*/)?.[0] || "";
+    const content = line.slice(indent.length);
+    const width = Math.max(24, maxChars - indent.length);
+    wrapText(content, width).forEach((part, index) => {
+      lines.push(`${indent}${index > 0 ? "  " : ""}${part}`);
+    });
+  });
+  return lines.length ? lines : [""];
 }
 
 function formatPdfTimestamp(value) {
@@ -596,6 +618,8 @@ function normalizeForPdf(value) {
     .replace(/[\u201c\u201d]/g, '"')
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u2013\u2014]/g, "-")
+    .replace(/[\u2022\u2023\u2043\u25E6]/g, "-")
+    .replace(/\t/g, "    ")
     .replace(/\u2026/g, "...")
     .replace(/[^\n\t\x20-\x7E]/g, " ");
 }
