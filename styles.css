@@ -183,9 +183,10 @@ input {
 
 .vault-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(2, minmax(260px, 360px));
+  justify-content: center;
   align-items: start;
-  gap: 14px;
+  gap: 18px;
 }
 
 .document-bank {
@@ -196,9 +197,10 @@ input {
 
 .source-documents {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(2, minmax(260px, 360px));
+  justify-content: center;
   align-items: start;
-  gap: 14px;
+  gap: 18px;
   padding-top: 4px;
 }
 
@@ -336,6 +338,7 @@ input {
 
   .vault-list,
   .source-documents {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
   }
 }
