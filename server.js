@@ -95,6 +95,8 @@ async function writeIndex(files) {
 async function saveUploadedFile(payload) {
   const decoded = dataUrlToBuffer(payload.dataUrl);
   if (decoded.data.length > maxUploadBytes) throw Object.assign(new Error("Upload too large"), { status: 413 });
+  const preview = payload.previewDataUrl ? dataUrlToBuffer(payload.previewDataUrl) : null;
+  if (preview && !String(preview.mime || "").startsWith("image/")) throw Object.assign(new Error("Invalid preview payload"), { status: 400 });
 
   const id = crypto.randomUUID();
   const name = sanitizeFileName(payload.name);
@@ -102,8 +104,16 @@ async function saveUploadedFile(payload) {
   const filePath = path.join(storageRoot, storageName);
   await fsp.mkdir(storageRoot, { recursive: true });
   await fsp.writeFile(filePath, decoded.data);
+  let previewStorageName = "";
+  let previewMime = "";
+  if (preview) {
+    previewStorageName = `${id}-preview.png`;
+    previewMime = preview.mime || "image/png";
+    await fsp.writeFile(path.join(storageRoot, previewStorageName), preview.data);
+  }
 
-  const now = new Date().toISOString();
+  const requestedCreatedAt = payload.createdAt ? new Date(payload.createdAt) : null;
+  const now = requestedCreatedAt && !Number.isNaN(requestedCreatedAt.getTime()) ? requestedCreatedAt.toISOString() : new Date().toISOString();
   const entry = {
     id,
     name,
@@ -114,6 +124,8 @@ async function saveUploadedFile(payload) {
     kind: payload.kind || "file",
     pages: Number(payload.pages || 0),
     storageName,
+    previewStorageName,
+    previewMime,
   };
   const files = await readIndex();
   files.unshift(entry);
@@ -122,8 +134,8 @@ async function saveUploadedFile(payload) {
 }
 
 function publicEntry(entry) {
-  const { storageName, ...rest } = entry;
-  return rest;
+  const { storageName, previewStorageName, previewMime, ...rest } = entry;
+  return { ...rest, hasPreview: Boolean(previewStorageName), previewMime: previewMime || "" };
 }
 
 async function findEntry(id) {
@@ -137,14 +149,15 @@ async function serveStoredFile(req, res, requestUrl, id, mode) {
     sendJson(res, 404, { error: "File not found" });
     return;
   }
-  const filePath = path.resolve(storageRoot, entry.storageName || "");
+  const isPreview = mode === "preview";
+  const filePath = path.resolve(storageRoot, isPreview ? entry.previewStorageName || "" : entry.storageName || "");
   if (!isInside(storageRoot, filePath)) {
     sendJson(res, 403, { error: "Invalid file path" });
     return;
   }
-  const disposition = mode === "view" ? "inline" : "attachment";
+  const disposition = mode === "download" ? "attachment" : "inline";
   res.writeHead(200, {
-    "Content-Type": entry.mime || "application/octet-stream",
+    "Content-Type": isPreview ? entry.previewMime || "image/png" : entry.mime || "application/octet-stream",
     "Content-Disposition": `${disposition}; filename="${encodeURIComponent(entry.name)}"`,
     "Cache-Control": "no-store",
   });
@@ -159,6 +172,8 @@ async function deleteStoredFile(req, res, id) {
   }
   const filePath = path.resolve(storageRoot, entry.storageName || "");
   if (isInside(storageRoot, filePath)) await fsp.rm(filePath, { force: true });
+  const previewPath = path.resolve(storageRoot, entry.previewStorageName || "");
+  if (entry.previewStorageName && isInside(storageRoot, previewPath)) await fsp.rm(previewPath, { force: true });
   await writeIndex(files.filter((file) => file.id !== id));
   sendJson(res, 200, { ok: true });
 }
@@ -218,7 +233,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const serveMatch = requestUrl.pathname.match(/^\/api\/files\/([^/]+)\/(view|download)$/);
+    const serveMatch = requestUrl.pathname.match(/^\/api\/files\/([^/]+)\/(view|download|preview)$/);
     if (serveMatch && req.method === "GET") {
       await serveStoredFile(req, res, requestUrl, serveMatch[1], serveMatch[2]);
       return;

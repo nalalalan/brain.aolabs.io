@@ -127,6 +127,7 @@ function convertTextToPendingPdf() {
   const createdAt = new Date().toISOString();
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
   const result = createTextPdf(paragraph, createdAt);
+  const previewDataUrl = createTextPreviewDataUrl(paragraph, createdAt);
   pendingTextPdf = {
     id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
@@ -136,6 +137,7 @@ function convertTextToPendingPdf() {
     sourceCreatedAt: createdAt,
     kind: "generated pdf",
     pages: result.pages,
+    previewDataUrl,
     blob: result.blob,
   };
   renderPending();
@@ -202,6 +204,8 @@ async function uploadToSync(file) {
     kind: file.kind || "file",
     pages: file.pages || 0,
     sourceCreatedAt: file.sourceCreatedAt || "",
+    createdAt: file.createdAt || "",
+    previewDataUrl: file.previewDataUrl || "",
   });
   return normalizeSyncFile(response.file);
 }
@@ -218,6 +222,7 @@ function fileRecordFromPending(file, kind, source) {
     kind,
     source,
     pages: file.pages || 0,
+    previewDataUrl: file.previewDataUrl || "",
   };
 }
 
@@ -272,7 +277,17 @@ async function createVaultItem(item) {
 
   const thumb = document.createElement("div");
   thumb.className = "vault-thumb";
-  if (item.kind === "image") {
+  if (item.source === "sync" && item.hasPreview) {
+    const img = document.createElement("img");
+    img.src = syncFileUrl(item.id, "preview");
+    img.alt = "";
+    thumb.append(img);
+  } else if (item.previewDataUrl) {
+    const img = document.createElement("img");
+    img.src = item.previewDataUrl;
+    img.alt = "";
+    thumb.append(img);
+  } else if (item.kind === "image") {
     const blob = item.source === "sync" ? null : await getBlob(item.id);
     if (blob) {
       const img = document.createElement("img");
@@ -410,6 +425,8 @@ function normalizeSyncFile(file) {
     sourceCreatedAt: file.sourceCreatedAt || "",
     kind: file.kind || "file",
     pages: file.pages || 0,
+    hasPreview: Boolean(file.hasPreview),
+    previewMime: file.previewMime || "",
     source: "sync",
   };
 }
@@ -467,6 +484,26 @@ function createTextPdf(text, createdAt) {
   objects[1] = `<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${pages.length} >>`;
   const pdf = buildPdf(objects);
   return { blob: new Blob([pdf], { type: "application/pdf" }), pages: pages.length };
+}
+
+function createTextPreviewDataUrl(text, createdAt) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 612;
+  canvas.height = 792;
+  const context = canvas.getContext("2d");
+  if (!context) return "";
+  context.fillStyle = "#fffdfa";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#1e2724";
+  context.font = "17px Arial, sans-serif";
+  context.textBaseline = "top";
+  const margin = 54;
+  const leading = 24;
+  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...wrapText(textPdfParagraph(text), 70)];
+  lines.slice(0, 27).forEach((line, index) => {
+    context.fillText(line, margin, margin + index * leading);
+  });
+  return canvas.toDataURL("image/png");
 }
 
 function streamForPage(lines, options) {

@@ -22,9 +22,9 @@
   <meta name="twitter:image:alt" content="Autism evaluation PDF cover preview.">
   <link rel="icon" href="./favicon.svg?v=20260610-brain" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260611-bank-consistency">
+  <link rel="stylesheet" href="./styles.css?v=20260611-note-collage">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260611-bank-consistency" defer></script>
+  <script src="./app.js?v=20260611-note-collage" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -36,11 +36,6 @@
         <img class="suite-app-mark" src="./favicon.svg?v=20260610-brain" alt="">
         <span class="suite-app-name">brain.aolabs.io</span>
       </a>
-    </div>
-    <div class="suite-topbar-actions" aria-label="brain actions">
-      <a href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf">autism pdf</a>
-      <a href="./ADHDLetter.pdf">adhd pdf</a>
-      <a href="./link-sending-note.pdf">note pdf</a>
     </div>
   </header>
 
@@ -69,37 +64,33 @@
 
     <section class="document-bank" aria-label="document bank">
       <div id="brain-vault" class="vault-list" aria-live="polite"></div>
-      <div class="source-documents" aria-label="source documents">
-        <a class="source-document" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf" aria-label="Open autism diagnostic evaluation PDF">
-          <span class="vault-thumb">
+      <div class="source-documents" aria-label="reference documents">
+        <article class="source-document">
+          <a class="vault-thumb" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf" aria-label="Open autism diagnostic evaluation PDF">
             <img src="./autism-evaluation-page-1.png" alt="">
-          </span>
+          </a>
           <span class="vault-main">
             <span class="vault-title">autism evaluation</span>
             <span class="vault-meta">pdf</span>
           </span>
-          <span class="source-action">open</span>
-        </a>
-        <a class="source-document" href="./ADHDLetter.pdf" aria-label="Open ADHD letter PDF">
-          <span class="vault-thumb">
-            <img src="./adhd-letter-page-1.png" alt="">
+          <span class="vault-actions">
+            <a class="source-action" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf">open</a>
+            <a class="source-action" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf" download>download</a>
           </span>
+        </article>
+        <article class="source-document">
+          <a class="vault-thumb" href="./ADHDLetter.pdf" aria-label="Open ADHD letter PDF">
+            <img src="./adhd-letter-page-1.png" alt="">
+          </a>
           <span class="vault-main">
             <span class="vault-title">adhd letter</span>
             <span class="vault-meta">1 page</span>
           </span>
-          <span class="source-action">open</span>
-        </a>
-        <a class="source-document" href="./link-sending-note.pdf" aria-label="Open link-sending note PDF">
-          <span class="vault-thumb">
-            <img src="./link-sending-note-page-1.png" alt="">
+          <span class="vault-actions">
+            <a class="source-action" href="./ADHDLetter.pdf">open</a>
+            <a class="source-action" href="./ADHDLetter.pdf" download>download</a>
           </span>
-          <span class="vault-main">
-            <span class="vault-title">link-sending note</span>
-            <span class="vault-meta">pdf</span>
-          </span>
-          <span class="source-action">open</span>
-        </a>
+        </article>
       </div>
     </section>
   </main>
