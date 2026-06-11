@@ -330,6 +330,9 @@ async function createVaultItem(item) {
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
+  if (item.source !== "sync" && sync.status === "connected") {
+    actions.append(actionButton("sync", () => syncLocalRecord(item)));
+  }
   actions.append(
     actionButton("open", () => openRecord(item)),
     actionButton("download", () => downloadRecord(item)),
@@ -375,6 +378,23 @@ async function deleteRecord(item) {
     await deleteBlob(item.id);
   }
   state = state.filter((record) => record.id !== item.id);
+  persistState();
+  renderVault();
+}
+
+async function syncLocalRecord(item) {
+  if (sync.status !== "connected") return;
+  const blob = await getBlob(item.id);
+  if (!blob) return;
+  const synced = await uploadToSync({
+    ...item,
+    kind: item.kind || "file",
+    mime: item.mime || blob.type || "application/octet-stream",
+    size: item.size || blob.size || 0,
+    blob,
+  });
+  await deleteBlob(item.id);
+  state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
   persistState();
   renderVault();
 }
