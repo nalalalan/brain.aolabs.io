@@ -792,11 +792,18 @@ function uniqueMatches(text, pattern) {
 }
 
 function matchStats(text, pattern) {
-  const matches = [...String(text || "").matchAll(pattern)].map((match) => match[0].trim()).filter(Boolean);
+  const matches = [...String(text || "").matchAll(pattern)].map((match) => displayMatchedTerm(match[0])).filter(Boolean);
   return {
     count: matches.length,
     terms: [...new Set(matches)].slice(0, 5),
   };
+}
+
+function displayMatchedTerm(value) {
+  const term = String(value || "").trim();
+  if (!term) return "";
+  if (/^if .+ then\b/.test(term)) return "if-then rule";
+  return term.length > 38 ? `${term.slice(0, 35)}...` : term;
 }
 
 function scoreDimension(stats, maxPoints) {
