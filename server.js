@@ -147,7 +147,7 @@ function clampScore(value) {
 }
 
 function cleanExplanation(value) {
-  return String(value || "").replace(/\s+/g, " ").trim().slice(0, 500);
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, 1200);
 }
 
 async function findEntry(id) {

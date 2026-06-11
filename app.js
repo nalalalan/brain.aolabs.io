@@ -685,41 +685,76 @@ function autismScoreForRecord(item) {
 }
 
 function autismExplanationForRecord(item) {
-  if (item?.autismScoreExplanation) return String(item.autismScoreExplanation).slice(0, 520);
+  if (item?.autismScoreExplanation) return String(item.autismScoreExplanation).slice(0, 900);
   return analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`).explanation;
 }
 
 function analyzeAutismText(value) {
   const text = normalizeForPdf(value).toLowerCase();
+  const extreme = matchStats(text, /\blevel 3\b|\brequir(?:es|ing) very substantial support\b|\bvery substantial support\b|\bsevere autism\b|\bextreme support\b|\bhigh support needs\b/g);
   const formal = matchStats(text, /\bautism diagnostic evaluation\b|\bdiagnos(?:ed|is) (?:with|of) (?:autism|asd|autism spectrum disorder)\b|\bmeets criteria for (?:autism|asd|autism spectrum disorder)\b|\bautism spectrum disorder\b/g);
   const direct = matchStats(text, /\bautis(?:m|tic)\b|\basd\b|\bautism spectrum\b|\bspectrum disorder\b/g);
   const diagnostic = matchStats(text, /\bdiagnostic evaluation\b|\bpsychological evaluation\b|\bneuropsych(?:ological)?\b|\bclinical\b|\breport\b|\bassessment\b|\bevaluation\b/g);
+  const predictability = matchStats(text, /\bconcrete anchor(?:s)?\b|\banchor(?:s)?\b|\bunpredictable\b|\bpredictable\b|\bknow for a fact\b|\bmake sure\b|\bto know\b|\bwhat(?:'| i)?s going to happen\b|\bassume\b|\bcertainty\b|\buncertain(?:ty)?\b|\bproof\b|\bif .{0,40} then\b/g);
+  const switching = matchStats(text, /\bswitch(?:ing)?\b|\btransition(?:s)?\b|\broutine(?:s)?\b|\bstable path\b|\bsame path\b|\bcommit(?:ting)?\b|\bone goal\b|\bone stable\b|\bchange decisions?\b|\bback and forth\b|\bmentalities\b/g);
+  const sensory = matchStats(text, /\bsensory\b|\bcomfort\b|\bcomfortable\b|\bquiet\b|\bsmooth\b|\bbumpy\b|\bugly sound\b|\bsound\b|\baudio\b|\bmetal box\b|\binsulation\b|\btexture\b|\blight(?:s)?\b|\bsmell\b|\bnoise\b|\bsafe\b|\bsafety\b|\bcheap\b/g);
+  const masking = matchStats(text, /\bmasking\b|\bunmask(?:ing)?\b|\bsocial life\b|\bsocial(?:ly)?\b|\btone\b|\beye contact\b|\bmisread\b|\bliteral\b|\bblunt\b|\breciprocity\b|\bnonverbal\b|\bconfus(?:e|ion|ed)\b/g);
+  const overwhelm = matchStats(text, /\boverwhelm(?:ed|ing)?\b|\btoo much\b|\bhard to handle\b|\bpanic\b|\bshutdown\b|\bmeltdown\b|\bspiral\b|\bcan't handle\b|\bcant handle\b|\bstress(?:ful|ed)?\b|\bannoying\b/g);
+  const systems = matchStats(text, /\bspecial interest\b|\brestricted interest\b|\bsystem(?:s|izing)?\b|\brule(?:s)?\b|\bpattern(?:s)?\b|\blist(?:s)?\b|\bexact\b|\bbrand\b|\bcategory\b|\bcategories\b|\baudi\b|\bcar brand\b|\bone audi\b/g);
   const adhd = matchStats(text, /\badhd\b|\battention[- ]deficit\b|\bexecutive function\b|\bhyperfocus\b|\bfocus\b|\binattention\b|\bimpulsiv(?:e|ity)\b/g);
-  const traits = matchStats(text, /\bneurodivergent\b|\bneurotypical\b|\bmasking\b|\bsensory\b|\bstimming\b|\bspecial interest\b|\boverwhelm\b|\broutine\b|\bshutdown\b|\bmeltdown\b|\brepetitive\b|\brestricted interest\b/g);
-  const social = matchStats(text, /\bsocial communication\b|\btone\b|\beye contact\b|\bmisread\b|\bliteral\b|\bblunt\b|\bconfus(?:e|ion|ed)\b|\breciprocity\b|\bnonverbal\b/g);
 
-  const formalPoints = formal.count ? 24 + Math.min(10, formal.count * 3) : 0;
+  const extremePoints = extreme.count ? 20 : 0;
+  const formalPoints = formal.count ? 26 + Math.min(12, formal.count * 4) : 0;
   const directPoints = direct.count ? 18 + Math.min(16, direct.count * 2 + direct.terms.length * 3) : 0;
-  const diagnosticPoints = diagnostic.count ? 10 + Math.min(12, diagnostic.count * 3) : 0;
-  const traitPoints = traits.count ? Math.min(18, traits.count * 3 + traits.terms.length * 2) : 0;
-  const socialPoints = social.count ? Math.min(14, social.count * 2 + social.terms.length * 2) : 0;
-  const adhdPoints = adhd.count ? Math.min(12, adhd.count * 3 + adhd.terms.length) : 0;
-  const rawScore = formalPoints + directPoints + diagnosticPoints + traitPoints + socialPoints + adhdPoints;
+  const diagnosticPoints = diagnostic.count ? 8 + Math.min(10, diagnostic.count * 2) : 0;
+  const predictabilityPoints = scoreDimension(predictability, 20);
+  const switchingPoints = scoreDimension(switching, 18);
+  const sensoryPoints = scoreDimension(sensory, 18);
+  const maskingPoints = scoreDimension(masking, 18);
+  const overwhelmPoints = scoreDimension(overwhelm, 16);
+  const systemsPoints = scoreDimension(systems, 14);
+  const adhdPoints = adhd.count ? Math.min(10, adhd.count * 2 + adhd.terms.length) : 0;
+  const rawScore = extremePoints + formalPoints + directPoints + diagnosticPoints + predictabilityPoints + switchingPoints + sensoryPoints + maskingPoints + overwhelmPoints + systemsPoints + adhdPoints;
+  const traitDimensions = [predictability, switching, sensory, masking, overwhelm, systems].filter((stats) => stats.count > 0).length;
 
   let cap = 10;
-  let capReason = "no readable autism-specific, trait, social-communication, or ADHD evidence";
-  if (formal.count && direct.count) {
+  let capReason = "no readable autism-specific or autism-trait evidence";
+  if (extreme.count && (formal.count || direct.count || traitDimensions >= 4)) {
+    cap = 100;
+    capReason = "explicit high-support or severe-autism wording appears with autism evidence";
+  } else if (formal.count && direct.count && traitDimensions >= 3) {
+    cap = 96;
+    capReason = "formal autism wording plus several independent autism-trait dimensions";
+  } else if (formal.count && direct.count) {
     cap = 94;
-    capReason = "formal autism diagnosis/evaluation wording is present, but the scale stays below 100 without explicit extreme-support or severity evidence";
+    capReason = "formal autism diagnosis/evaluation wording is present without explicit extreme-support language";
+  } else if (direct.count && traitDimensions >= 4) {
+    cap = 92;
+    capReason = "direct autism wording plus broad trait evidence";
+  } else if (traitDimensions >= 5) {
+    cap = 86;
+    capReason = "many independent autism-trait dimensions appear even without direct autism wording";
   } else if (direct.count && diagnostic.count) {
     cap = 86;
-    capReason = "direct autism wording appears with general report/evaluation context, not a full formal-diagnosis signal";
-  } else if (direct.count) {
+    capReason = "direct autism wording appears with general report/evaluation context";
+  } else if (direct.count && traitDimensions >= 2) {
+    cap = 84;
+    capReason = "direct autism wording appears with multiple trait dimensions";
+  } else if (traitDimensions === 4) {
     cap = 78;
-    capReason = "direct autism wording appears without a diagnostic-evaluation source";
-  } else if (traits.count || social.count) {
+    capReason = "four independent autism-trait dimensions appear without direct autism wording";
+  } else if (direct.count) {
+    cap = 76;
+    capReason = "direct autism wording appears but the readable text has limited trait detail";
+  } else if (traitDimensions === 3) {
+    cap = 70;
+    capReason = "three independent autism-trait dimensions appear without direct autism wording";
+  } else if (traitDimensions === 2) {
     cap = 58;
-    capReason = "autism-adjacent trait or social-communication language appears without direct autism wording";
+    capReason = "two autism-trait dimensions appear without direct autism wording";
+  } else if (traitDimensions === 1) {
+    cap = 42;
+    capReason = "one autism-trait dimension appears without direct autism wording";
   } else if (adhd.count) {
     cap = 34;
     capReason = "ADHD/executive-function language is neurodivergent context, not autism-specific evidence";
@@ -727,17 +762,22 @@ function analyzeAutismText(value) {
 
   const finalScore = clampAutismScore(Math.min(rawScore, cap));
   const parts = [];
+  addScorePart(parts, "extreme-support wording", extremePoints, extreme);
   addScorePart(parts, "formal autism wording", formalPoints, formal);
   addScorePart(parts, "direct autism wording", directPoints, direct);
   addScorePart(parts, "evaluation/report context", diagnosticPoints, diagnostic);
-  addScorePart(parts, "trait language", traitPoints, traits);
-  addScorePart(parts, "social-communication language", socialPoints, social);
+  addScorePart(parts, "predictability/concrete-anchor signal", predictabilityPoints, predictability);
+  addScorePart(parts, "switching/routine signal", switchingPoints, switching);
+  addScorePart(parts, "sensory/safety-comfort signal", sensoryPoints, sensory);
+  addScorePart(parts, "masking/social-interpretation signal", maskingPoints, masking);
+  addScorePart(parts, "overwhelm/load signal", overwhelmPoints, overwhelm);
+  addScorePart(parts, "systemizing/special-interest signal", systemsPoints, systems);
   addScorePart(parts, "ADHD/executive context", adhdPoints, adhd);
   const breakdown = parts.length ? parts.join(" + ") : "0 matched autism-context evidence";
   const capText = rawScore > finalScore ? `raw ${rawScore} capped at ${cap}` : `raw ${rawScore}, cap ${cap} not reached`;
   return {
     score: finalScore,
-    explanation: `Score ${finalScore}/100 = ${breakdown}; ${capText} because ${capReason}. This is a document-language score, not a clinical severity rating.`,
+    explanation: `Score ${finalScore}/100 = ${breakdown}; ${traitDimensions} trait dimensions; ${capText} because ${capReason}. This is a document-language score, not a clinical severity rating.`,
   };
 }
 
@@ -757,6 +797,11 @@ function matchStats(text, pattern) {
     count: matches.length,
     terms: [...new Set(matches)].slice(0, 5),
   };
+}
+
+function scoreDimension(stats, maxPoints) {
+  if (!stats.count) return 0;
+  return Math.min(maxPoints, 6 + stats.count * 3 + stats.terms.length * 2);
 }
 
 function addScorePart(parts, label, points, stats) {
