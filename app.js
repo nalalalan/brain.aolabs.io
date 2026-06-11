@@ -126,7 +126,7 @@ function convertTextToPendingPdf() {
   }
   const createdAt = new Date().toISOString();
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
-  const result = createTextPdf(paragraph);
+  const result = createTextPdf(paragraph, createdAt);
   pendingTextPdf = {
     id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
@@ -438,14 +438,14 @@ function syncFileUrl(id, mode) {
   return `${sync.base}/api/files/${encodeURIComponent(id)}/${mode}`;
 }
 
-function createTextPdf(text) {
+function createTextPdf(text, createdAt) {
   const width = 612;
   const height = 792;
   const margin = 54;
   const fontSize = 10.5;
   const leading = 15;
   const maxChars = 88;
-  const lines = wrapText(textPdfParagraph(text), maxChars);
+  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...wrapText(textPdfParagraph(text), maxChars)];
   const maxLines = Math.floor((height - margin * 2) / leading);
   const pages = [];
   for (let i = 0; i < lines.length; i += maxLines) {
@@ -523,6 +523,24 @@ function wrapText(text, maxChars) {
 
 function textPdfParagraph(value) {
   return normalizeForPdf(value).replace(/\s+/g, " ").trim();
+}
+
+function formatPdfTimestamp(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(date);
+  } catch {
+    return date.toLocaleString([], { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
 }
 
 function normalizeForPdf(value) {
