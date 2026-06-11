@@ -34,8 +34,8 @@ input {
 }
 
 .shell {
-  width: calc(100% - 32px);
-  max-width: 1120px;
+  width: calc(100% - 48px);
+  max-width: 1680px;
   margin: 0 auto;
   padding: 28px 0 44px;
 }
@@ -183,8 +183,8 @@ input {
 
 .vault-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 360px));
-  justify-content: center;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  justify-content: stretch;
   align-items: start;
   gap: 18px;
 }
@@ -197,7 +197,7 @@ input {
 
 .source-documents {
   display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 360px));
+  grid-template-columns: repeat(2, minmax(260px, 420px));
   justify-content: center;
   align-items: start;
   gap: 18px;
@@ -312,6 +312,56 @@ input {
 
 .vault-text {
   max-width: 760px;
+}
+
+.score-citations {
+  margin-top: 24px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.score-citations h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.citation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+  gap: 10px;
+}
+
+.citation-item {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdfa;
+}
+
+.citation-item strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.citation-item span,
+.citation-item a {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.28;
+}
+
+.citation-item a {
+  color: #315d58;
+  font-weight: 850;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 .vault-actions {
