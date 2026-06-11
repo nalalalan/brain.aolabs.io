@@ -257,7 +257,7 @@ async function renderVault() {
   if (!state.length) {
     const empty = document.createElement("p");
     empty.className = "vault-empty";
-    empty.textContent = "No saved entries yet.";
+    empty.textContent = "No generated notes yet.";
     vaultList.append(empty);
     return;
   }
