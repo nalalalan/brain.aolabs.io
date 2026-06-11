@@ -814,41 +814,41 @@ function analyzeAutismText(value) {
 
 function humanAutismExplanation(score, evidence) {
   if (score <= 5) {
-    return "Picked this low because the readable text does not really show autism-diagnosis language or the patterns I would expect to see around social confusion, routines, sensory needs, masking, predictability, or overwhelm.";
+    return "Picked this low because the readable text does not really show autism-diagnosis language, social confusion, routine needs, sensory issues, masking, predictability needs, or overwhelm.";
   }
 
   const reasons = [];
-  if (evidence.formal.count) reasons.push("a formal autism diagnosis or evaluation");
-  else if (evidence.direct.count) reasons.push("direct autism language");
-  if (evidence.social.count) reasons.push("social confusion or relationship certainty");
-  if (evidence.sameness.count) reasons.push("routine and switching needs");
-  if (evidence.sensory.count) reasons.push("sensory comfort or sound/body reactions");
-  if (evidence.focused.count) reasons.push("fixed preferences or intense focus");
-  if (evidence.masking.count) reasons.push("masking or social switching");
-  if (evidence.predictability.count) reasons.push("needing proof, predictability, or if-then certainty");
-  if (evidence.regulation.count) reasons.push("overwhelm or stress load");
-  if (evidence.functioning.count) reasons.push("daily functioning or support impact");
-  if (evidence.adhd.count && reasons.length < 3) reasons.push("ADHD/executive-function context");
+  if (evidence.formal.count) reasons.push("the text says there was an autism diagnosis or evaluation");
+  else if (evidence.direct.count) reasons.push("the text directly mentions autism");
+  if (evidence.social.count) reasons.push("people, conversation, or relationships are hard to read");
+  if (evidence.sameness.count) reasons.push("switching or changes seem hard");
+  if (evidence.sensory.count) reasons.push("sound, comfort, safety, or body feel matter a lot");
+  if (evidence.focused.count) reasons.push("there are very fixed preferences or intense focus");
+  if (evidence.masking.count) reasons.push("masking or social-mode switching shows up");
+  if (evidence.predictability.count) reasons.push("there is a strong need for proof, predictability, or if-then certainty");
+  if (evidence.regulation.count) reasons.push("overwhelm or stress is a big part of it");
+  if (evidence.functioning.count) reasons.push("it affects work, safety, support, or daily functioning");
+  if (evidence.adhd.count && reasons.length < 3) reasons.push("there is ADHD or executive-function context");
 
   const mainReason = reasons.length
     ? humanJoin(reasons.slice(0, 4))
     : "there is some autism-adjacent context, but not much strong evidence";
   let boundary = "";
   if (evidence.support.count) {
-    boundary = "I only put it this high because the text also has high-support or severe-autism wording.";
+    boundary = "I only put it this high because the text also says high-support or severe autism.";
   } else if (score >= 94) {
-    boundary = "I kept it under 100 because I do not see explicit Level 3, severe, or very-high-support wording.";
+    boundary = "I kept it under 100 because it does not say Level 3 or high-support autism.";
   } else if (!evidence.formal.count && !evidence.direct.count && score >= 80) {
-    boundary = "I still scored it high without the word autism because those patterns stack up across the whole text.";
+    boundary = "I still scored it high without the word autism because those patterns keep stacking up.";
   } else if (evidence.adhd.count && score < 50) {
-    boundary = "I kept it lower because ADHD context alone is not enough for a high autism score.";
+    boundary = "I kept it lower because ADHD by itself is not enough for a high autism score.";
   } else if (score < 40) {
-    boundary = "I kept it low because there is only a small amount of autism-specific evidence.";
+    boundary = "I kept it low because there is only a little autism-specific evidence.";
   } else {
     boundary = "That is why it lands in the middle instead of the very top band.";
   }
 
-  return `Picked this score because I see ${mainReason}. ${boundary}`;
+  return `Picked this score because ${mainReason}. ${boundary}`;
 }
 
 function humanJoin(items) {
