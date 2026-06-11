@@ -7,6 +7,7 @@ let pendingFiles = [];
 let pendingTextPdf = null;
 let textTimer = 0;
 let openUrls = [];
+let autoSyncRunning = false;
 
 const sync = {
   base: resolveApiBase(),
@@ -72,6 +73,7 @@ async function initSync() {
     sync.status = "connected";
     renderSyncStatus();
     await refreshSyncFiles();
+    await autoSyncLocalRecords();
   } catch {
     markSyncLocal();
   }
@@ -84,7 +86,9 @@ function markSyncLocal() {
 
 function renderSyncStatus() {
   if (!syncStatus) return;
-  if (sync.status === "connected") {
+  if (sync.status === "connected" && autoSyncRunning) {
+    syncStatus.textContent = "sync connected - syncing device entries";
+  } else if (sync.status === "connected") {
     syncStatus.textContent = "sync connected - entries are shared";
   } else if (sync.status === "checking") {
     syncStatus.textContent = "checking sync";
@@ -301,9 +305,6 @@ async function createVaultItem(item) {
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
-  if (item.source !== "sync" && sync.status === "connected") {
-    actions.append(actionButton("sync", () => syncLocalRecord(item)));
-  }
   actions.append(
     actionButton("open", () => openRecord(item)),
     actionButton("download", () => downloadRecord(item)),
@@ -353,21 +354,38 @@ async function deleteRecord(item) {
   renderVault();
 }
 
-async function syncLocalRecord(item) {
-  if (sync.status !== "connected") return;
-  const blob = await getBlob(item.id);
-  if (!blob) return;
-  const synced = await uploadToSync({
-    ...item,
-    kind: item.kind || "file",
-    mime: item.mime || blob.type || "application/octet-stream",
-    size: item.size || blob.size || 0,
-    blob,
-  });
-  await deleteBlob(item.id);
-  state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
-  persistState();
-  renderVault();
+async function autoSyncLocalRecords() {
+  if (autoSyncRunning || sync.status !== "connected") return;
+  const localRecords = state.filter((item) => item.source !== "sync");
+  if (!localRecords.length) return;
+  autoSyncRunning = true;
+  renderSyncStatus();
+  try {
+    for (const item of localRecords) {
+      if (sync.status !== "connected") break;
+      const blob = await getBlob(item.id);
+      if (!blob) continue;
+      try {
+        const synced = await uploadToSync({
+          ...item,
+          kind: item.kind || "file",
+          mime: item.mime || blob.type || "application/octet-stream",
+          size: item.size || blob.size || 0,
+          blob,
+        });
+        await deleteBlob(item.id);
+        state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
+        persistState();
+      } catch {
+        markSyncLocal();
+        break;
+      }
+    }
+  } finally {
+    autoSyncRunning = false;
+    renderSyncStatus();
+    renderVault();
+  }
 }
 
 async function refreshSyncFiles() {
