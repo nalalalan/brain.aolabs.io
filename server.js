@@ -124,6 +124,7 @@ async function saveUploadedFile(payload) {
     kind: payload.kind || "file",
     pages: Number(payload.pages || 0),
     autismScore: clampScore(payload.autismScore),
+    autismScoreExplanation: cleanExplanation(payload.autismScoreExplanation),
     storageName,
     previewStorageName,
     previewMime,
@@ -143,6 +144,10 @@ function clampScore(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 0;
   return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function cleanExplanation(value) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, 500);
 }
 
 async function findEntry(id) {

@@ -128,7 +128,7 @@ function convertTextToPendingPdf() {
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
   const result = createTextPdf(sourceText, createdAt);
   const previewDataUrl = createTextPreviewDataUrl(sourceText, createdAt);
-  const autismScore = scoreAutismText(sourceText);
+  const autism = analyzeAutismText(sourceText);
   pendingTextPdf = {
     id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
@@ -139,7 +139,8 @@ function convertTextToPendingPdf() {
     kind: "generated pdf",
     pages: result.pages,
     previewDataUrl,
-    autismScore,
+    autismScore: autism.score,
+    autismScoreExplanation: autism.explanation,
     blob: result.blob,
   };
   renderPending();
@@ -163,7 +164,7 @@ async function savePending() {
       if (noteInput) noteInput.value = "";
     }
     for (const file of files) {
-      const autismScore = await scoreUploadFile(file);
+      const autism = await analyzeUploadFile(file);
       nextRecords.push(await saveFileLike({
         id: `file-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: file.name || "uploaded file",
@@ -172,7 +173,8 @@ async function savePending() {
         createdAt: new Date().toISOString(),
         sourceCreatedAt: file.lastModified ? new Date(file.lastModified).toISOString() : "",
         kind: file.type?.startsWith("image/") ? "image" : "file",
-        autismScore,
+        autismScore: autism.score,
+        autismScoreExplanation: autism.explanation,
         blob: file,
       }));
     }
@@ -211,6 +213,7 @@ async function uploadToSync(file) {
     createdAt: file.createdAt || "",
     previewDataUrl: file.previewDataUrl || "",
     autismScore: autismScoreForRecord(file),
+    autismScoreExplanation: autismExplanationForRecord(file),
   });
   return normalizeSyncFile(response.file);
 }
@@ -229,6 +232,7 @@ function fileRecordFromPending(file, kind, source) {
     pages: file.pages || 0,
     previewDataUrl: file.previewDataUrl || "",
     autismScore: autismScoreForRecord(file),
+    autismScoreExplanation: autismExplanationForRecord(file),
   };
 }
 
@@ -322,10 +326,13 @@ async function createVaultItem(item) {
   const score = document.createElement("p");
   score.className = "autism-score";
   score.textContent = `autism score ${autismScoreForRecord(item)}/100`;
+  const scoreWhy = document.createElement("p");
+  scoreWhy.className = "autism-score-why";
+  scoreWhy.textContent = autismExplanationForRecord(item);
   const meta = document.createElement("p");
   meta.className = "vault-meta";
   meta.textContent = [item.source === "sync" ? "synced" : "device", item.kind || "file", item.pages ? `${item.pages} pages` : "", formatBytes(item.size || 0), displayDate(item.createdAt)].filter(Boolean).join(" - ");
-  main.append(title, score, meta);
+  main.append(title, score, scoreWhy, meta);
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
@@ -437,6 +444,7 @@ function normalizeSyncFile(file) {
     hasPreview: Boolean(file.hasPreview),
     previewMime: file.previewMime || "",
     autismScore: autismScoreForRecord(file),
+    autismScoreExplanation: autismExplanationForRecord(file),
     source: "sync",
   };
 }
@@ -660,46 +668,79 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function scoreUploadFile(file) {
+async function analyzeUploadFile(file) {
   let text = `${file.name || ""} ${file.type || ""}`;
   if (file.type?.startsWith("text/") || /\.(txt|md|csv|json|pdf)$/i.test(file.name || "")) {
     const readable = await file.text().catch(() => "");
     text += ` ${readable.slice(0, 50000)}`;
   }
-  return scoreAutismText(text);
+  return analyzeAutismText(text);
 }
 
 function autismScoreForRecord(item) {
   if (item && item.autismScore !== undefined && item.autismScore !== null && item.autismScore !== "") {
     return clampAutismScore(item.autismScore);
   }
-  return scoreAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`);
+  return analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`).score;
 }
 
-function scoreAutismText(value) {
+function autismExplanationForRecord(item) {
+  if (item?.autismScoreExplanation) return String(item.autismScoreExplanation).slice(0, 360);
+  return analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`).explanation;
+}
+
+function analyzeAutismText(value) {
   const text = normalizeForPdf(value).toLowerCase();
-  const rules = [
-    [/\bautis(?:m|tic)\b/g, 55],
-    [/\basd\b|\bautism spectrum\b|\bspectrum disorder\b/g, 45],
-    [/\bdiagnostic evaluation\b|\bpsychological evaluation\b|\bneuropsych(?:ological)?\b/g, 24],
-    [/\bprosper health\b|\bbnba\b|\badhd\b|\battention[- ]deficit\b/g, 22],
-    [/\bneurodivergent\b|\bneurotypical\b|\bmasking\b|\bsensory\b|\bstimming\b|\bspecial interest\b/g, 15],
-    [/\bexecutive function\b|\bhyperfocus\b|\boverwhelm\b|\broutine\b|\bshutdown\b|\bmeltdown\b/g, 10],
-    [/\bsocial communication\b|\btone\b|\beye contact\b|\bmisread\b|\bliteral\b/g, 8],
-  ];
+  const direct = uniqueMatches(text, /\bautis(?:m|tic)\b|\basd\b|\bautism spectrum\b|\bspectrum disorder\b/g);
+  const diagnostic = uniqueMatches(text, /\bdiagnostic evaluation\b|\bpsychological evaluation\b|\bneuropsych(?:ological)?\b|\bclinical\b|\breport\b/g);
+  const adhd = uniqueMatches(text, /\badhd\b|\battention[- ]deficit\b|\bexecutive function\b|\bhyperfocus\b|\bfocus\b/g);
+  const traits = uniqueMatches(text, /\bneurodivergent\b|\bneurotypical\b|\bmasking\b|\bsensory\b|\bstimming\b|\bspecial interest\b|\boverwhelm\b|\broutine\b|\bshutdown\b|\bmeltdown\b/g);
+  const social = uniqueMatches(text, /\bsocial communication\b|\btone\b|\beye contact\b|\bmisread\b|\bliteral\b|\bblunt\b|\bconfus(?:e|ion|ed)\b/g);
   let score = 0;
-  for (const [pattern, weight] of rules) {
-    const matches = text.match(pattern);
-    if (matches) score += Math.min(matches.length, 4) * weight;
+  score += direct.length ? 34 + Math.min(20, direct.length * 6) : 0;
+  score += diagnostic.length ? Math.min(18, diagnostic.length * 6) : 0;
+  score += adhd.length ? Math.min(22, adhd.length * 7) : 0;
+  score += traits.length ? Math.min(24, traits.length * 5) : 0;
+  score += social.length ? Math.min(18, social.length * 4) : 0;
+
+  let cap = 18;
+  let capReason = "no strong autism-specific terms";
+  if (direct.length && diagnostic.length) {
+    cap = 96;
+    capReason = "direct autism terms plus evaluation/report context";
+  } else if (direct.length) {
+    cap = 88;
+    capReason = "direct autism terms without a diagnostic-evaluation signal";
+  } else if (traits.length || social.length) {
+    cap = 62;
+    capReason = "autism-adjacent trait/context terms without direct autism wording";
+  } else if (adhd.length) {
+    cap = 42;
+    capReason = "ADHD/executive-function context, not autism-specific evidence";
   }
-  if (/\bautis(?:m|tic)\b|\basd\b/.test(text)) score = Math.max(score, 70);
-  return clampAutismScore(score);
+
+  const finalScore = clampAutismScore(Math.min(score, cap));
+  const parts = [];
+  if (direct.length) parts.push(`direct autism terms: ${direct.join(", ")}`);
+  if (diagnostic.length) parts.push(`evaluation/report terms: ${diagnostic.join(", ")}`);
+  if (adhd.length) parts.push(`ADHD/executive terms: ${adhd.join(", ")}`);
+  if (traits.length) parts.push(`trait terms: ${traits.join(", ")}`);
+  if (social.length) parts.push(`social-communication terms: ${social.join(", ")}`);
+  if (!parts.length) parts.push("no autism-specific or adjacent terms found in readable text/filename");
+  return {
+    score: finalScore,
+    explanation: `${parts.join("; ")}. Capped by: ${capReason}.`,
+  };
 }
 
 function clampAutismScore(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 0;
   return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function uniqueMatches(text, pattern) {
+  return [...new Set((text.match(pattern) || []).map((item) => item.trim()).filter(Boolean))].slice(0, 5);
 }
 
 function sortRecords(records) {
