@@ -791,8 +791,70 @@ function analyzeAutismText(value) {
   const capText = rawScore > finalScore ? `raw ${rawScore} capped at ${cap}` : `raw ${rawScore}, cap ${cap} not reached`;
   return {
     score: finalScore,
-    explanation: `Score ${finalScore}/100 = ${breakdown}; DSM core domains ${coreDomains}/4, context domains ${contextDomains}/4; ${capText} because ${capReason}. This is a document-language score, not a clinical diagnosis or severity rating.`,
+    explanation: humanAutismExplanation(finalScore, {
+      support,
+      formal,
+      direct,
+      social,
+      sameness,
+      sensory,
+      focused,
+      masking,
+      predictability,
+      regulation,
+      functioning,
+      adhd,
+      evidenceDomains,
+      capReason,
+      capText,
+      breakdown,
+    }),
   };
+}
+
+function humanAutismExplanation(score, evidence) {
+  if (score <= 5) {
+    return "Picked this low because the readable text does not really show autism-diagnosis language or the patterns I would expect to see around social confusion, routines, sensory needs, masking, predictability, or overwhelm.";
+  }
+
+  const reasons = [];
+  if (evidence.formal.count) reasons.push("a formal autism diagnosis or evaluation");
+  else if (evidence.direct.count) reasons.push("direct autism language");
+  if (evidence.social.count) reasons.push("social confusion or relationship certainty");
+  if (evidence.sameness.count) reasons.push("routine and switching needs");
+  if (evidence.sensory.count) reasons.push("sensory comfort or sound/body reactions");
+  if (evidence.focused.count) reasons.push("fixed preferences or intense focus");
+  if (evidence.masking.count) reasons.push("masking or social switching");
+  if (evidence.predictability.count) reasons.push("needing proof, predictability, or if-then certainty");
+  if (evidence.regulation.count) reasons.push("overwhelm or stress load");
+  if (evidence.functioning.count) reasons.push("daily functioning or support impact");
+  if (evidence.adhd.count && reasons.length < 3) reasons.push("ADHD/executive-function context");
+
+  const mainReason = reasons.length
+    ? humanJoin(reasons.slice(0, 4))
+    : "there is some autism-adjacent context, but not much strong evidence";
+  let boundary = "";
+  if (evidence.support.count) {
+    boundary = "I only put it this high because the text also has high-support or severe-autism wording.";
+  } else if (score >= 94) {
+    boundary = "I kept it under 100 because I do not see explicit Level 3, severe, or very-high-support wording.";
+  } else if (!evidence.formal.count && !evidence.direct.count && score >= 80) {
+    boundary = "I still scored it high without the word autism because those patterns stack up across the whole text.";
+  } else if (evidence.adhd.count && score < 50) {
+    boundary = "I kept it lower because ADHD context alone is not enough for a high autism score.";
+  } else if (score < 40) {
+    boundary = "I kept it low because there is only a small amount of autism-specific evidence.";
+  } else {
+    boundary = "That is why it lands in the middle instead of the very top band.";
+  }
+
+  return `Picked this score because I see ${mainReason}. ${boundary}`;
+}
+
+function humanJoin(items) {
+  if (items.length <= 1) return items[0] || "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
 function clampAutismScore(value) {
