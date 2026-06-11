@@ -128,6 +128,7 @@ function convertTextToPendingPdf() {
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
   const result = createTextPdf(paragraph, createdAt);
   const previewDataUrl = createTextPreviewDataUrl(paragraph, createdAt);
+  const autismScore = scoreAutismText(paragraph);
   pendingTextPdf = {
     id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
@@ -138,6 +139,7 @@ function convertTextToPendingPdf() {
     kind: "generated pdf",
     pages: result.pages,
     previewDataUrl,
+    autismScore,
     blob: result.blob,
   };
   renderPending();
@@ -161,6 +163,7 @@ async function savePending() {
       if (noteInput) noteInput.value = "";
     }
     for (const file of files) {
+      const autismScore = await scoreUploadFile(file);
       nextRecords.push(await saveFileLike({
         id: `file-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: file.name || "uploaded file",
@@ -169,6 +172,7 @@ async function savePending() {
         createdAt: new Date().toISOString(),
         sourceCreatedAt: file.lastModified ? new Date(file.lastModified).toISOString() : "",
         kind: file.type?.startsWith("image/") ? "image" : "file",
+        autismScore,
         blob: file,
       }));
     }
@@ -206,6 +210,7 @@ async function uploadToSync(file) {
     sourceCreatedAt: file.sourceCreatedAt || "",
     createdAt: file.createdAt || "",
     previewDataUrl: file.previewDataUrl || "",
+    autismScore: autismScoreForRecord(file),
   });
   return normalizeSyncFile(response.file);
 }
@@ -223,6 +228,7 @@ function fileRecordFromPending(file, kind, source) {
     source,
     pages: file.pages || 0,
     previewDataUrl: file.previewDataUrl || "",
+    autismScore: autismScoreForRecord(file),
   };
 }
 
@@ -313,10 +319,13 @@ async function createVaultItem(item) {
   const title = document.createElement("p");
   title.className = "vault-title";
   title.textContent = item.name || "saved file";
+  const score = document.createElement("p");
+  score.className = "autism-score";
+  score.textContent = `autism score ${autismScoreForRecord(item)}/100`;
   const meta = document.createElement("p");
   meta.className = "vault-meta";
   meta.textContent = [item.source === "sync" ? "synced" : "device", item.kind || "file", item.pages ? `${item.pages} pages` : "", formatBytes(item.size || 0), displayDate(item.createdAt)].filter(Boolean).join(" - ");
-  main.append(title, meta);
+  main.append(title, score, meta);
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
@@ -427,6 +436,7 @@ function normalizeSyncFile(file) {
     pages: file.pages || 0,
     hasPreview: Boolean(file.hasPreview),
     previewMime: file.previewMime || "",
+    autismScore: autismScoreForRecord(file),
     source: "sync",
   };
 }
@@ -624,6 +634,48 @@ function blobToDataUrl(blob) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
   });
+}
+
+async function scoreUploadFile(file) {
+  let text = `${file.name || ""} ${file.type || ""}`;
+  if (file.type?.startsWith("text/") || /\.(txt|md|csv|json|pdf)$/i.test(file.name || "")) {
+    const readable = await file.text().catch(() => "");
+    text += ` ${readable.slice(0, 50000)}`;
+  }
+  return scoreAutismText(text);
+}
+
+function autismScoreForRecord(item) {
+  if (item && item.autismScore !== undefined && item.autismScore !== null && item.autismScore !== "") {
+    return clampAutismScore(item.autismScore);
+  }
+  return scoreAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`);
+}
+
+function scoreAutismText(value) {
+  const text = normalizeForPdf(value).toLowerCase();
+  const rules = [
+    [/\bautis(?:m|tic)\b/g, 55],
+    [/\basd\b|\bautism spectrum\b|\bspectrum disorder\b/g, 45],
+    [/\bdiagnostic evaluation\b|\bpsychological evaluation\b|\bneuropsych(?:ological)?\b/g, 24],
+    [/\bprosper health\b|\bbnba\b|\badhd\b|\battention[- ]deficit\b/g, 22],
+    [/\bneurodivergent\b|\bneurotypical\b|\bmasking\b|\bsensory\b|\bstimming\b|\bspecial interest\b/g, 15],
+    [/\bexecutive function\b|\bhyperfocus\b|\boverwhelm\b|\broutine\b|\bshutdown\b|\bmeltdown\b/g, 10],
+    [/\bsocial communication\b|\btone\b|\beye contact\b|\bmisread\b|\bliteral\b/g, 8],
+  ];
+  let score = 0;
+  for (const [pattern, weight] of rules) {
+    const matches = text.match(pattern);
+    if (matches) score += Math.min(matches.length, 4) * weight;
+  }
+  if (/\bautis(?:m|tic)\b|\basd\b/.test(text)) score = Math.max(score, 70);
+  return clampAutismScore(score);
+}
+
+function clampAutismScore(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
 }
 
 function sortRecords(records) {

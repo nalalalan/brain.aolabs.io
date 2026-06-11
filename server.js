@@ -123,6 +123,7 @@ async function saveUploadedFile(payload) {
     sourceCreatedAt: payload.sourceCreatedAt || "",
     kind: payload.kind || "file",
     pages: Number(payload.pages || 0),
+    autismScore: clampScore(payload.autismScore),
     storageName,
     previewStorageName,
     previewMime,
@@ -136,6 +137,12 @@ async function saveUploadedFile(payload) {
 function publicEntry(entry) {
   const { storageName, previewStorageName, previewMime, ...rest } = entry;
   return { ...rest, hasPreview: Boolean(previewStorageName), previewMime: previewMime || "" };
+}
+
+function clampScore(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
 }
 
 async function findEntry(id) {
