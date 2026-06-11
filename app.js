@@ -29,6 +29,9 @@ fileInput?.addEventListener("change", () => {
   fileInput.value = "";
 });
 saveButton?.addEventListener("click", () => savePending());
+syncStatus?.addEventListener("click", (event) => {
+  if (event.target?.matches("[data-action='unlock-sync']")) unlockSync();
+});
 
 dropzone?.addEventListener("dragover", (event) => {
   event.preventDefault();
@@ -87,15 +90,32 @@ function markSyncLocal() {
 
 function renderSyncStatus() {
   if (!syncStatus) return;
+  syncStatus.replaceChildren();
   if (sync.status === "connected") {
     syncStatus.textContent = "sync connected - entries are shared";
   } else if (sync.status === "locked") {
-    syncStatus.textContent = "sync locked - enter bank code to view shared entries";
+    syncStatus.append(document.createTextNode("sync locked - "));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "sync-unlock";
+    button.dataset.action = "unlock-sync";
+    button.textContent = "enter bank code";
+    syncStatus.append(button);
   } else if (sync.status === "checking") {
     syncStatus.textContent = "checking sync";
   } else {
     syncStatus.textContent = "sync not connected - saved on this device";
   }
+}
+
+async function unlockSync() {
+  if (!requestBankCode()) return;
+  sync.status = "connected";
+  renderSyncStatus();
+  await refreshSyncFiles().catch(() => {
+    sync.status = "locked";
+    renderSyncStatus();
+  });
 }
 
 function loadState() {

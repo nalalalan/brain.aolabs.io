@@ -276,6 +276,18 @@ input {
   text-transform: lowercase;
 }
 
+.sync-unlock {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 900;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .vault-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
