@@ -196,7 +196,7 @@ input {
 
 .source-documents {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   align-items: start;
   gap: 14px;
   padding-top: 4px;
