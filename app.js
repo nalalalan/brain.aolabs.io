@@ -12,6 +12,7 @@ let openUrls = [];
 const sync = {
   base: resolveApiBase(),
   status: "checking",
+  auth: false,
 };
 
 const noteInput = document.getElementById("brain-note");
@@ -69,9 +70,11 @@ async function initSync() {
   try {
     const response = await fetch(`${sync.base}/api/health`, { cache: "no-store" });
     if (!response.ok) throw new Error(`health ${response.status}`);
-    sync.status = "connected";
+    const json = await response.json();
+    sync.auth = Boolean(json.auth);
+    sync.status = sync.auth && !localStorage.getItem(tokenKey) ? "locked" : "connected";
     renderSyncStatus();
-    await refreshSyncFiles();
+    if (sync.status === "connected") await refreshSyncFiles();
   } catch {
     markSyncLocal();
   }
@@ -86,6 +89,8 @@ function renderSyncStatus() {
   if (!syncStatus) return;
   if (sync.status === "connected") {
     syncStatus.textContent = "sync connected - entries are shared";
+  } else if (sync.status === "locked") {
+    syncStatus.textContent = "sync locked - enter bank code to view shared entries";
   } else if (sync.status === "checking") {
     syncStatus.textContent = "checking sync";
   } else {
@@ -177,6 +182,10 @@ async function savePending() {
 }
 
 async function saveFileLike(file) {
+  if (sync.status === "locked" && requestBankCode()) {
+    sync.status = "connected";
+    renderSyncStatus();
+  }
   if (sync.status === "connected") {
     try {
       return await uploadToSync(file);
@@ -279,7 +288,7 @@ async function createVaultItem(item) {
       thumb.append(img);
     } else if (item.source === "sync") {
       const img = document.createElement("img");
-      img.src = `${sync.base}/api/files/${encodeURIComponent(item.id)}/view`;
+      img.src = syncFileUrl(item.id, "view");
       img.alt = "";
       thumb.append(img);
     } else {
@@ -322,7 +331,7 @@ function actionButton(text, action, extraClass = "") {
 
 async function openRecord(item) {
   if (item.source === "sync" && sync.status === "connected") {
-    window.open(`${sync.base}/api/files/${encodeURIComponent(item.id)}/view`, "_blank", "noopener");
+    window.open(syncFileUrl(item.id, "view"), "_blank", "noopener");
     return;
   }
   const blob = await getBlob(item.id);
@@ -331,7 +340,7 @@ async function openRecord(item) {
 
 async function downloadRecord(item) {
   if (item.source === "sync" && sync.status === "connected") {
-    window.location.href = `${sync.base}/api/files/${encodeURIComponent(item.id)}/download`;
+    window.location.href = syncFileUrl(item.id, "download");
     return;
   }
   const blob = await getBlob(item.id);
@@ -351,7 +360,17 @@ async function deleteRecord(item) {
 }
 
 async function refreshSyncFiles() {
-  const response = await fetch(`${sync.base}/api/files`, { cache: "no-store" });
+  const response = await fetch(`${sync.base}/api/files`, { cache: "no-store", headers: authHeaders() });
+  if (response.status === 401) {
+    sync.status = "locked";
+    renderSyncStatus();
+    if (requestBankCode()) {
+      sync.status = "connected";
+      renderSyncStatus();
+      return refreshSyncFiles();
+    }
+    return;
+  }
   if (!response.ok) throw new Error(`files ${response.status}`);
   const json = await response.json();
   const synced = Array.isArray(json.files) ? json.files.map(normalizeSyncFile) : [];
@@ -403,6 +422,13 @@ async function deleteSyncFile(id, retry = true) {
 function authHeaders() {
   const token = localStorage.getItem(tokenKey);
   return token ? { "x-brain-token": token } : {};
+}
+
+function syncFileUrl(id, mode) {
+  const token = localStorage.getItem(tokenKey);
+  const url = new URL(`${sync.base}/api/files/${encodeURIComponent(id)}/${mode}`);
+  if (token) url.searchParams.set("token", token);
+  return url.toString();
 }
 
 function requestBankCode() {

@@ -40,9 +40,10 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function requireWrite(req, res) {
+function requireAccess(req, res, requestUrl) {
   if (!writeToken) return true;
   if (req.headers["x-brain-token"] === writeToken) return true;
+  if (requestUrl?.searchParams?.get("token") === writeToken) return true;
   sendJson(res, 401, { error: "Bank code required" });
   return false;
 }
@@ -139,7 +140,8 @@ async function findEntry(id) {
   return { files, entry: files.find((file) => file.id === id) };
 }
 
-async function serveStoredFile(req, res, id, mode) {
+async function serveStoredFile(req, res, requestUrl, id, mode) {
+  if (!requireAccess(req, res, requestUrl)) return;
   const { entry } = await findEntry(id);
   if (!entry) {
     sendJson(res, 404, { error: "File not found" });
@@ -160,7 +162,7 @@ async function serveStoredFile(req, res, id, mode) {
 }
 
 async function deleteStoredFile(req, res, id) {
-  if (!requireWrite(req, res)) return;
+  if (!requireAccess(req, res)) return;
   const { files, entry } = await findEntry(id);
   if (!entry) {
     sendJson(res, 404, { error: "File not found" });
@@ -216,13 +218,14 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (requestUrl.pathname === "/api/files" && req.method === "GET") {
+      if (!requireAccess(req, res, requestUrl)) return;
       const files = (await readIndex()).map(publicEntry);
       sendJson(res, 200, { files });
       return;
     }
 
     if (requestUrl.pathname === "/api/files" && req.method === "POST") {
-      if (!requireWrite(req, res)) return;
+      if (!requireAccess(req, res, requestUrl)) return;
       const entry = await saveUploadedFile(await readJson(req));
       sendJson(res, 200, { file: publicEntry(entry) });
       return;
@@ -230,7 +233,7 @@ const server = http.createServer(async (req, res) => {
 
     const serveMatch = requestUrl.pathname.match(/^\/api\/files\/([^/]+)\/(view|download)$/);
     if (serveMatch && req.method === "GET") {
-      await serveStoredFile(req, res, serveMatch[1], serveMatch[2]);
+      await serveStoredFile(req, res, requestUrl, serveMatch[1], serveMatch[2]);
       return;
     }
 
