@@ -477,7 +477,16 @@ function clampScore(value) {
 }
 
 function cleanExplanation(value) {
-  return String(value || "").replace(/\s+/g, " ").trim().slice(0, 1200);
+  return repairQuestionArtifacts(String(value || "").replace(/\s+/g, " ").trim()).slice(0, 1200);
+}
+
+function repairQuestionArtifacts(value) {
+  return String(value || "")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\?([^?\n]{1,90}?)\?/g, '"$1"')
+    .replace(/([A-Za-z0-9])\?([a-z])/g, "$1'$2")
+    .replace(/([A-Za-z0-9])\?([A-Z])/g, "$1'$2");
 }
 
 async function findEntry(id) {
