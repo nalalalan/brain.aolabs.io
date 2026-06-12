@@ -63,8 +63,8 @@ function resolveApiBase() {
   if (configured) return String(configured).replace(/\/+$/, "");
   const host = window.location.hostname;
   if (["localhost", "127.0.0.1", "::1"].includes(host)) return window.location.origin;
-  if (host === "brain.aolabs.io" || host.endsWith(".up.railway.app")) return window.location.origin;
-  return "https://brain.aolabs.io";
+  if (host.endsWith(".up.railway.app")) return window.location.origin;
+  return "https://brain-aolabs-io-production.up.railway.app";
 }
 
 async function initSync() {
