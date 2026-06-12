@@ -741,8 +741,11 @@ function buildPdf(objects) {
 
 function textPdfSource(value) {
   return normalizeForPdf(value)
+    .replace(/[ \t]*\n+[ \t]*/g, " ")
+    .replace(/\s{2,}/g, " ")
     .replace(/^(?:[ \t]*\n)+/, "")
-    .replace(/(?:\n[ \t]*)+$/, "");
+    .replace(/(?:\n[ \t]*)+$/, "")
+    .trim();
 }
 
 function formattedPdfLines(value, options) {
