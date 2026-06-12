@@ -167,7 +167,7 @@ async function analyzeWithAi(payload) {
       const message = body?.error?.message || `OpenAI analysis failed (${response.status})`;
       throw Object.assign(new Error(message), { status: response.status >= 500 ? 502 : 400 });
     }
-    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, sourceText.length, sourceAnchors);
+    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, sourceText.length, sourceAnchors, sourceText);
   } catch (error) {
     if (error?.name === "AbortError") throw Object.assign(new Error("AI analysis timed out"), { status: 504 });
     throw error;
@@ -207,12 +207,12 @@ function extractResponseText(body) {
   return parts.join("").trim();
 }
 
-function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors = []) {
+function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors = [], sourceText = "") {
   const score = clampScore(value?.score || fallbackScore || 1);
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  const highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors);
+  const highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors, sourceText);
   const highlightExplanation = cleanExplanation(value?.highlightExplanation).slice(0, 320);
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
@@ -234,14 +234,36 @@ function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors 
   };
 }
 
-function normalizedHighlightText(value, anchors = []) {
+function normalizedHighlightText(value, anchors = [], sourceText = "") {
   const text = cleanExplanation(value)
     .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
     .replace(/\*\*/g, "")
     .trim();
-  if (text.split(/\s+/).filter(Boolean).length >= 2) return shortHighlightPhrase(text);
+  if (text.split(/\s+/).filter(Boolean).length >= 2) return completeHighlightPhrase(text, sourceText);
   const fallback = anchors.find((anchor) => String(anchor || "").split(/\s+/).filter(Boolean).length >= 2) || "";
   return shortHighlightPhrase(text || fallback);
+}
+
+function completeHighlightPhrase(value, sourceText = "") {
+  const phrase = shortHighlightPhrase(value);
+  if (!phrase || !isDanglingHighlight(phrase)) return phrase;
+  const source = cleanExplanation(sourceText).replace(/\s+/g, " ");
+  if (!source) return phrase;
+  const pattern = new RegExp(phrase.split(/\s+/).map(escapeRegex).join("\\s+"), "i");
+  const match = pattern.exec(source);
+  if (!match) return phrase;
+  const words = source.slice(match.index).split(/\s+/).filter(Boolean).slice(0, 14).join(" ");
+  const sentence = words.match(/^(.+?[.!?;:])(?:\s|$)/)?.[1] || words;
+  return shortHighlightPhrase(sentence.replace(/[.!?;:]+$/g, ""));
+}
+
+function isDanglingHighlight(value) {
+  const text = cleanExplanation(value).toLowerCase();
+  return /\b(?:kind of|sort of)$/.test(text) || /\b(?:that|to|i|im|i'm|cant|can't|cannot|because|like|of|for|with|when|if|the|a|an|and|or|but)$/.test(text);
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function shortHighlightPhrase(value) {
