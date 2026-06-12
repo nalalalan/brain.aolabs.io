@@ -101,6 +101,8 @@ async function analyzeWithAi(payload) {
           "Also choose exactly one short phrase from the saved input that is the strongest autism-trait signal in the entry. This phrase will be bolded in the generated PDF.",
           "The bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
           "A strong bolded phrase usually shows one of these: need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
+          "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, or exactness evidence.",
+          "Prefer self-contained phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, or know. Do not end the phrase on a dangling word like that, to, I, can't, cant, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "The paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen bold phrase is autism-shaped. Use short paraphrases, not long quotes.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
@@ -144,8 +146,8 @@ async function analyzeWithAi(payload) {
                 highlightText: {
                   type: "string",
                   minLength: 4,
-                  maxLength: 90,
-                  description: "One exact 4-12 word phrase from the saved input that should be bolded as the strongest autism-trait signal.",
+                  maxLength: 100,
+                  description: "One exact 4-14 word phrase from the saved input that should be bolded as the strongest autism-trait signal.",
                 },
                 highlightExplanation: {
                   type: "string",
@@ -248,9 +250,9 @@ function shortHighlightPhrase(value) {
     .replace(/\*\*/g, "")
     .split(/\s+/)
     .filter(Boolean)
-    .slice(0, 12)
+    .slice(0, 14)
     .join(" ")
-    .slice(0, 90);
+    .slice(0, 100);
 }
 
 function lowercaseFirst(value) {
