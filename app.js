@@ -1336,9 +1336,9 @@ function normalizeHighlightText(value) {
     .replace(/\s+/g, " ")
     .trim()
     .split(/\s+/)
-    .slice(0, 14)
+    .slice(0, 12)
     .join(" ")
-    .slice(0, 160);
+    .slice(0, 90);
 }
 
 function normalizeHighlightExplanation(value) {

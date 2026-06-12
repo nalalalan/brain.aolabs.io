@@ -144,8 +144,8 @@ async function analyzeWithAi(payload) {
                 highlightText: {
                   type: "string",
                   minLength: 4,
-                  maxLength: 110,
-                  description: "One exact short phrase from the saved input that should be bolded as the strongest autism-trait signal.",
+                  maxLength: 90,
+                  description: "One exact 4-12 word phrase from the saved input that should be bolded as the strongest autism-trait signal.",
                 },
                 highlightExplanation: {
                   type: "string",
@@ -237,9 +237,20 @@ function normalizedHighlightText(value, anchors = []) {
     .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
     .replace(/\*\*/g, "")
     .trim();
-  if (text.split(/\s+/).filter(Boolean).length >= 2) return text.slice(0, 110);
+  if (text.split(/\s+/).filter(Boolean).length >= 2) return shortHighlightPhrase(text);
   const fallback = anchors.find((anchor) => String(anchor || "").split(/\s+/).filter(Boolean).length >= 2) || "";
-  return cleanExplanation(fallback).slice(0, 110);
+  return shortHighlightPhrase(text || fallback);
+}
+
+function shortHighlightPhrase(value) {
+  return cleanExplanation(value)
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
+    .replace(/\*\*/g, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 12)
+    .join(" ")
+    .slice(0, 90);
 }
 
 function lowercaseFirst(value) {
