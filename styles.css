@@ -342,6 +342,20 @@ input {
   overflow-wrap: anywhere;
 }
 
+.autism-signal {
+  margin: 0;
+  color: #315d58;
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.autism-signal strong {
+  color: #1e403a;
+  font-weight: 900;
+}
+
 .vault-meta,
 .vault-text {
   margin: 0;

@@ -98,8 +98,11 @@ async function analyzeWithAi(payload) {
           "Return a nuanced autism-trait signal score from 1 to 100 for this entry, not a clinical diagnosis and not a severity label.",
           "Never output 0. A low score means this entry has weak autism-specific signal, not that the person has no autistic traits.",
           "Do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
+          "Also choose exactly one short phrase from the saved input that is the strongest autism-trait signal in the entry. This phrase will be bolded in the generated PDF.",
+          "The bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
+          "A strong bolded phrase usually shows one of these: need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
-          "The paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Use short paraphrases, not long quotes.",
+          "The paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen bold phrase is autism-shaped. Use short paraphrases, not long quotes.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
           "Do not quote long sensitive passages. Keep analysis to one compact paragraph, and finish in complete sentences.",
@@ -138,8 +141,20 @@ async function analyzeWithAi(payload) {
                     maxLength: 90,
                   },
                 },
+                highlightText: {
+                  type: "string",
+                  minLength: 4,
+                  maxLength: 110,
+                  description: "One exact short phrase from the saved input that should be bolded as the strongest autism-trait signal.",
+                },
+                highlightExplanation: {
+                  type: "string",
+                  minLength: 30,
+                  maxLength: 280,
+                  description: "One short human sentence explaining why the highlighted phrase is autism-shaped.",
+                },
               },
-              required: ["score", "analysis", "specificDetails"],
+              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation"],
             },
           },
         },
@@ -195,19 +210,41 @@ function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors 
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
+  const highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors);
+  const highlightExplanation = cleanExplanation(value?.highlightExplanation).slice(0, 320);
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
   const anchors = [...sourceAnchors, ...details].map((item) => cleanExplanation(item)).filter(Boolean);
   if (anchors.length >= 2 && !analysisMentionsDetails(analysis, anchors)) {
     analysis = `${analysis} The concrete pieces I am weighing here are ${humanJoin(anchors.slice(0, 3))}.`;
   }
+  if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
+    analysis = `${analysis} The bolded phrase matters because ${lowercaseFirst(highlightExplanation)}`;
+  }
   analysis = trimIncompleteSentence(analysis);
   return {
     score: Math.max(1, score),
     explanation: cleanExplanation(analysis).slice(0, 1100),
+    highlightText,
+    highlightExplanation,
     model: openAiModel,
     textChars: Math.max(0, Number(textChars || 0)),
   };
+}
+
+function normalizedHighlightText(value, anchors = []) {
+  const text = cleanExplanation(value)
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
+    .replace(/\*\*/g, "")
+    .trim();
+  if (text.split(/\s+/).filter(Boolean).length >= 2) return text.slice(0, 110);
+  const fallback = anchors.find((anchor) => String(anchor || "").split(/\s+/).filter(Boolean).length >= 2) || "";
+  return cleanExplanation(fallback).slice(0, 110);
+}
+
+function lowercaseFirst(value) {
+  const text = cleanExplanation(value);
+  return text ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : "";
 }
 
 function trimIncompleteSentence(value) {
@@ -381,6 +418,8 @@ async function saveUploadedFile(payload) {
     pages: Number(payload.pages || 0),
     autismScore: clampScore(payload.autismScore),
     autismScoreExplanation: cleanExplanation(payload.autismScoreExplanation),
+    autismHighlightText: cleanExplanation(payload.autismHighlightText).slice(0, 160),
+    autismHighlightExplanation: cleanExplanation(payload.autismHighlightExplanation).slice(0, 360),
     storageName,
     previewStorageName,
     previewMime,

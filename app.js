@@ -132,9 +132,9 @@ function convertTextToPendingPdf() {
   }
   const createdAt = new Date().toISOString();
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
-  const result = createTextPdf(sourceText, createdAt);
-  const previewDataUrl = createTextPreviewDataUrl(sourceText, createdAt);
   const autism = analyzeAutismText(sourceText);
+  const result = createTextPdf(sourceText, createdAt, autism.highlightText);
+  const previewDataUrl = createTextPreviewDataUrl(sourceText, createdAt, autism.highlightText);
   pendingTextPdf = {
     id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
@@ -147,6 +147,8 @@ function convertTextToPendingPdf() {
     previewDataUrl,
     autismScore: autism.score,
     autismScoreExplanation: autism.explanation,
+    autismHighlightText: autism.highlightText,
+    autismHighlightExplanation: autism.highlightExplanation,
     sourceText,
     blob: result.blob,
   };
@@ -214,10 +216,30 @@ async function withAiAnalysis(file, text) {
     kind: file.kind,
     text,
   });
-  return {
+  const analyzed = {
     ...file,
     autismScore: autism.score,
     autismScoreExplanation: autism.explanation,
+    autismHighlightText: autism.highlightText || file.autismHighlightText || "",
+    autismHighlightExplanation: autism.highlightExplanation || file.autismHighlightExplanation || "",
+  };
+  if ((file.kind || "").toLowerCase() === "generated pdf" && textPdfSource(text)) {
+    return rebuildGeneratedPdf(analyzed, text);
+  }
+  return analyzed;
+}
+
+function rebuildGeneratedPdf(file, text) {
+  const sourceText = textPdfSource(text);
+  const createdAt = file.sourceCreatedAt || file.createdAt || new Date().toISOString();
+  const result = createTextPdf(sourceText, createdAt, file.autismHighlightText);
+  return {
+    ...file,
+    size: result.blob.size,
+    pages: result.pages,
+    previewDataUrl: createTextPreviewDataUrl(sourceText, createdAt, file.autismHighlightText),
+    sourceText,
+    blob: result.blob,
   };
 }
 
@@ -247,6 +269,8 @@ async function uploadToSync(file) {
     previewDataUrl: file.previewDataUrl || "",
     autismScore: autismScoreForRecord(file),
     autismScoreExplanation: autismExplanationForRecord(file),
+    autismHighlightText: autismHighlightTextForRecord(file),
+    autismHighlightExplanation: autismHighlightExplanationForRecord(file),
   });
   return normalizeSyncFile(response.file);
 }
@@ -266,6 +290,8 @@ function fileRecordFromPending(file, kind, source) {
     previewDataUrl: file.previewDataUrl || "",
     autismScore: autismScoreForRecord(file),
     autismScoreExplanation: autismExplanationForRecord(file),
+    autismHighlightText: autismHighlightTextForRecord(file),
+    autismHighlightExplanation: autismHighlightExplanationForRecord(file),
   };
 }
 
@@ -412,10 +438,21 @@ async function createVaultItem(item) {
   const scoreWhy = document.createElement("p");
   scoreWhy.className = "autism-score-why";
   scoreWhy.textContent = autismExplanationForRecord(item);
+  const signal = autismHighlightForRecord(item);
+  const signalWhy = document.createElement("p");
+  signalWhy.className = "autism-signal";
+  if (signal.text) {
+    const strong = document.createElement("strong");
+    strong.textContent = `bolded signal: "${signal.text}"`;
+    signalWhy.append(strong);
+    if (signal.explanation) signalWhy.append(document.createTextNode(` ${signal.explanation}`));
+  }
   const meta = document.createElement("p");
   meta.className = "vault-meta";
   meta.textContent = [item.source === "sync" ? "synced" : "device", item.kind || "file", item.pages ? `${item.pages} pages` : "", formatBytes(item.size || 0), displayDate(item.createdAt)].filter(Boolean).join(" - ");
-  main.append(title, score, scoreWhy, meta);
+  main.append(title, score);
+  if (signal.text) main.append(signalWhy);
+  main.append(scoreWhy, meta);
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
@@ -528,6 +565,8 @@ function normalizeSyncFile(file) {
     previewMime: file.previewMime || "",
     autismScore: autismScoreForRecord(file),
     autismScoreExplanation: autismExplanationForRecord(file),
+    autismHighlightText: autismHighlightTextForRecord(file),
+    autismHighlightExplanation: autismHighlightExplanationForRecord(file),
     source: "sync",
   };
 }
@@ -556,7 +595,7 @@ function syncFileUrl(id, mode) {
   return `${sync.base}/api/files/${encodeURIComponent(id)}/${mode}`;
 }
 
-function createTextPdf(text, createdAt) {
+function createTextPdf(text, createdAt, highlightText = "") {
   const width = 612;
   const height = 792;
   const margin = 54;
@@ -566,7 +605,7 @@ function createTextPdf(text, createdAt) {
   const lines = [
     pdfLine(`Created: ${formatPdfTimestamp(createdAt)}`),
     blankPdfLine(),
-    ...formattedPdfLines(text, { lineWidth, fontSize, measureText: pdfTextWidth }),
+    ...formattedPdfLines(text, { lineWidth, fontSize, measureText: pdfTextWidth, highlightText }),
   ];
   const maxLines = Math.floor((height - margin * 2) / leading);
   const pages = [];
@@ -592,7 +631,7 @@ function createTextPdf(text, createdAt) {
   return { blob: new Blob([pdf], { type: "application/pdf" }), pages: pages.length };
 }
 
-function createTextPreviewDataUrl(text, createdAt) {
+function createTextPreviewDataUrl(text, createdAt, highlightText = "") {
   const canvas = document.createElement("canvas");
   canvas.width = 612;
   canvas.height = 792;
@@ -613,7 +652,7 @@ function createTextPreviewDataUrl(text, createdAt) {
   const lines = [
     pdfLine(`Created: ${formatPdfTimestamp(createdAt)}`),
     blankPdfLine(),
-    ...formattedPdfLines(text, { lineWidth, fontSize, measureText }),
+    ...formattedPdfLines(text, { lineWidth, fontSize, measureText, highlightText }),
   ];
   lines.slice(0, 27).forEach((line, index) => {
     drawPreviewLine(context, line, { margin, y: margin + index * leading, lineWidth, fontSize });
@@ -709,7 +748,7 @@ function textPdfSource(value) {
 function formattedPdfLines(value, options) {
   const source = textPdfSource(value);
   if (!source.trim()) return [blankPdfLine()];
-  const boldRanges = autismFlavorRanges(source);
+  const boldRanges = autismFlavorRanges(source, options.highlightText || "");
   const lines = [];
   let sourceOffset = 0;
   source.split("\n").forEach((rawLine) => {
@@ -873,10 +912,13 @@ function sourceRangeSegments(source, start, end, ranges) {
   return segments;
 }
 
-function autismFlavorRanges(text) {
+function autismFlavorRanges(text, highlightText = "") {
+  const preferred = preferredHighlightRange(text, highlightText);
+  if (preferred) return [preferred];
   const candidates = [];
   const patterns = [
-    { pattern: /\b(?:what'?s going to happen|know for a fact|if-then|certainty|uncertainty|predictable|predictability|proof|make sure)\b/gi, weight: 108 },
+    { pattern: /\b(?:i\s+)?need to know what'?s going to happen\b/gi, weight: 140, exact: true },
+    { pattern: /\b(?:need to know|what'?s going to happen|know for a fact|if-then|certainty|uncertainty|predictable|predictability|proof|make sure)\b/gi, weight: 108 },
     { pattern: /\b(?:overwhelm|overwhelmed|overwhelming|panic|shutdown|meltdown|spiral|body stops feeling alert|body feel(?:s)? unsafe)\b/gi, weight: 106 },
     { pattern: /\b(?:sensory|metal box|fluorescent|sound|noise|comfort|comfortable|safe|safety|body|bumpy|smooth|quiet|texture|light|smell)\b/gi, weight: 104 },
     { pattern: /\b(?:routine|routines|transition|transitions|switching|same|stable|change|changes|back and forth|commitment|commit)\b/gi, weight: 100 },
@@ -885,10 +927,12 @@ function autismFlavorRanges(text) {
     { pattern: /\b(?:special interest|fixed preference|focused interest|fixated|exact|details|rules|patterns|categories|system)\b/gi, weight: 94 },
     { pattern: /\b(?:autism|autistic|asd|diagnosis|diagnostic evaluation)\b/gi, weight: 78 },
   ];
-  for (const { pattern, weight } of patterns) {
+  for (const { pattern, weight, exact } of patterns) {
     let match;
     while ((match = pattern.exec(text))) {
-      const range = expandAutismFlavorRange(text, match.index, match.index + match[0].length);
+      const range = exact
+        ? { start: match.index, end: match.index + match[0].length }
+        : expandAutismFlavorRange(text, match.index, match.index + match[0].length);
       candidates.push({
         ...range,
         score: weight + Math.min(18, range.end - range.start) + Math.min(8, match[0].length),
@@ -901,6 +945,23 @@ function autismFlavorRanges(text) {
   }
   const best = candidates.sort((a, b) => b.score - a.score || (b.end - b.start) - (a.end - a.start))[0];
   return [{ start: best.start, end: best.end }];
+}
+
+function preferredHighlightRange(text, highlightText) {
+  const source = String(text || "");
+  const phrase = textPdfSource(highlightText || "")
+    .replace(/^["']+|["']+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (phrase.split(/\s+/).filter(Boolean).length < 2) return null;
+  const pattern = new RegExp(phrase.split(/\s+/).map(escapeRegex).join("\\s+"), "i");
+  const match = pattern.exec(source);
+  if (!match) return null;
+  return { start: match.index, end: match.index + match[0].length };
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function fallbackAutismFlavorRange(text) {
@@ -1078,6 +1139,8 @@ function normalizeRemoteAnalysis(analysis, fallback) {
   return {
     score: Math.max(1, score),
     explanation: explanation.slice(0, 900),
+    highlightText: normalizeHighlightText(analysis?.highlightText || fallback.highlightText || ""),
+    highlightExplanation: normalizeHighlightExplanation(analysis?.highlightExplanation || fallback.highlightExplanation || ""),
   };
 }
 
@@ -1091,6 +1154,31 @@ function autismScoreForRecord(item) {
 function autismExplanationForRecord(item) {
   if (item?.autismScoreExplanation) return String(item.autismScoreExplanation).slice(0, 900);
   return analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`).explanation;
+}
+
+function autismHighlightForRecord(item) {
+  return {
+    text: autismHighlightTextForRecord(item),
+    explanation: autismHighlightExplanationForRecord(item),
+  };
+}
+
+function autismHighlightTextForRecord(item) {
+  if (!isGeneratedPdf(item)) return "";
+  if (item?.autismHighlightText) return normalizeHighlightText(item.autismHighlightText);
+  const fallback = analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`);
+  return normalizeHighlightText(fallback.highlightText || "");
+}
+
+function autismHighlightExplanationForRecord(item) {
+  if (!isGeneratedPdf(item)) return "";
+  if (item?.autismHighlightExplanation) return normalizeHighlightExplanation(item.autismHighlightExplanation);
+  const fallback = analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`);
+  return normalizeHighlightExplanation(fallback.highlightExplanation || "");
+}
+
+function isGeneratedPdf(item) {
+  return (item?.kind || "").toLowerCase() === "generated pdf";
 }
 
 function analyzeAutismText(value) {
@@ -1181,6 +1269,7 @@ function analyzeAutismText(value) {
 
   const baselineScore = readableText.length >= 20 ? 12 : 8;
   const finalScore = clampAutismScore(Math.max(baselineScore, Math.min(rawScore, cap)));
+  const highlight = heuristicHighlightForText(readableSource);
   return {
     score: finalScore,
     explanation: autismAnalysisText(finalScore, {
@@ -1200,7 +1289,62 @@ function analyzeAutismText(value) {
       hasReadableText: readableText.length >= 20,
       anchors,
     }),
+    highlightText: highlight.text,
+    highlightExplanation: highlight.explanation,
   };
+}
+
+function heuristicHighlightForText(value) {
+  const source = textPdfSource(value || "");
+  const range = autismFlavorRanges(source)[0] || fallbackAutismFlavorRange(source);
+  const text = range ? source.slice(range.start, range.end).trim() : "";
+  return {
+    text: normalizeHighlightText(text),
+    explanation: highlightExplanationForPhrase(text),
+  };
+}
+
+function highlightExplanationForPhrase(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\bwhat'?s going to happen|know for a fact|certainty|uncertainty|predictable|proof|make sure\b/.test(text)) {
+    return "It shows the need for certainty and a stable rule before the situation feels safe enough to trust.";
+  }
+  if (/\boverwhelm|panic|shutdown|meltdown|spiral|stress|unsafe\b/.test(text)) {
+    return "It shows distress becoming a body-level regulation problem, not just ordinary annoyance.";
+  }
+  if (/\bsensory|sound|noise|comfort|comfortable|safe|safety|body|bumpy|texture|light|smell\b/.test(text)) {
+    return "It shows sensory comfort and body safety carrying unusual weight in the decision.";
+  }
+  if (/\broutine|transition|switch|same|stable|change|back and forth|commit\b/.test(text)) {
+    return "It shows switching and change carrying a heavier cost than the surface situation suggests.";
+  }
+  if (/\bmask|camouflage|normal|fit in|hide|compensate\b/.test(text)) {
+    return "It shows the social self-monitoring and masking layer that often makes autistic experience harder to see from outside.";
+  }
+  if (/\bsocial|conversation|relationship|tone|misread|block|love|respond\b/.test(text)) {
+    return "It shows social meaning being treated as something that has to be decoded instead of automatically felt.";
+  }
+  if (/\bfixed|focus|exact|details|rules|patterns|categories|system\b/.test(text)) {
+    return "It shows a narrow, exact pattern taking on more importance than the topic would usually carry.";
+  }
+  return "It is the strongest personal pattern in this note, even though the note itself is lower-signal overall.";
+}
+
+function normalizeHighlightText(value) {
+  return textPdfSource(value || "")
+    .replace(/^["']+|["']+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 14)
+    .join(" ")
+    .slice(0, 160);
+}
+
+function normalizeHighlightExplanation(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.slice(0, 360);
 }
 
 function autismAnalysisText(score, evidence) {
