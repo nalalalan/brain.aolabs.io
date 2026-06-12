@@ -26,6 +26,20 @@ const referenceScores = [
   { score: 96, weight: 3, label: "autism evaluation" },
   { score: 34, weight: 0.5, label: "adhd letter" },
 ];
+const notePdfLayout = Object.freeze({
+  width: 612,
+  height: 792,
+  margin: 40,
+  fontSize: 10,
+  leading: 14,
+});
+const notePreviewLayout = Object.freeze({
+  width: 612,
+  height: 792,
+  margin: 40,
+  fontSize: 11.5,
+  leading: 16,
+});
 
 noteInput?.addEventListener("input", () => scheduleTextPdf());
 fileInput?.addEventListener("change", () => {
@@ -596,11 +610,7 @@ function syncFileUrl(id, mode) {
 }
 
 function createTextPdf(text, createdAt, highlightText = "") {
-  const width = 612;
-  const height = 792;
-  const margin = 54;
-  const fontSize = 10.5;
-  const leading = 15;
+  const { width, height, margin, fontSize, leading } = notePdfLayout;
   const lineWidth = width - margin * 2;
   const lines = [
     pdfLine(`Created: ${formatPdfTimestamp(createdAt)}`),
@@ -632,18 +642,16 @@ function createTextPdf(text, createdAt, highlightText = "") {
 }
 
 function createTextPreviewDataUrl(text, createdAt, highlightText = "") {
+  const { width, height, margin, fontSize, leading } = notePreviewLayout;
   const canvas = document.createElement("canvas");
-  canvas.width = 612;
-  canvas.height = 792;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext("2d");
   if (!context) return "";
   context.fillStyle = "#fffdfa";
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = "#1e2724";
   context.textBaseline = "top";
-  const margin = 54;
-  const leading = 24;
-  const fontSize = 17;
   const lineWidth = canvas.width - margin * 2;
   const measureText = (value, bold = false) => {
     context.font = `${bold ? "700" : "400"} ${fontSize}px Arial, sans-serif`;
@@ -654,7 +662,8 @@ function createTextPreviewDataUrl(text, createdAt, highlightText = "") {
     blankPdfLine(),
     ...formattedPdfLines(text, { lineWidth, fontSize, measureText, highlightText }),
   ];
-  lines.slice(0, 27).forEach((line, index) => {
+  const maxPreviewLines = Math.floor((height - margin * 2) / leading);
+  lines.slice(0, maxPreviewLines).forEach((line, index) => {
     drawPreviewLine(context, line, { margin, y: margin + index * leading, lineWidth, fontSize });
   });
   return canvas.toDataURL("image/png");
