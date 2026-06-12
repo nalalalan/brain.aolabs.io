@@ -709,19 +709,25 @@ function textPdfSource(value) {
 function formattedPdfLines(value, options) {
   const source = textPdfSource(value);
   if (!source.trim()) return [blankPdfLine()];
+  const boldRanges = autismFlavorRanges(source);
   const lines = [];
+  let sourceOffset = 0;
   source.split("\n").forEach((rawLine) => {
     const line = rawLine.replace(/[ \t]+$/g, "");
+    const lineStart = sourceOffset;
+    sourceOffset += rawLine.length + 1;
     if (!line.trim()) {
       lines.push(blankPdfLine());
       return;
     }
     const indent = line.match(/^[ ]*/)?.[0] || "";
     const content = line.slice(indent.length);
+    const contentStart = lineStart + indent.length;
+    const contentSegments = sourceRangeSegments(source, contentStart, contentStart + content.length, boldRanges);
     const continuationIndent = indent ? `${indent}  ` : "";
     const firstWidth = Math.max(120, options.lineWidth - options.measureText(indent, false, options.fontSize));
     const restWidth = Math.max(120, options.lineWidth - options.measureText(continuationIndent, false, options.fontSize));
-    const wrapped = wrapRichText(content, { ...options, firstWidth, restWidth });
+    const wrapped = wrapRichTextSegments(contentSegments, { ...options, firstWidth, restWidth });
     wrapped.forEach((part, index) => {
       const lineIndent = index > 0 ? continuationIndent : indent;
       lines.push(pdfLineFromSegments(part.segments, {
@@ -734,7 +740,11 @@ function formattedPdfLines(value, options) {
 }
 
 function wrapRichText(text, options) {
-  const tokens = tokenizePdfSegments(autismFlavorSegments(text));
+  return wrapRichTextSegments(autismFlavorSegments(text), options);
+}
+
+function wrapRichTextSegments(segments, options) {
+  const tokens = tokenizePdfSegments(segments);
   const lines = [];
   let current = [];
   let currentWidth = 0;
@@ -815,6 +825,10 @@ function countPdfSpaces(segments) {
 function tokenizePdfSegments(segments) {
   const tokens = [];
   for (const segment of segments) {
+    if (segment.bold) {
+      tokens.push({ text: segment.text, bold: true });
+      continue;
+    }
     for (const part of String(segment.text || "").split(/(\s+)/).filter(Boolean)) {
       tokens.push({ text: part, bold: segment.bold });
     }
@@ -839,29 +853,37 @@ function mergeAdjacentPdfSegments(segments) {
 function autismFlavorSegments(text) {
   const source = String(text || "");
   const ranges = autismFlavorRanges(source);
-  if (!ranges.length) return [{ text: source, bold: false }];
+  return sourceRangeSegments(source, 0, source.length, ranges);
+}
+
+function sourceRangeSegments(source, start, end, ranges) {
+  const slice = String(source || "").slice(start, end);
+  if (!ranges.length) return [{ text: slice, bold: false }];
   const segments = [];
-  let cursor = 0;
+  let cursor = start;
   for (const range of ranges) {
-    if (range.start > cursor) segments.push({ text: source.slice(cursor, range.start), bold: false });
-    segments.push({ text: source.slice(range.start, range.end), bold: true });
-    cursor = range.end;
+    if (range.end <= start || range.start >= end) continue;
+    const rangeStart = Math.max(start, range.start);
+    const rangeEnd = Math.min(end, range.end);
+    if (rangeStart > cursor) segments.push({ text: source.slice(cursor, rangeStart), bold: false });
+    segments.push({ text: source.slice(rangeStart, rangeEnd), bold: true });
+    cursor = rangeEnd;
   }
-  if (cursor < source.length) segments.push({ text: source.slice(cursor), bold: false });
+  if (cursor < end) segments.push({ text: source.slice(cursor, end), bold: false });
   return segments;
 }
 
 function autismFlavorRanges(text) {
   const candidates = [];
   const patterns = [
-    { pattern: /\b(?:autism|autistic|asd|diagnosis|diagnostic evaluation)\b/gi, weight: 100 },
-    { pattern: /\b(?:what'?s going to happen|know for a fact|if-then|certainty|uncertainty|predictable|predictability|proof|make sure)\b/gi, weight: 92 },
-    { pattern: /\b(?:overwhelm|overwhelmed|overwhelming|panic|shutdown|meltdown|spiral|body stops feeling alert|body feel(?:s)? unsafe)\b/gi, weight: 90 },
-    { pattern: /\b(?:sensory|metal box|fluorescent|sound|noise|comfort|comfortable|safe|safety|body|bumpy|smooth|quiet|texture|light|smell)\b/gi, weight: 86 },
-    { pattern: /\b(?:routine|routines|transition|transitions|switching|same|stable|change|changes|back and forth|commitment|commit)\b/gi, weight: 82 },
-    { pattern: /\b(?:masking|mask|camouflage|appear normal|fit in|hide|compensate)\b/gi, weight: 80 },
-    { pattern: /\b(?:social cues|eye contact|text back|respond|relationship|conversation|tone|misread|blunt|block me|love me|social)\b/gi, weight: 78 },
-    { pattern: /\b(?:special interest|fixed preference|focused interest|fixated|exact|details|rules|patterns|categories|system)\b/gi, weight: 74 },
+    { pattern: /\b(?:what'?s going to happen|know for a fact|if-then|certainty|uncertainty|predictable|predictability|proof|make sure)\b/gi, weight: 108 },
+    { pattern: /\b(?:overwhelm|overwhelmed|overwhelming|panic|shutdown|meltdown|spiral|body stops feeling alert|body feel(?:s)? unsafe)\b/gi, weight: 106 },
+    { pattern: /\b(?:sensory|metal box|fluorescent|sound|noise|comfort|comfortable|safe|safety|body|bumpy|smooth|quiet|texture|light|smell)\b/gi, weight: 104 },
+    { pattern: /\b(?:routine|routines|transition|transitions|switching|same|stable|change|changes|back and forth|commitment|commit)\b/gi, weight: 100 },
+    { pattern: /\b(?:masking|mask|camouflage|appear normal|fit in|hide|compensate)\b/gi, weight: 98 },
+    { pattern: /\b(?:social cues|eye contact|text back|respond|relationship|conversation|tone|misread|blunt|block me|love me|social)\b/gi, weight: 96 },
+    { pattern: /\b(?:special interest|fixed preference|focused interest|fixated|exact|details|rules|patterns|categories|system)\b/gi, weight: 94 },
+    { pattern: /\b(?:autism|autistic|asd|diagnosis|diagnostic evaluation)\b/gi, weight: 78 },
   ];
   for (const { pattern, weight } of patterns) {
     let match;
@@ -882,17 +904,21 @@ function autismFlavorRanges(text) {
 }
 
 function fallbackAutismFlavorRange(text) {
-  const clauses = String(text || "")
+  const source = String(text || "");
+  const clauses = source
     .split(/[,.;:!?\n]+/)
     .map((clause) => clause.trim())
     .filter((clause) => clause.split(/\s+/).filter(Boolean).length >= 4);
-  if (!clauses.length) return null;
+  if (!clauses.length) {
+    const fallback = source.match(/\S+(?:\s+\S+){0,7}/);
+    return fallback ? { start: fallback.index, end: fallback.index + fallback[0].length } : null;
+  }
   const scored = clauses.map((clause) => ({
     clause,
     score: fallbackClauseScore(clause),
   })).sort((a, b) => b.score - a.score || b.clause.length - a.clause.length);
-  const phrase = scored[0].clause.split(/\s+/).slice(0, 14).join(" ");
-  const start = text.indexOf(phrase);
+  const phrase = scored[0].clause.split(/\s+/).slice(0, 8).join(" ");
+  const start = source.indexOf(phrase);
   return start >= 0 ? { start, end: start + phrase.length } : null;
 }
 
@@ -910,7 +936,7 @@ function expandAutismFlavorRange(text, start, end) {
   const rightMatch = text.slice(end).match(/^[^,.;:!?]*/);
   const rawStart = leftBoundary;
   const rawEnd = end + (rightMatch ? rightMatch[0].length : 0);
-  return trimRangeToWords(text, rawStart, rawEnd, start, end, 14);
+  return trimRangeToWords(text, rawStart, rawEnd, start, end, 8);
 }
 
 function trimRangeToWords(text, start, end, focusStart, focusEnd, maxWords) {
@@ -978,6 +1004,7 @@ function normalizeForPdf(value) {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u2013\u2014]/g, "-")
     .replace(/[\u2022\u2023\u2043\u25E6]/g, "-")
+    .replace(/\*\*/g, "")
     .replace(/\t/g, "    ")
     .replace(/\u2026/g, "...")
     .replace(/[^\n\t\x20-\x7E]/g, " ");
