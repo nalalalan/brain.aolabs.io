@@ -64,11 +64,15 @@ async function analyzeWithAi(payload) {
 
   const sourceText = compactAnalysisText(payload.text || "");
   const fallbackScore = clampScore(payload.fallbackScore);
+  const sourceAnchors = extractAnalysisAnchors(sourceText);
   const input = [
     `Name: ${String(payload.name || "untitled").slice(0, 160)}`,
     `Kind: ${String(payload.kind || "text").slice(0, 80)}`,
     `MIME: ${String(payload.mime || "").slice(0, 80)}`,
     `Heuristic fallback score: ${fallbackScore}/100`,
+    "",
+    "Distinctive details from this saved input:",
+    ...(sourceAnchors.length ? sourceAnchors.map((anchor) => `- ${anchor}`) : ["- no short readable details extracted"]),
     "",
     "Saved input:",
     sourceText || "(no readable text supplied)",
@@ -94,8 +98,8 @@ async function analyzeWithAi(payload) {
           "Return a nuanced autism-trait signal score from 1 to 100 for this entry, not a clinical diagnosis and not a severity label.",
           "Never output 0. A low score means this entry has weak autism-specific signal, not that the person has no autistic traits.",
           "Do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
-          "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input.",
-          "The analysis must name at least two concrete input-specific details, situations, or tensions from the saved text. Use short paraphrases, not long quotes.",
+          "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
+          "The paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Use short paraphrases, not long quotes.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
           "Do not quote long sensitive passages. Keep analysis to one compact paragraph.",
@@ -121,7 +125,7 @@ async function analyzeWithAi(payload) {
                   type: "string",
                   minLength: 80,
                   maxLength: 650,
-                  description: "One unique human paragraph explaining the score without point math. It must mention concrete details from this exact input.",
+                  description: "One unique human paragraph explaining the score without point math. It must mention concrete details from this exact input and avoid reusable template language.",
                 },
                 specificDetails: {
                   type: "array",
@@ -146,7 +150,7 @@ async function analyzeWithAi(payload) {
       const message = body?.error?.message || `OpenAI analysis failed (${response.status})`;
       throw Object.assign(new Error(message), { status: response.status >= 500 ? 502 : 400 });
     }
-    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, sourceText.length);
+    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, sourceText.length, sourceAnchors);
   } catch (error) {
     if (error?.name === "AbortError") throw Object.assign(new Error("AI analysis timed out"), { status: 504 });
     throw error;
@@ -186,15 +190,16 @@ function extractResponseText(body) {
   return parts.join("").trim();
 }
 
-function normalizeAiAnalysis(value, fallbackScore, textChars = 0) {
+function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors = []) {
   const score = clampScore(value?.score || fallbackScore || 1);
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
-  if (details.length >= 2 && !analysisMentionsDetails(analysis, details)) {
-    analysis = `${analysis} What makes this entry specific is ${humanJoin(details.slice(0, 3))}.`;
+  const anchors = [...sourceAnchors, ...details].map((item) => cleanExplanation(item)).filter(Boolean);
+  if (anchors.length >= 2 && !analysisMentionsDetails(analysis, anchors)) {
+    analysis = `${analysis} The concrete pieces I am weighing here are ${humanJoin(anchors.slice(0, 3))}.`;
   }
   return {
     score: Math.max(1, score),
@@ -202,6 +207,76 @@ function normalizeAiAnalysis(value, fallbackScore, textChars = 0) {
     model: openAiModel,
     textChars: Math.max(0, Number(textChars || 0)),
   };
+}
+
+function extractAnalysisAnchors(value) {
+  const text = String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u0000/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return [];
+  const clauses = text
+    .split(/[\n.!?;]+|,\s+(?=(?:and|but|because|when|while|then|so|if|the|i)\b)/i)
+    .map((part) => cleanAnchor(part))
+    .filter(Boolean);
+  const scored = clauses.map((clause, index) => ({
+    clause,
+    index,
+    score: anchorScore(clause),
+  }));
+  return scored
+    .filter((item) => item.score > 0 || item.clause.split(/\s+/).length >= 6)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.clause)
+    .filter((item, index, list) => list.findIndex((other) => anchorSimilarity(item, other) > 0.72) === index)
+    .slice(0, 5);
+}
+
+function cleanAnchor(value) {
+  const text = String(value || "")
+    .replace(/^[\s\-*\u2022\d.)\]]+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text || text.length < 12) return "";
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length < 4) return "";
+  const clipped = words.length > 18 ? `${words.slice(0, 18).join(" ")}...` : words.join(" ");
+  return clipped.slice(0, 140);
+}
+
+function anchorScore(value) {
+  const text = String(value || "").toLowerCase();
+  let score = 0;
+  const patterns = [
+    /\bpredict|certainty|uncertain|proof|know|what'?s going to happen|if\b/,
+    /\bsound|noise|comfort|comfortable|safe|safety|body|texture|light|bumpy|metal box\b/,
+    /\bsocial|conversation|relationship|respond|text|tone|misread|confus|block|love\b/,
+    /\broutine|switch|transition|change|same|stable|commit|back and forth\b/,
+    /\boverwhelm|panic|shutdown|meltdown|stress|anxiety|hard to handle|too much\b/,
+    /\bfocus|fixed|interest|exact|details|pattern|rule|category|audi|car\b/,
+    /\bmask|normal|fit in|hide|compensat|camouflag\b/,
+    /\badhd|executive function|attention|hyperfocus\b/,
+    /\bautis|asd|diagnos|evaluation|assessment\b/,
+  ];
+  for (const pattern of patterns) {
+    if (pattern.test(text)) score += 3;
+  }
+  if (/\bi\b|\bme\b|\bmy\b/.test(text)) score += 1;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words >= 7 && words <= 18) score += 1;
+  return score;
+}
+
+function anchorSimilarity(a, b) {
+  const left = new Set(String(a || "").toLowerCase().split(/[^a-z0-9']+/).filter((token) => token.length >= 4));
+  const right = new Set(String(b || "").toLowerCase().split(/[^a-z0-9']+/).filter((token) => token.length >= 4));
+  if (!left.size || !right.size) return 0;
+  let overlap = 0;
+  for (const token of left) {
+    if (right.has(token)) overlap += 1;
+  }
+  return overlap / Math.min(left.size, right.size);
 }
 
 function analysisMentionsDetails(analysis, details) {

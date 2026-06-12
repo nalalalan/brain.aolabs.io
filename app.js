@@ -743,8 +743,10 @@ function autismExplanationForRecord(item) {
 }
 
 function analyzeAutismText(value) {
-  const text = normalizeForPdf(value).toLowerCase();
+  const readableSource = normalizeForPdf(value);
+  const text = readableSource.toLowerCase();
   const readableText = text.replace(/\s+/g, " ").trim();
+  const anchors = extractAnalysisAnchors(readableSource);
   const support = matchStats(text, /\blevel 3\b|\brequir(?:es|ing) very substantial support\b|\bvery substantial support\b|\bsevere autism\b|\bextreme support\b|\bhigh support needs\b/g);
   const formal = matchStats(text, /\bautism diagnostic evaluation\b|\bdiagnos(?:ed|is) (?:with|of) (?:autism|asd|autism spectrum disorder)\b|\bmeets criteria for (?:autism|asd|autism spectrum disorder)\b|\bautism spectrum disorder\b/g);
   const direct = matchStats(text, /\bautis(?:m|tic)\b|\basd\b|\bautism spectrum\b|\bspectrum disorder\b/g);
@@ -845,16 +847,19 @@ function analyzeAutismText(value) {
       adhd,
       evidenceDomains,
       hasReadableText: readableText.length >= 20,
+      anchors,
     }),
   };
 }
 
 function autismAnalysisText(score, evidence) {
+  const anchors = evidence.anchors || [];
   if (score <= 14) {
     if (!evidence.hasReadableText) {
       return "This file has almost no readable text for me to judge. I am leaving it as a low baseline, not calling it 0 or saying there are no autistic traits.";
     }
-    return "This entry has only faint autism-specific signal. I would not read that as neurotypical proof; it just does not give me much autism-relevant material to score from.";
+    const anchorText = anchors.length ? ` The actual readable parts are mostly about ${humanJoin(anchors.slice(0, 2))}.` : "";
+    return `This is low-signal for autism from the readable text, but I would not call it 0 or use it as neurotypical proof.${anchorText}`;
   }
 
   const reasons = [];
@@ -873,13 +878,16 @@ function autismAnalysisText(score, evidence) {
   const mainReason = reasons.length
     ? humanJoin(reasons.slice(0, 4))
     : "there is some autism-adjacent context, but not much strong evidence";
+  const anchorLead = anchors.length
+    ? `This note turns on ${humanJoin(anchors.slice(0, 3))}.`
+    : "This note has enough readable material to judge the autism-trait signal.";
   const lead = score >= 94
-    ? "This entry reads as very strong autism evidence."
+    ? `${anchorLead} I read that as very strong autism evidence.`
     : score >= 80
-      ? "This entry reads as strongly autism-shaped."
+      ? `${anchorLead} I read that as strongly autism-shaped.`
       : score >= 50
-        ? "This entry has a real autism-trait signal."
-        : "This entry has a light autism-trait signal.";
+        ? `${anchorLead} I read that as a real autism-trait signal.`
+        : `${anchorLead} I read that as a lighter autism-trait signal.`;
   let boundary = "";
   if (evidence.support.count) {
     boundary = "I treat it as very high because support or severity is named too.";
@@ -895,7 +903,76 @@ function autismAnalysisText(score, evidence) {
     boundary = "That is why it lands in the middle instead of the very top band.";
   }
 
-  return `${lead} The clearest pieces are ${mainReason}. ${boundary}`;
+  return `${lead} The autism-relevant weight is ${mainReason}. ${boundary}`;
+}
+
+function extractAnalysisAnchors(value) {
+  const text = normalizeForPdf(value)
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u0000/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return [];
+  const clauses = text
+    .split(/[\n.!?;]+|,\s+(?=(?:and|but|because|when|while|then|so|if|the|i)\b)/i)
+    .map((part) => cleanAnchor(part))
+    .filter(Boolean);
+  const scored = clauses.map((clause, index) => ({
+    clause,
+    index,
+    score: anchorScore(clause),
+  }));
+  return scored
+    .filter((item) => item.score > 0 || item.clause.split(/\s+/).length >= 6)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.clause)
+    .filter((item, index, list) => list.findIndex((other) => anchorSimilarity(item, other) > 0.72) === index)
+    .slice(0, 5);
+}
+
+function cleanAnchor(value) {
+  const text = String(value || "")
+    .replace(/^[\s\-*\u2022\d.)\]]+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text || text.length < 12) return "";
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length < 4) return "";
+  return (words.length > 18 ? `${words.slice(0, 18).join(" ")}...` : words.join(" ")).slice(0, 140);
+}
+
+function anchorScore(value) {
+  const text = String(value || "").toLowerCase();
+  let score = 0;
+  const patterns = [
+    /\bpredict|certainty|uncertain|proof|know|what'?s going to happen|if\b/,
+    /\bsound|noise|comfort|comfortable|safe|safety|body|texture|light|bumpy|metal box\b/,
+    /\bsocial|conversation|relationship|respond|text|tone|misread|confus|block|love\b/,
+    /\broutine|switch|transition|change|same|stable|commit|back and forth\b/,
+    /\boverwhelm|panic|shutdown|meltdown|stress|anxiety|hard to handle|too much\b/,
+    /\bfocus|fixed|interest|exact|details|pattern|rule|category|audi|car\b/,
+    /\bmask|normal|fit in|hide|compensat|camouflag\b/,
+    /\badhd|executive function|attention|hyperfocus\b/,
+    /\bautis|asd|diagnos|evaluation|assessment\b/,
+  ];
+  for (const pattern of patterns) {
+    if (pattern.test(text)) score += 3;
+  }
+  if (/\bi\b|\bme\b|\bmy\b/.test(text)) score += 1;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words >= 7 && words <= 18) score += 1;
+  return score;
+}
+
+function anchorSimilarity(a, b) {
+  const left = new Set(String(a || "").toLowerCase().split(/[^a-z0-9']+/).filter((token) => token.length >= 4));
+  const right = new Set(String(b || "").toLowerCase().split(/[^a-z0-9']+/).filter((token) => token.length >= 4));
+  if (!left.size || !right.size) return 0;
+  let overlap = 0;
+  for (const token of left) {
+    if (right.has(token)) overlap += 1;
+  }
+  return overlap / Math.min(left.size, right.size);
 }
 
 function humanJoin(items) {
@@ -906,8 +983,8 @@ function humanJoin(items) {
 
 function clampAutismScore(value) {
   const number = Number(value);
-  if (!Number.isFinite(number)) return 0;
-  return Math.max(0, Math.min(100, Math.round(number)));
+  if (!Number.isFinite(number)) return 1;
+  return Math.max(1, Math.min(100, Math.round(number)));
 }
 
 function uniqueMatches(text, pattern) {
