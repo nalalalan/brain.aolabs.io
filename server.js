@@ -92,7 +92,7 @@ async function analyzeWithAi(payload) {
         model: openAiModel,
         store: false,
         reasoning: { effort: "low" },
-        max_output_tokens: 700,
+        max_output_tokens: 950,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
           "Return a nuanced autism-trait signal score from 1 to 100 for this entry, not a clinical diagnosis and not a severity label.",
@@ -102,7 +102,7 @@ async function analyzeWithAi(payload) {
           "The paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Use short paraphrases, not long quotes.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
-          "Do not quote long sensitive passages. Keep analysis to one compact paragraph.",
+          "Do not quote long sensitive passages. Keep analysis to one compact paragraph, and finish in complete sentences.",
         ].join("\n"),
         input,
         text: {
@@ -124,7 +124,7 @@ async function analyzeWithAi(payload) {
                 analysis: {
                   type: "string",
                   minLength: 80,
-                  maxLength: 650,
+                  maxLength: 900,
                   description: "One unique human paragraph explaining the score without point math. It must mention concrete details from this exact input and avoid reusable template language.",
                 },
                 specificDetails: {
@@ -201,12 +201,21 @@ function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors 
   if (anchors.length >= 2 && !analysisMentionsDetails(analysis, anchors)) {
     analysis = `${analysis} The concrete pieces I am weighing here are ${humanJoin(anchors.slice(0, 3))}.`;
   }
+  analysis = trimIncompleteSentence(analysis);
   return {
     score: Math.max(1, score),
-    explanation: cleanExplanation(analysis).slice(0, 900),
+    explanation: cleanExplanation(analysis).slice(0, 1100),
     model: openAiModel,
     textChars: Math.max(0, Number(textChars || 0)),
   };
+}
+
+function trimIncompleteSentence(value) {
+  const text = cleanExplanation(value);
+  if (!text || /[.!?]["')\]]?$/.test(text)) return text;
+  const lastStop = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"));
+  if (lastStop >= 80) return text.slice(0, lastStop + 1).trim();
+  return text;
 }
 
 function extractAnalysisAnchors(value) {
