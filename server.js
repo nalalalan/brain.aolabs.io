@@ -484,6 +484,8 @@ function repairQuestionArtifacts(value) {
   return String(value || "")
     .replace(/[\u201c\u201d]/g, '"')
     .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\?like\b/g, " like")
+    .replace(/\?points\b/g, " points")
     .replace(/\?([^?\n]{1,90}?)\?/g, '"$1"')
     .replace(/([A-Za-z0-9])\?([a-z])/g, "$1'$2")
     .replace(/([A-Za-z0-9])\?([A-Z])/g, "$1'$2");
