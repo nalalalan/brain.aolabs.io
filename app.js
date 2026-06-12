@@ -562,8 +562,12 @@ function createTextPdf(text, createdAt) {
   const margin = 54;
   const fontSize = 10.5;
   const leading = 15;
-  const maxChars = 88;
-  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...formattedPdfLines(text, maxChars)];
+  const lineWidth = width - margin * 2;
+  const lines = [
+    pdfLine(`Created: ${formatPdfTimestamp(createdAt)}`),
+    blankPdfLine(),
+    ...formattedPdfLines(text, { lineWidth, fontSize, measureText: pdfTextWidth }),
+  ];
   const maxLines = Math.floor((height - margin * 2) / leading);
   const pages = [];
   for (let i = 0; i < lines.length; i += maxLines) {
@@ -573,14 +577,15 @@ function createTextPdf(text, createdAt) {
     "<< /Type /Catalog /Pages 2 0 R >>",
     "",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
   ];
   const kids = [];
   pages.forEach((pageLines) => {
     const pageObj = objects.length + 1;
     const contentObj = objects.length + 2;
     kids.push(`${pageObj} 0 R`);
-    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentObj} 0 R >>`);
-    objects.push(streamForPage(pageLines, { margin, height, fontSize, leading }));
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObj} 0 R >>`);
+    objects.push(streamForPage(pageLines, { margin, height, lineWidth, fontSize, leading }));
   });
   objects[1] = `<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${pages.length} >>`;
   const pdf = buildPdf(objects);
@@ -596,28 +601,87 @@ function createTextPreviewDataUrl(text, createdAt) {
   context.fillStyle = "#fffdfa";
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = "#1e2724";
-  context.font = "17px Arial, sans-serif";
   context.textBaseline = "top";
   const margin = 54;
   const leading = 24;
-  const lines = [`Created: ${formatPdfTimestamp(createdAt)}`, "", ...formattedPdfLines(text, 70)];
+  const fontSize = 17;
+  const lineWidth = canvas.width - margin * 2;
+  const measureText = (value, bold = false) => {
+    context.font = `${bold ? "700" : "400"} ${fontSize}px Arial, sans-serif`;
+    return context.measureText(value).width;
+  };
+  const lines = [
+    pdfLine(`Created: ${formatPdfTimestamp(createdAt)}`),
+    blankPdfLine(),
+    ...formattedPdfLines(text, { lineWidth, fontSize, measureText }),
+  ];
   lines.slice(0, 27).forEach((line, index) => {
-    context.fillText(line, margin, margin + index * leading);
+    drawPreviewLine(context, line, { margin, y: margin + index * leading, lineWidth, fontSize });
   });
   return canvas.toDataURL("image/png");
 }
 
 function streamForPage(lines, options) {
-  const { margin, height, fontSize, leading } = options;
+  const { margin, height, lineWidth, fontSize, leading } = options;
   const commands = [
     "BT",
     `/F1 ${fontSize} Tf`,
     `${leading} TL`,
     `${margin} ${height - margin} Td`,
-    ...lines.map((line) => `(${escapePdfString(line)}) Tj T*`),
+    ...lines.flatMap((line) => pdfLineCommands(line, { fontSize, lineWidth })),
     "ET",
   ].join("\n");
   return `<< /Length ${commands.length} >>\nstream\n${commands}\nendstream`;
+}
+
+function pdfLineCommands(line, options) {
+  if (!line || line.blank) return ["T*"];
+  const commands = [];
+  const indentWidth = pdfTextWidth(line.indent || "", false, options.fontSize);
+  let activeBold = false;
+  commands.push(`/F1 ${options.fontSize} Tf`);
+  commands.push("0 Tw");
+  if (line.indent) commands.push(`(${escapePdfString(line.indent)}) Tj`);
+  const wordSpacing = pdfWordSpacing(line, Math.max(0, options.lineWidth - indentWidth), options.fontSize);
+  if (wordSpacing > 0) commands.push(`${formatPdfNumber(wordSpacing)} Tw`);
+  for (const segment of line.segments) {
+    if (!segment.text) continue;
+    if (Boolean(segment.bold) !== activeBold) {
+      activeBold = Boolean(segment.bold);
+      commands.push(`/${activeBold ? "F2" : "F1"} ${options.fontSize} Tf`);
+    }
+    commands.push(`(${escapePdfString(segment.text)}) Tj`);
+  }
+  commands.push("0 Tw");
+  commands.push("T*");
+  return commands;
+}
+
+function drawPreviewLine(context, line, options) {
+  if (!line || line.blank) return;
+  let x = options.margin + measureCanvasText(context, line.indent || "", false, options.fontSize);
+  const y = options.y;
+  const availableWidth = Math.max(0, options.lineWidth - measureCanvasText(context, line.indent || "", false, options.fontSize));
+  const wordSpacing = canvasWordSpacing(context, line, availableWidth, options.fontSize);
+  if (line.indent) {
+    context.font = `400 ${options.fontSize}px Arial, sans-serif`;
+    context.fillText(line.indent, options.margin, y);
+  }
+  for (const segment of line.segments) {
+    if (!segment.text) continue;
+    context.font = `${segment.bold ? "700" : "400"} ${options.fontSize}px Arial, sans-serif`;
+    if (/^\s+$/.test(segment.text)) {
+      x += context.measureText(segment.text).width + wordSpacing * segment.text.length;
+      continue;
+    }
+    context.fillText(segment.text, x, y);
+    x += context.measureText(segment.text).width;
+  }
+}
+
+function measureCanvasText(context, value, bold, fontSize) {
+  context.font = `${bold ? "700" : "400"} ${fontSize}px Arial, sans-serif`;
+  return context.measureText(value).width;
 }
 
 function buildPdf(objects) {
@@ -636,53 +700,257 @@ function buildPdf(objects) {
   return output;
 }
 
-function wrapText(text, maxChars) {
-  const lines = [];
-  const words = String(text || "").split(/\s+/).filter(Boolean);
-  let line = "";
-  words.forEach((word) => {
-    if (word.length > maxChars) {
-      if (line) lines.push(line);
-      line = "";
-      for (let i = 0; i < word.length; i += maxChars) lines.push(word.slice(i, i + maxChars));
-      return;
-    }
-    const next = line ? `${line} ${word}` : word;
-    if (next.length > maxChars) {
-      if (line) lines.push(line);
-      line = word;
-    } else {
-      line = next;
-    }
-  });
-  if (line) lines.push(line);
-  return lines.length ? lines : [""];
-}
-
 function textPdfSource(value) {
   return normalizeForPdf(value)
     .replace(/^(?:[ \t]*\n)+/, "")
     .replace(/(?:\n[ \t]*)+$/, "");
 }
 
-function formattedPdfLines(value, maxChars) {
+function formattedPdfLines(value, options) {
   const source = textPdfSource(value);
-  if (!source.trim()) return [""];
+  if (!source.trim()) return [blankPdfLine()];
   const lines = [];
   source.split("\n").forEach((rawLine) => {
     const line = rawLine.replace(/[ \t]+$/g, "");
     if (!line.trim()) {
-      lines.push("");
+      lines.push(blankPdfLine());
       return;
     }
     const indent = line.match(/^[ ]*/)?.[0] || "";
     const content = line.slice(indent.length);
-    const width = Math.max(24, maxChars - indent.length);
-    wrapText(content, width).forEach((part, index) => {
-      lines.push(`${indent}${index > 0 ? "  " : ""}${part}`);
+    const continuationIndent = indent ? `${indent}  ` : "";
+    const firstWidth = Math.max(120, options.lineWidth - options.measureText(indent, false, options.fontSize));
+    const restWidth = Math.max(120, options.lineWidth - options.measureText(continuationIndent, false, options.fontSize));
+    const wrapped = wrapRichText(content, { ...options, firstWidth, restWidth });
+    wrapped.forEach((part, index) => {
+      const lineIndent = index > 0 ? continuationIndent : indent;
+      lines.push(pdfLineFromSegments(part.segments, {
+        indent: lineIndent,
+        justify: shouldJustifyPdfLine(content, part, index, wrapped.length),
+      }));
     });
   });
-  return lines.length ? lines : [""];
+  return lines.length ? lines : [blankPdfLine()];
+}
+
+function wrapRichText(text, options) {
+  const tokens = tokenizePdfSegments(autismFlavorSegments(text));
+  const lines = [];
+  let current = [];
+  let currentWidth = 0;
+  let maxWidth = options.firstWidth;
+  for (const token of tokens) {
+    if (!token.text) continue;
+    const isSpace = /^\s+$/.test(token.text);
+    const width = options.measureText(token.text, token.bold, options.fontSize);
+    if (isSpace && !current.length) continue;
+    if (current.length && currentWidth + width > maxWidth && !isSpace) {
+      trimPdfLineTokens(current);
+      lines.push({ segments: mergeAdjacentPdfSegments(current), width: currentWidth });
+      current = [];
+      currentWidth = 0;
+      maxWidth = options.restWidth;
+    }
+    if (isSpace && !current.length) continue;
+    current.push(token);
+    currentWidth += width;
+  }
+  trimPdfLineTokens(current);
+  if (current.length) lines.push({ segments: mergeAdjacentPdfSegments(current), width: currentWidth });
+  return lines.length ? lines : [{ segments: [], width: 0 }];
+}
+
+function trimPdfLineTokens(tokens) {
+  while (tokens.length && /^\s+$/.test(tokens[tokens.length - 1].text)) tokens.pop();
+}
+
+function pdfLine(text) {
+  return pdfLineFromSegments([{ text: String(text || ""), bold: false }], { indent: "", justify: false });
+}
+
+function blankPdfLine() {
+  return { blank: true, indent: "", segments: [], justify: false };
+}
+
+function pdfLineFromSegments(segments, options = {}) {
+  return {
+    blank: false,
+    indent: options.indent || "",
+    segments: mergeAdjacentPdfSegments(segments),
+    justify: Boolean(options.justify),
+  };
+}
+
+function shouldJustifyPdfLine(sourceLine, wrappedLine, index, total) {
+  if (index >= total - 1) return false;
+  if (/^\s*(?:[-*]|\d+[.)])\s+/.test(sourceLine)) return false;
+  const text = wrappedLine.segments.map((segment) => segment.text).join("");
+  return text.trim().split(/\s+/).length >= 5 && countPdfSpaces(wrappedLine.segments) >= 3;
+}
+
+function pdfWordSpacing(line, availableWidth, fontSize) {
+  if (!line.justify) return 0;
+  const spaces = countPdfSpaces(line.segments);
+  if (spaces < 3) return 0;
+  const used = line.segments.reduce((sum, segment) => sum + pdfTextWidth(segment.text, segment.bold, fontSize), 0);
+  const extra = availableWidth - used;
+  if (extra <= 0 || extra / spaces > 5.5) return 0;
+  return extra / spaces;
+}
+
+function canvasWordSpacing(context, line, availableWidth, fontSize) {
+  if (!line.justify) return 0;
+  const spaces = countPdfSpaces(line.segments);
+  if (spaces < 3) return 0;
+  const used = line.segments.reduce((sum, segment) => sum + measureCanvasText(context, segment.text, segment.bold, fontSize), 0);
+  const extra = availableWidth - used;
+  if (extra <= 0 || extra / spaces > 9) return 0;
+  return extra / spaces;
+}
+
+function countPdfSpaces(segments) {
+  return segments.reduce((sum, segment) => sum + (segment.text.match(/ /g) || []).length, 0);
+}
+
+function tokenizePdfSegments(segments) {
+  const tokens = [];
+  for (const segment of segments) {
+    for (const part of String(segment.text || "").split(/(\s+)/).filter(Boolean)) {
+      tokens.push({ text: part, bold: segment.bold });
+    }
+  }
+  return tokens;
+}
+
+function mergeAdjacentPdfSegments(segments) {
+  const merged = [];
+  for (const segment of segments) {
+    if (!segment.text) continue;
+    const previous = merged[merged.length - 1];
+    if (previous && previous.bold === segment.bold) {
+      previous.text += segment.text;
+    } else {
+      merged.push({ text: segment.text, bold: Boolean(segment.bold) });
+    }
+  }
+  return merged;
+}
+
+function autismFlavorSegments(text) {
+  const source = String(text || "");
+  const ranges = autismFlavorRanges(source);
+  if (!ranges.length) return [{ text: source, bold: false }];
+  const segments = [];
+  let cursor = 0;
+  for (const range of ranges) {
+    if (range.start > cursor) segments.push({ text: source.slice(cursor, range.start), bold: false });
+    segments.push({ text: source.slice(range.start, range.end), bold: true });
+    cursor = range.end;
+  }
+  if (cursor < source.length) segments.push({ text: source.slice(cursor), bold: false });
+  return segments;
+}
+
+function autismFlavorRanges(text) {
+  const candidates = [];
+  const patterns = [
+    { pattern: /\b(?:autism|autistic|asd|diagnosis|diagnostic evaluation)\b/gi, weight: 100 },
+    { pattern: /\b(?:what'?s going to happen|know for a fact|if-then|certainty|uncertainty|predictable|predictability|proof|make sure)\b/gi, weight: 92 },
+    { pattern: /\b(?:overwhelm|overwhelmed|overwhelming|panic|shutdown|meltdown|spiral|body stops feeling alert|body feel(?:s)? unsafe)\b/gi, weight: 90 },
+    { pattern: /\b(?:sensory|metal box|fluorescent|sound|noise|comfort|comfortable|safe|safety|body|bumpy|smooth|quiet|texture|light|smell)\b/gi, weight: 86 },
+    { pattern: /\b(?:routine|routines|transition|transitions|switching|same|stable|change|changes|back and forth|commitment|commit)\b/gi, weight: 82 },
+    { pattern: /\b(?:masking|mask|camouflage|appear normal|fit in|hide|compensate)\b/gi, weight: 80 },
+    { pattern: /\b(?:social cues|eye contact|text back|respond|relationship|conversation|tone|misread|blunt|block me|love me|social)\b/gi, weight: 78 },
+    { pattern: /\b(?:special interest|fixed preference|focused interest|fixated|exact|details|rules|patterns|categories|system)\b/gi, weight: 74 },
+  ];
+  for (const { pattern, weight } of patterns) {
+    let match;
+    while ((match = pattern.exec(text))) {
+      const range = expandAutismFlavorRange(text, match.index, match.index + match[0].length);
+      candidates.push({
+        ...range,
+        score: weight + Math.min(18, range.end - range.start) + Math.min(8, match[0].length),
+      });
+    }
+  }
+  if (!candidates.length) {
+    const fallback = fallbackAutismFlavorRange(text);
+    return fallback ? [fallback] : [];
+  }
+  const best = candidates.sort((a, b) => b.score - a.score || (b.end - b.start) - (a.end - a.start))[0];
+  return [{ start: best.start, end: best.end }];
+}
+
+function fallbackAutismFlavorRange(text) {
+  const clauses = String(text || "")
+    .split(/[,.;:!?\n]+/)
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.split(/\s+/).filter(Boolean).length >= 4);
+  if (!clauses.length) return null;
+  const scored = clauses.map((clause) => ({
+    clause,
+    score: fallbackClauseScore(clause),
+  })).sort((a, b) => b.score - a.score || b.clause.length - a.clause.length);
+  const phrase = scored[0].clause.split(/\s+/).slice(0, 14).join(" ");
+  const start = text.indexOf(phrase);
+  return start >= 0 ? { start, end: start + phrase.length } : null;
+}
+
+function fallbackClauseScore(clause) {
+  const text = clause.toLowerCase();
+  let score = Math.min(20, clause.length / 5);
+  if (/\bi\b|\bme\b|\bmy\b/.test(text)) score += 8;
+  if (/\bneed|hard|always|never|only|exact|feel|body|think|know|cannot|can't\b/.test(text)) score += 6;
+  if (/\bwork|career|relationship|people|focus|plan|safe|comfort\b/.test(text)) score += 4;
+  return score;
+}
+
+function expandAutismFlavorRange(text, start, end) {
+  const leftBoundary = Math.max(0, text.slice(0, start).search(/[^,.;:!?]*$/));
+  const rightMatch = text.slice(end).match(/^[^,.;:!?]*/);
+  const rawStart = leftBoundary;
+  const rawEnd = end + (rightMatch ? rightMatch[0].length : 0);
+  return trimRangeToWords(text, rawStart, rawEnd, start, end, 14);
+}
+
+function trimRangeToWords(text, start, end, focusStart, focusEnd, maxWords) {
+  const prefix = text.slice(start, focusStart).trim().split(/\s+/).filter(Boolean);
+  const focus = text.slice(focusStart, focusEnd).trim().split(/\s+/).filter(Boolean);
+  const suffix = text.slice(focusEnd, end).trim().split(/\s+/).filter(Boolean);
+  let leftCount = Math.max(0, Math.floor((maxWords - focus.length) / 2));
+  let rightCount = Math.max(0, maxWords - focus.length - leftCount);
+  const words = [
+    ...prefix.slice(-leftCount),
+    ...focus,
+    ...suffix.slice(0, rightCount),
+  ];
+  if (!words.length) return { start: focusStart, end: focusEnd };
+  const phrase = words.join(" ");
+  const phraseIndex = text.indexOf(phrase, Math.max(0, start - 1));
+  if (phraseIndex >= 0) return { start: phraseIndex, end: phraseIndex + phrase.length };
+  return { start: focusStart, end: focusEnd };
+}
+
+function pdfTextWidth(text, bold = false, fontSize = 10.5) {
+  let units = 0;
+  for (const char of String(text || "")) units += pdfCharWidth(char);
+  return (units / 1000) * fontSize * (bold ? 1.035 : 1);
+}
+
+function pdfCharWidth(char) {
+  if (char === " ") return 278;
+  if ("il.,:;'|!()[]".includes(char)) return 278;
+  if ("mwMW".includes(char)) return char === "W" ? 944 : 833;
+  if ("ABCDEFGHKNOPQRSTUVXYZ".includes(char)) return 667;
+  if ("0123456789".includes(char)) return 556;
+  if ("-_/".includes(char)) return 333;
+  if (/[A-Z]/.test(char)) return 610;
+  if (/[a-z]/.test(char)) return 500;
+  return 500;
+}
+
+function formatPdfNumber(value) {
+  return Number(value).toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 function formatPdfTimestamp(value) {
