@@ -41,6 +41,10 @@ input {
 }
 
 .document-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 18px;
 }
 
@@ -52,6 +56,43 @@ input {
   font-weight: 650;
   line-height: 1.42;
   overflow-wrap: anywhere;
+}
+
+.overall-score {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 10px;
+  min-width: min(100%, 420px);
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+  border-radius: 7px;
+  background: #e9f0ec;
+  color: #274943;
+}
+
+.overall-score span {
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.overall-score strong {
+  font-size: 22px;
+  font-weight: 950;
+  line-height: .95;
+}
+
+.overall-score em {
+  flex-basis: 100%;
+  color: #4e625d;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 760;
+  line-height: 1.25;
+  text-align: right;
 }
 
 .local-intake {
@@ -395,6 +436,20 @@ input {
 
   .local-intake {
     padding: 12px;
+  }
+
+  .document-intro {
+    display: grid;
+    gap: 10px;
+  }
+
+  .overall-score {
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  .overall-score em {
+    text-align: left;
   }
 
   .vault-list,

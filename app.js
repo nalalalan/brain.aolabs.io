@@ -21,6 +21,11 @@ const pendingList = document.getElementById("brain-pending");
 const vaultList = document.getElementById("brain-vault");
 const syncStatus = document.getElementById("brain-sync-status");
 const dropzone = document.querySelector("[data-role='dropzone']");
+const overallScore = document.getElementById("overall-autism-score");
+const referenceScores = [
+  { score: 96, weight: 3, label: "autism evaluation" },
+  { score: 34, weight: 0.5, label: "adhd letter" },
+];
 
 noteInput?.addEventListener("input", () => scheduleTextPdf());
 fileInput?.addEventListener("change", () => {
@@ -49,6 +54,7 @@ dropzone?.addEventListener("paste", (event) => {
 
 renderSyncStatus();
 renderPending();
+renderOverallScore();
 renderVault();
 void initSync();
 
@@ -294,6 +300,7 @@ function pendingAction(text, action) {
 
 async function renderVault() {
   if (!vaultList) return;
+  renderOverallScore();
   revokeOpenUrls();
   vaultList.replaceChildren();
   if (!state.length) {
@@ -306,6 +313,55 @@ async function renderVault() {
   for (const item of sortRecords(state)) {
     vaultList.append(await createVaultItem(item));
   }
+}
+
+function renderOverallScore() {
+  if (!overallScore) return;
+  const result = bankAutismScore();
+  overallScore.replaceChildren();
+  const label = document.createElement("span");
+  label.textContent = "overall autism score";
+  const value = document.createElement("strong");
+  value.textContent = `${result.score}/100`;
+  const detail = document.createElement("em");
+  detail.textContent = result.detail;
+  overallScore.append(label, value, detail);
+}
+
+function bankAutismScore() {
+  const generated = state
+    .filter((item) => (item.kind || "").toLowerCase() === "generated pdf")
+    .map((item) => ({
+      score: autismScoreForRecord(item),
+      weight: generatedScoreWeight(item),
+      label: "saved note",
+    }))
+    .filter((item) => Number.isFinite(item.score));
+  const evidence = [...referenceScores, ...generated].filter((item) => item.score > 0);
+  if (!evidence.length) return { score: 1, detail: "no readable evidence yet" };
+
+  const strongest = [...evidence].sort((a, b) => b.score - a.score).slice(0, Math.min(5, evidence.length));
+  const weighted = strongest.reduce(
+    (acc, item) => {
+      acc.total += item.score * item.weight;
+      acc.weight += item.weight;
+      return acc;
+    },
+    { total: 0, weight: 0 }
+  );
+  const score = Math.max(1, Math.min(100, Math.round(weighted.total / Math.max(1, weighted.weight))));
+  const highNotes = generated.filter((item) => item.score >= 80).length;
+  const detail = highNotes
+    ? `strongest evidence: autism evaluation + ${highNotes} high-signal saved note${highNotes === 1 ? "" : "s"}`
+    : "strongest evidence: autism evaluation";
+  return { score, detail };
+}
+
+function generatedScoreWeight(item) {
+  const pages = Number(item.pages || 0);
+  const size = Number(item.size || 0);
+  if (pages >= 2 || size >= 3500) return 1.25;
+  return 1;
 }
 
 async function createVaultItem(item) {
