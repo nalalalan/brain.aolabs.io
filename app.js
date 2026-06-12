@@ -718,13 +718,20 @@ function drawPreviewLine(context, line, options) {
   for (const segment of line.segments) {
     if (!segment.text) continue;
     context.font = `${segment.bold ? "700" : "400"} ${options.fontSize}px Arial, sans-serif`;
-    if (/^\s+$/.test(segment.text)) {
-      x += context.measureText(segment.text).width + wordSpacing * segment.text.length;
-      continue;
-    }
-    context.fillText(segment.text, x, y);
-    x += context.measureText(segment.text).width;
+    x = drawPreviewTextSegment(context, segment.text, x, y, wordSpacing);
   }
+}
+
+function drawPreviewTextSegment(context, text, x, y, wordSpacing) {
+  for (const part of String(text || "").split(/( )/g).filter((value) => value !== "")) {
+    if (part === " ") {
+      x += context.measureText(part).width + wordSpacing;
+    } else {
+      context.fillText(part, x, y);
+      x += context.measureText(part).width;
+    }
+  }
+  return x;
 }
 
 function measureCanvasText(context, value, bold, fontSize) {
