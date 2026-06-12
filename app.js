@@ -457,7 +457,7 @@ async function createVaultItem(item) {
   signalWhy.className = "autism-signal";
   if (signal.text) {
     const strong = document.createElement("strong");
-    strong.textContent = `bolded signal: "${signal.text}"`;
+    strong.textContent = `"${signal.text}"`;
     signalWhy.append(strong);
     if (signal.explanation) signalWhy.append(document.createTextNode(` ${signal.explanation}`));
   }
