@@ -163,6 +163,11 @@ function convertTextToPendingPdf() {
     autismScoreExplanation: autism.explanation,
     autismHighlightText: autism.highlightText,
     autismHighlightExplanation: autism.highlightExplanation,
+    autismScoreSource: autism.scoreSource || "heuristic",
+    autismScoreModel: autism.scoreModel || "browser heuristic",
+    autismScoreConfidence: autism.scoreConfidence || "low",
+    autismScoreWarning: autism.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
+    autismTextChars: autism.textChars || sourceText.length,
     sourceText,
     blob: result.blob,
   };
@@ -204,6 +209,13 @@ async function savePending() {
         kind: file.type?.startsWith("image/") ? "image" : "file",
         autismScore: autism.score,
         autismScoreExplanation: autism.explanation,
+        autismHighlightText: autism.highlightText || "",
+        autismHighlightExplanation: autism.highlightExplanation || "",
+        autismScoreSource: autism.scoreSource || "heuristic",
+        autismScoreModel: autism.scoreModel || "",
+        autismScoreConfidence: autism.scoreConfidence || "",
+        autismScoreWarning: autism.scoreWarning || "",
+        autismTextChars: autism.textChars || readableText.length || 0,
         blob: file,
       }));
     }
@@ -236,6 +248,11 @@ async function withAiAnalysis(file, text) {
     autismScoreExplanation: autism.explanation,
     autismHighlightText: autism.highlightText || file.autismHighlightText || "",
     autismHighlightExplanation: autism.highlightExplanation || file.autismHighlightExplanation || "",
+    autismScoreSource: autism.scoreSource || "heuristic",
+    autismScoreModel: autism.scoreModel || "",
+    autismScoreConfidence: autism.scoreConfidence || "",
+    autismScoreWarning: autism.scoreWarning || "",
+    autismTextChars: autism.textChars || textPdfSource(text || "").length || 0,
   };
   if ((file.kind || "").toLowerCase() === "generated pdf" && textPdfSource(text)) {
     return rebuildGeneratedPdf(analyzed, text);
@@ -285,6 +302,11 @@ async function uploadToSync(file) {
     autismScoreExplanation: autismExplanationForRecord(file),
     autismHighlightText: autismHighlightTextForRecord(file),
     autismHighlightExplanation: autismHighlightExplanationForRecord(file),
+    autismScoreSource: autismScoreSourceForRecord(file),
+    autismScoreModel: autismScoreModelForRecord(file),
+    autismScoreConfidence: autismScoreConfidenceForRecord(file),
+    autismScoreWarning: autismScoreWarningForRecord(file),
+    autismTextChars: autismTextCharsForRecord(file),
   });
   return normalizeSyncFile(response.file);
 }
@@ -306,6 +328,11 @@ function fileRecordFromPending(file, kind, source) {
     autismScoreExplanation: autismExplanationForRecord(file),
     autismHighlightText: autismHighlightTextForRecord(file),
     autismHighlightExplanation: autismHighlightExplanationForRecord(file),
+    autismScoreSource: autismScoreSourceForRecord(file),
+    autismScoreModel: autismScoreModelForRecord(file),
+    autismScoreConfidence: autismScoreConfidenceForRecord(file),
+    autismScoreWarning: autismScoreWarningForRecord(file),
+    autismTextChars: autismTextCharsForRecord(file),
   };
 }
 
@@ -463,7 +490,14 @@ async function createVaultItem(item) {
   }
   const meta = document.createElement("p");
   meta.className = "vault-meta";
-  meta.textContent = [item.source === "sync" ? "synced" : "device", item.kind || "file", item.pages ? `${item.pages} pages` : "", formatBytes(item.size || 0), displayDate(item.createdAt)].filter(Boolean).join(" - ");
+  meta.textContent = [
+    item.source === "sync" ? "synced" : "device",
+    item.kind || "file",
+    item.pages ? `${item.pages} pages` : "",
+    formatBytes(item.size || 0),
+    displayDate(item.createdAt),
+    autismScoreSourceForRecord(item) === "heuristic" ? "fallback score" : "",
+  ].filter(Boolean).join(" - ");
   main.append(title, score);
   if (signal.text) main.append(signalWhy);
   main.append(scoreWhy, meta);
@@ -581,6 +615,11 @@ function normalizeSyncFile(file) {
     autismScoreExplanation: autismExplanationForRecord(file),
     autismHighlightText: autismHighlightTextForRecord(file),
     autismHighlightExplanation: autismHighlightExplanationForRecord(file),
+    autismScoreSource: autismScoreSourceForRecord(file),
+    autismScoreModel: autismScoreModelForRecord(file),
+    autismScoreConfidence: autismScoreConfidenceForRecord(file),
+    autismScoreWarning: autismScoreWarningForRecord(file),
+    autismTextChars: autismTextCharsForRecord(file),
     source: "sync",
   };
 }
@@ -1136,7 +1175,9 @@ async function readableUploadText(file) {
 async function analyzeRecordText({ name, mime, kind, text }) {
   const readable = textPdfSource(text || "");
   const fallback = analyzeAutismText(`${name || ""} ${kind || ""} ${mime || ""} ${readable}`);
-  if (sync.status !== "connected" || !sync.base) return fallback;
+  if (sync.status !== "connected" || !sync.base) {
+    return fallbackAnalysis(fallback, "sync not connected");
+  }
   try {
     const response = await postJson(`${sync.base}/api/analyze`, {
       name: name || "",
@@ -1147,19 +1188,35 @@ async function analyzeRecordText({ name, mime, kind, text }) {
     });
     return normalizeRemoteAnalysis(response.analysis, fallback);
   } catch {
-    return fallback;
+    return fallbackAnalysis(fallback, "AI analysis unavailable");
   }
 }
 
 function normalizeRemoteAnalysis(analysis, fallback) {
   const score = clampAutismScore(analysis?.score ?? fallback.score);
   const explanation = String(analysis?.explanation || "").replace(/\s+/g, " ").trim();
-  if (!explanation) return fallback;
+  if (!explanation) return fallbackAnalysis(fallback, "AI analysis returned no explanation");
   return {
     score: Math.max(1, score),
     explanation: explanation.slice(0, 900),
     highlightText: normalizeHighlightText(analysis?.highlightText || fallback.highlightText || ""),
     highlightExplanation: normalizeHighlightExplanation(analysis?.highlightExplanation || fallback.highlightExplanation || ""),
+    scoreSource: "ai",
+    scoreModel: String(analysis?.model || "OpenAI").slice(0, 80),
+    scoreConfidence: "medium",
+    scoreWarning: "",
+    textChars: Math.max(0, Number(analysis?.textChars || 0)),
+  };
+}
+
+function fallbackAnalysis(fallback, warning) {
+  return {
+    ...fallback,
+    scoreSource: "heuristic",
+    scoreModel: "browser heuristic",
+    scoreConfidence: "low",
+    scoreWarning: warning || "AI analysis unavailable",
+    textChars: Math.max(0, Number(fallback?.textChars || 0)),
   };
 }
 
@@ -1173,6 +1230,29 @@ function autismScoreForRecord(item) {
 function autismExplanationForRecord(item) {
   if (item?.autismScoreExplanation) return String(item.autismScoreExplanation).slice(0, 900);
   return analyzeAutismText(`${item?.name || ""} ${item?.kind || ""} ${item?.mime || ""}`).explanation;
+}
+
+function autismScoreSourceForRecord(item) {
+  const source = String(item?.autismScoreSource || item?.scoreSource || "").toLowerCase().trim();
+  if (source === "ai" || source === "heuristic") return source;
+  return "";
+}
+
+function autismScoreModelForRecord(item) {
+  return String(item?.autismScoreModel || item?.scoreModel || "").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+function autismScoreConfidenceForRecord(item) {
+  const confidence = String(item?.autismScoreConfidence || item?.scoreConfidence || "").toLowerCase().trim();
+  return ["low", "medium", "high"].includes(confidence) ? confidence : "";
+}
+
+function autismScoreWarningForRecord(item) {
+  return String(item?.autismScoreWarning || item?.scoreWarning || "").replace(/\s+/g, " ").trim().slice(0, 180);
+}
+
+function autismTextCharsForRecord(item) {
+  return Math.max(0, Number(item?.autismTextChars || item?.textChars || 0));
 }
 
 function autismHighlightForRecord(item) {
@@ -1310,6 +1390,11 @@ function analyzeAutismText(value) {
     }),
     highlightText: highlight.text,
     highlightExplanation: highlight.explanation,
+    scoreSource: "heuristic",
+    scoreModel: "browser heuristic",
+    scoreConfidence: "low",
+    scoreWarning: "AI analysis not used",
+    textChars: readableText.length,
   };
 }
 

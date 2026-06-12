@@ -455,6 +455,11 @@ async function saveUploadedFile(payload) {
     autismScoreExplanation: cleanExplanation(payload.autismScoreExplanation),
     autismHighlightText: cleanExplanation(payload.autismHighlightText).slice(0, 160),
     autismHighlightExplanation: cleanExplanation(payload.autismHighlightExplanation).slice(0, 360),
+    autismScoreSource: scoreSource(payload.autismScoreSource),
+    autismScoreModel: cleanExplanation(payload.autismScoreModel).slice(0, 80),
+    autismScoreConfidence: scoreConfidence(payload.autismScoreConfidence),
+    autismScoreWarning: cleanExplanation(payload.autismScoreWarning).slice(0, 180),
+    autismTextChars: Math.max(0, Number(payload.autismTextChars || 0)),
     storageName,
     previewStorageName,
     previewMime,
@@ -468,6 +473,16 @@ async function saveUploadedFile(payload) {
 function publicEntry(entry) {
   const { storageName, previewStorageName, previewMime, ...rest } = entry;
   return { ...rest, hasPreview: Boolean(previewStorageName), previewMime: previewMime || "" };
+}
+
+function scoreSource(value) {
+  const source = String(value || "").toLowerCase().trim();
+  return source === "ai" || source === "heuristic" ? source : "";
+}
+
+function scoreConfidence(value) {
+  const confidence = String(value || "").toLowerCase().trim();
+  return ["low", "medium", "high"].includes(confidence) ? confidence : "";
 }
 
 function clampScore(value) {
