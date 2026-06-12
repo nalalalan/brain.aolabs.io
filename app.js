@@ -141,6 +141,7 @@ function convertTextToPendingPdf() {
     previewDataUrl,
     autismScore: autism.score,
     autismScoreExplanation: autism.explanation,
+    sourceText,
     blob: result.blob,
   };
   renderPending();
@@ -155,16 +156,22 @@ async function savePending() {
   const textFile = pendingTextPdf;
   const files = [...pendingFiles];
   if (!textFile && !files.length) return;
-  if (saveButton) saveButton.disabled = true;
+  setSaveBusy(true, "analyzing");
   const nextRecords = [];
   try {
     if (textFile) {
-      nextRecords.push(await saveFileLike(textFile));
+      nextRecords.push(await saveFileLike(await withAiAnalysis(textFile, textFile.sourceText || "")));
       pendingTextPdf = null;
       if (noteInput) noteInput.value = "";
     }
     for (const file of files) {
-      const autism = await analyzeUploadFile(file);
+      const readableText = await readableUploadText(file);
+      const autism = await analyzeRecordText({
+        name: file.name || "uploaded file",
+        mime: file.type || "application/octet-stream",
+        kind: file.type?.startsWith("image/") ? "image" : "file",
+        text: readableText,
+      });
       nextRecords.push(await saveFileLike({
         id: `file-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: file.name || "uploaded file",
@@ -182,10 +189,30 @@ async function savePending() {
     state = sortRecords([...nextRecords, ...state.filter((item) => !nextRecords.some((next) => next.id === item.id))]);
     persistState();
   } finally {
-    if (saveButton) saveButton.disabled = false;
+    setSaveBusy(false);
     renderPending();
     renderVault();
   }
+}
+
+function setSaveBusy(isBusy, label = "") {
+  if (!saveButton) return;
+  saveButton.disabled = isBusy;
+  saveButton.textContent = isBusy ? label : "save to vault";
+}
+
+async function withAiAnalysis(file, text) {
+  const autism = await analyzeRecordText({
+    name: file.name,
+    mime: file.mime,
+    kind: file.kind,
+    text,
+  });
+  return {
+    ...file,
+    autismScore: autism.score,
+    autismScoreExplanation: autism.explanation,
+  };
 }
 
 async function saveFileLike(file) {
@@ -668,13 +695,39 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function analyzeUploadFile(file) {
-  let text = `${file.name || ""} ${file.type || ""}`;
+async function readableUploadText(file) {
   if (file.type?.startsWith("text/") || /\.(txt|md|csv|json|pdf)$/i.test(file.name || "")) {
-    const readable = await file.text().catch(() => "");
-    text += ` ${readable.slice(0, 50000)}`;
+    return (await file.text().catch(() => "")).slice(0, 60000);
   }
-  return analyzeAutismText(text);
+  return "";
+}
+
+async function analyzeRecordText({ name, mime, kind, text }) {
+  const readable = textPdfSource(text || "");
+  const fallback = analyzeAutismText(`${name || ""} ${kind || ""} ${mime || ""} ${readable}`);
+  if (sync.status !== "connected" || !sync.base) return fallback;
+  try {
+    const response = await postJson(`${sync.base}/api/analyze`, {
+      name: name || "",
+      kind: kind || "",
+      mime: mime || "",
+      text: readable,
+      fallbackScore: fallback.score,
+    });
+    return normalizeRemoteAnalysis(response.analysis, fallback);
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeRemoteAnalysis(analysis, fallback) {
+  const score = clampAutismScore(analysis?.score ?? fallback.score);
+  const explanation = String(analysis?.explanation || "").replace(/\s+/g, " ").trim();
+  if (!explanation) return fallback;
+  return {
+    score: Math.max(1, score),
+    explanation: explanation.slice(0, 900),
+  };
 }
 
 function autismScoreForRecord(item) {

@@ -10,6 +10,9 @@ const publicDir = __dirname;
 const storageRoot = path.resolve(process.env.BRAIN_STORAGE_DIR || path.join(os.homedir(), "Documents", "brain-pdf-bank"));
 const indexPath = path.join(storageRoot, ".brain-files.json");
 const maxUploadBytes = Number(process.env.BRAIN_MAX_UPLOAD_MB || 100) * 1024 * 1024;
+const openAiModel = process.env.BRAIN_OPENAI_MODEL || process.env.OPENAI_MODEL || "gpt-5.4-mini";
+const analyzeMaxChars = Number(process.env.BRAIN_ANALYZE_MAX_CHARS || 28000);
+const analyzeTimeoutMs = Number(process.env.BRAIN_ANALYZE_TIMEOUT_MS || 25000);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -53,6 +56,175 @@ async function readBody(req) {
 async function readJson(req) {
   const text = await readBody(req);
   return text ? JSON.parse(text) : {};
+}
+
+async function analyzeWithAi(payload) {
+  const apiKey = process.env.OPENAI_API_KEY || "";
+  if (!apiKey) throw Object.assign(new Error("AI analysis is not configured"), { status: 503 });
+
+  const sourceText = compactAnalysisText(payload.text || "");
+  const fallbackScore = clampScore(payload.fallbackScore);
+  const input = [
+    `Name: ${String(payload.name || "untitled").slice(0, 160)}`,
+    `Kind: ${String(payload.kind || "text").slice(0, 80)}`,
+    `MIME: ${String(payload.mime || "").slice(0, 80)}`,
+    `Heuristic fallback score: ${fallbackScore}/100`,
+    "",
+    "Saved input:",
+    sourceText || "(no readable text supplied)",
+  ].join("\n");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), analyzeTimeoutMs);
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: openAiModel,
+        store: false,
+        reasoning: { effort: "low" },
+        max_output_tokens: 700,
+        instructions: [
+          "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
+          "Return a nuanced autism-trait signal score from 1 to 100 for this entry, not a clinical diagnosis and not a severity label.",
+          "Never output 0. A low score means this entry has weak autism-specific signal, not that the person has no autistic traits.",
+          "Do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
+          "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input.",
+          "The analysis must name at least two concrete input-specific details, situations, or tensions from the saved text. Use short paraphrases, not long quotes.",
+          "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
+          "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
+          "Do not quote long sensitive passages. Keep analysis to one compact paragraph.",
+        ].join("\n"),
+        input,
+        text: {
+          verbosity: "low",
+          format: {
+            type: "json_schema",
+            name: "brain_autism_analysis",
+            strict: true,
+            schema: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                score: {
+                  type: "integer",
+                  minimum: 1,
+                  maximum: 100,
+                  description: "Autism-trait signal score for this entry only.",
+                },
+                analysis: {
+                  type: "string",
+                  minLength: 80,
+                  maxLength: 650,
+                  description: "One unique human paragraph explaining the score without point math. It must mention concrete details from this exact input.",
+                },
+                specificDetails: {
+                  type: "array",
+                  minItems: 2,
+                  maxItems: 5,
+                  description: "Short paraphrases of concrete details from this input that made the analysis unique.",
+                  items: {
+                    type: "string",
+                    minLength: 4,
+                    maxLength: 90,
+                  },
+                },
+              },
+              required: ["score", "analysis", "specificDetails"],
+            },
+          },
+        },
+      }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = body?.error?.message || `OpenAI analysis failed (${response.status})`;
+      throw Object.assign(new Error(message), { status: response.status >= 500 ? 502 : 400 });
+    }
+    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, sourceText.length);
+  } catch (error) {
+    if (error?.name === "AbortError") throw Object.assign(new Error("AI analysis timed out"), { status: 504 });
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function compactAnalysisText(value) {
+  const text = String(value || "").replace(/\r\n?/g, "\n").replace(/\u0000/g, "").trim();
+  if (text.length <= analyzeMaxChars) return text;
+  const slice = Math.max(2000, Math.floor(analyzeMaxChars / 3));
+  const head = text.slice(0, slice);
+  const midpoint = Math.max(slice, Math.floor(text.length / 2) - Math.floor(slice / 2));
+  const middle = text.slice(midpoint, midpoint + slice);
+  const tail = text.slice(-slice);
+  return [head, "\n\n[...middle excerpt...]\n\n", middle, "\n\n[...ending excerpt...]\n\n", tail].join("").slice(0, analyzeMaxChars + 80);
+}
+
+function parseAiJson(body) {
+  const text = extractResponseText(body);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw Object.assign(new Error("AI analysis returned invalid JSON"), { status: 502 });
+  }
+}
+
+function extractResponseText(body) {
+  if (typeof body?.output_text === "string") return body.output_text;
+  const parts = [];
+  for (const item of body?.output || []) {
+    for (const content of item?.content || []) {
+      if (typeof content?.text === "string") parts.push(content.text);
+    }
+  }
+  return parts.join("").trim();
+}
+
+function normalizeAiAnalysis(value, fallbackScore, textChars = 0) {
+  const score = clampScore(value?.score || fallbackScore || 1);
+  const details = Array.isArray(value?.specificDetails)
+    ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
+    : [];
+  let analysis = cleanExplanation(value?.analysis);
+  if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
+  if (details.length >= 2 && !analysisMentionsDetails(analysis, details)) {
+    analysis = `${analysis} What makes this entry specific is ${humanJoin(details.slice(0, 3))}.`;
+  }
+  return {
+    score: Math.max(1, score),
+    explanation: cleanExplanation(analysis).slice(0, 900),
+    model: openAiModel,
+    textChars: Math.max(0, Number(textChars || 0)),
+  };
+}
+
+function analysisMentionsDetails(analysis, details) {
+  const text = analysis.toLowerCase();
+  const tokens = new Set(
+    details
+      .join(" ")
+      .toLowerCase()
+      .split(/[^a-z0-9']+/)
+      .filter((token) => token.length >= 5)
+  );
+  let matches = 0;
+  for (const token of tokens) {
+    if (text.includes(token)) matches += 1;
+    if (matches >= 2) return true;
+  }
+  return false;
+}
+
+function humanJoin(items) {
+  if (items.length <= 1) return items[0] || "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
 function dataUrlToBuffer(dataUrl) {
@@ -229,7 +401,13 @@ const server = http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
     if (requestUrl.pathname === "/api/health" && req.method === "GET") {
-      sendJson(res, 200, { ok: true, app: "brain", storage: storageRoot });
+      sendJson(res, 200, { ok: true, app: "brain", storage: storageRoot, ai: Boolean(process.env.OPENAI_API_KEY), aiModel: openAiModel });
+      return;
+    }
+
+    if (requestUrl.pathname === "/api/analyze" && req.method === "POST") {
+      const analysis = await analyzeWithAi(await readJson(req));
+      sendJson(res, 200, { analysis });
       return;
     }
 
