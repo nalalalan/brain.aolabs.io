@@ -550,7 +550,9 @@ async function createVaultItem(item) {
   score.textContent = `autism score ${autismScoreForRecord(item)}/100`;
   const scoreWhy = document.createElement("p");
   scoreWhy.className = "autism-score-why";
-  scoreWhy.textContent = autismExplanationForRecord(item);
+  const autismExplanation = autismExplanationForRecord(item);
+  scoreWhy.textContent = cardAnalysisExplanation(autismExplanation);
+  scoreWhy.title = autismExplanation;
   const signal = autismHighlightForRecord(item);
   const signalWhy = document.createElement("p");
   signalWhy.className = "autism-signal";
@@ -565,7 +567,9 @@ async function createVaultItem(item) {
   adhdScore.textContent = `adhd score ${adhd.score}/100`;
   const adhdWhy = document.createElement("p");
   adhdWhy.className = "adhd-score-why";
-  adhdWhy.textContent = adhd.explanation;
+  const adhdExplanation = adhd.explanation;
+  adhdWhy.textContent = cardAnalysisExplanation(adhdExplanation);
+  adhdWhy.title = adhdExplanation;
   const adhdSignalWhy = document.createElement("p");
   adhdSignalWhy.className = "autism-signal adhd-signal";
   if (adhd.highlightText) {
@@ -1888,6 +1892,23 @@ function recordAnalysisBasis(item) {
 
 function normalizeAnalysisExplanation(value) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, 900);
+}
+
+function cardAnalysisExplanation(value) {
+  const text = normalizeAnalysisExplanation(value);
+  if (text.length <= 230) return text;
+  const sentences = text.match(/[^.!?]+[.!?]+(?=\s|$)/g) || [];
+  let selected = "";
+  for (const sentence of sentences) {
+    const clean = sentence.replace(/\s+/g, " ").trim();
+    if (!clean) continue;
+    const next = selected ? `${selected} ${clean}` : clean;
+    if (next.length > 230 && selected) break;
+    selected = next;
+    if (selected.length >= 150) break;
+  }
+  if (selected) return selected;
+  return text;
 }
 
 function isGeneratedPdf(item) {
