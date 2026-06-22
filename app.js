@@ -1740,22 +1740,22 @@ function decodePdfLiteral(value) {
 
 function stripGeneratedAnalysisLeak(value) {
   return String(value || "")
-    .replace(/\s+It shows the need for certainty and a stable rule before the situation feels safe enough to trust\.?/gi, " ")
-    .replace(/\s+It shows distress becoming a body-level regulation problem, not just ordinary annoyance\.?/gi, " ")
-    .replace(/\s+It shows sensory comfort and body safety carrying unusual weight in the decision\.?/gi, " ")
-    .replace(/\s+It shows switching and change carrying a heavier cost than the surface situation suggests\.?/gi, " ")
-    .replace(/\s+It shows the social self-monitoring and masking layer that often makes autistic experience harder to see from outside\.?/gi, " ")
-    .replace(/\s+It shows social meaning being treated as something that has to be decoded instead of automatically felt\.?/gi, " ")
-    .replace(/\s+It shows a narrow, exact pattern taking on more importance than the topic would usually carry\.?/gi, " ")
-    .replace(/\s+It is the strongest personal pattern in this note, even though the note itself is lower-signal overall\.?/gi, " ")
-    .replace(/\s+It shows focus depending on interest instead of staying available just because the task needs it\.?/gi, " ")
-    .replace(/\s+It shows the hard part is getting the task started, sequenced, or finished\.?/gi, " ")
-    .replace(/\s+It shows memory, time, or organization adding friction before the task can even move\.?/gi, " ")
-    .replace(/\s+It shows the pressure to act or switch quickly before there is time to steer it\.?/gi, " ")
-    .replace(/\s+It shows the body wanting movement, not just the mind disliking the situation\.?/gi, " ")
-    .replace(/\s+It shows task friction turning into frustration or overwhelm\.?/gi, " ")
-    .replace(/\s+It shows attention locking hard onto one thing while other priorities drop away\.?/gi, " ")
-    .replace(/\s+It is the closest attention, task, time, or regulation clue in a lower-signal ADHD note\.?/gi, " ");
+    .replace(/\s+It shows the need for certainty(?: and a stable rule before the situation feels safe enough to trust)?\.?/gi, " ")
+    .replace(/\s+It shows distress becoming a body-level regulation problem(?:, not just ordinary annoyance)?\.?/gi, " ")
+    .replace(/\s+It shows sensory comfort(?: and body safety carrying unusual weight in the decision)?\.?/gi, " ")
+    .replace(/\s+It shows switching and change(?: carrying a heavier cost than the surface situation suggests)?\.?/gi, " ")
+    .replace(/\s+It shows the social self-monitoring(?: and masking layer that often makes autistic experience harder to see from outside)?\.?/gi, " ")
+    .replace(/\s+It shows social meaning(?: being treated as something that has to be decoded instead of automatically felt)?\.?/gi, " ")
+    .replace(/\s+It shows a narrow, exact pattern(?: taking on more importance than the topic would usually carry)?\.?/gi, " ")
+    .replace(/\s+It is the strongest personal pattern in this note(?:, even though the note itself is lower-signal overall)?\.?/gi, " ")
+    .replace(/\s+It shows focus depending on interest(?: instead of staying available just because the task needs it)?\.?/gi, " ")
+    .replace(/\s+It shows the hard part is getting the task started(?:, sequenced, or finished)?\.?/gi, " ")
+    .replace(/\s+It shows memory, time, or organization(?: adding friction before the task can even move)?\.?/gi, " ")
+    .replace(/\s+It shows the pressure to act or switch quickly(?: before there is time to steer it)?\.?/gi, " ")
+    .replace(/\s+It shows the body wanting movement(?:, not just the mind disliking the situation)?\.?/gi, " ")
+    .replace(/\s+It shows task friction(?: turning into frustration or overwhelm)?\.?/gi, " ")
+    .replace(/\s+It shows attention locking hard(?: onto one thing while other priorities drop away)?\.?/gi, " ")
+    .replace(/\s+It is the closest attention, task, time, or regulation clue(?: in a lower-signal ADHD note)?\.?/gi, " ");
 }
 
 function recordAnalysisBasis(item) {
