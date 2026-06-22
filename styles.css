@@ -342,7 +342,7 @@ input {
 
 .autism-score-why,
 .adhd-score-why {
-  height: calc(1.28em * 12);
+  min-height: calc(1.28em * 5);
   margin: 0;
   color: var(--muted);
   font-size: 12px;

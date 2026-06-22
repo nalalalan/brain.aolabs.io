@@ -407,6 +407,27 @@ async function renderVault() {
   for (const item of sortRecords(state)) {
     vaultList.append(await createVaultItem(item));
   }
+  syncVaultAnalysisHeights();
+}
+
+let vaultHeightSyncTimer = 0;
+
+window.addEventListener("resize", () => {
+  window.clearTimeout(vaultHeightSyncTimer);
+  vaultHeightSyncTimer = window.setTimeout(syncVaultAnalysisHeights, 120);
+});
+
+function syncVaultAnalysisHeights() {
+  if (!vaultList) return;
+  for (const card of vaultList.querySelectorAll(".vault-item")) {
+    const blocks = [...card.querySelectorAll(".autism-score-why, .adhd-score-why")];
+    if (blocks.length < 2) continue;
+    for (const block of blocks) block.style.height = "auto";
+    const lineHeight = Number.parseFloat(window.getComputedStyle(blocks[0]).lineHeight) || 15.5;
+    const minHeight = Math.ceil(lineHeight * 5);
+    const height = Math.ceil(Math.max(minHeight, ...blocks.map((block) => block.scrollHeight)));
+    for (const block of blocks) block.style.height = `${height}px`;
+  }
 }
 
 function renderOverallScore() {
@@ -544,6 +565,7 @@ async function createVaultItem(item) {
   const title = document.createElement("p");
   title.className = "vault-title";
   title.textContent = item.name || "saved file";
+  const itemSeed = item.id || item.name || item.createdAt || "";
   const cardSourceText = await cardSourceTextForRecord(item);
   const adhd = await adhdAnalysisForRecord(item);
   const signal = autismHighlightForRecord(item);
@@ -559,6 +581,7 @@ async function createVaultItem(item) {
     sourceText: cardSourceText,
     score: autismScoreForRecord(item),
     trait: "autism",
+    seedText: itemSeed,
   });
   scoreWhy.title = autismExplanation;
   const signalWhy = document.createElement("p");
@@ -581,6 +604,7 @@ async function createVaultItem(item) {
     sourceText: cardSourceText,
     score: adhd.score,
     trait: "adhd",
+    seedText: itemSeed,
   });
   adhdWhy.title = adhdExplanation;
   const adhdSignalWhy = document.createElement("p");
@@ -1206,13 +1230,13 @@ function adhdFlavorRanges(text, highlightText = "") {
     { pattern: /\b(?:i\s+)?(?:can'?t|cant|cannot) concentrate unless [^,.;:!?]{0,80}?(?:interesting|lock onto|locks on)\b[^,.;:!?]*/gi, weight: 150, exact: false },
     { pattern: /\b(?:i\s+)?(?:can'?t|cant|cannot) focus unless [^,.;:!?]{0,80}?(?:interesting|urgent|lock onto|locks on)\b[^,.;:!?]*/gi, weight: 148, exact: false },
     { pattern: /\b(?:can't concentrate|cant concentrate|attention gets pulled|hard to focus|focus for hours|only focus if|interesting enough)\b/gi, weight: 132, exact: true },
-    { pattern: /\b(?:attention|focus|focusing|distract(?:ed|ible|ion)?|sustained attention|too boring|boring|zoning out|concentrate|one simple thing to focus on)\b/gi, weight: 108 },
-    { pattern: /\b(?:executive function(?:ing)?|procrastinat(?:e|ing|ion)|follow through|finish(?:ing)? (?:the )?task|starting? (?:the )?task|task(?:s)?|too many steps|get started|stuck (?:on|with) (?:the )?task|mental load|warm[- ]?up period|ramp(?:ing)? up|activation energy|getting into|start friction)\b/gi, weight: 112 },
-    { pattern: /\b(?:forget(?:ting|s|ful)?|lose|lost|misplace|time(?: blindness)?|deadline|late|appointment|calendar|organize(?:d|ing|ation)?|planning|priority|prioritize)\b/gi, weight: 104 },
+    { pattern: /\b(?:attention|focus|focusing|distract(?:ed|ible|ion)?|sustained attention|too boring|boring|zoning out|concentrate|one simple thing to focus on|one thing|stay on)\b/gi, weight: 108 },
+    { pattern: /\b(?:executive function(?:ing)?|procrastinat(?:e|ing|ion)|follow through|finish(?:ing)? (?:the )?task|starting? (?:the )?task|can't start|cant start|cannot start|task(?:s)?|too many steps|setup steps|make myself|get started|getting started|stuck (?:on|with) (?:the )?task|mental load|warm[- ]?up period|ramp(?:ing)? up|activation energy|getting into|start friction|task friction|lost momentum|motivation)\b/gi, weight: 112 },
+    { pattern: /\b(?:forget(?:ting|s|ful)?|lose|lost|misplace|time(?: blindness)?|deadline|late|appointment|calendar|schedule|organize(?:d|ing|ation)?|planning|priority|prioritize)\b/gi, weight: 104 },
     { pattern: /\b(?:impuls(?:e|ive|ivity)|interrupt|blurting?|can't wait|cant wait|impulse spend(?:ing)?|spend(?:ing)? impulsively|impulse buy(?:ing)?|buy(?:ing)? impulsively|switch tabs|jump(?:ing)? between|act first)\b/gi, weight: 100 },
     { pattern: /\b(?:restless|fidget(?:ing)?|squirm|on the go|driven by a motor|can't sit|cant sit|pace|pacing|body wants to move)\b/gi, weight: 96 },
     { pattern: /\b(?:overwhelm(?:ed|ing)?|frustrat(?:ed|ion|ing)?|irritab(?:le|ility)|angry|annoy(?:ed|ing)?|stress(?:ed|ful)?|emotional|mood|panic|too much)\b/gi, weight: 94 },
-    { pattern: /\b(?:hyperfocus|deep focus|intense focus|fixat(?:e|ed|ion)|can focus for hours|one thing for hours)\b/gi, weight: 98 },
+    { pattern: /\b(?:hyperfocus|deep focus|intense focus|fixat(?:e|ed|ion)|can focus for hours|one thing for hours|locked in)\b/gi, weight: 98 },
     { pattern: /\b(?:adhd|attention[- ]deficit|hyperactivity disorder|inattention|hyperactive|impulsive)\b/gi, weight: 76 },
   ];
   for (const { pattern, weight, exact } of patterns) {
@@ -1252,7 +1276,7 @@ function fallbackAdhdFlavorRange(text) {
 function fallbackAdhdClauseScore(clause) {
   const text = clause.toLowerCase();
   let score = Math.min(16, clause.length / 6);
-  if (/\bfocus|attention|task|start|finish|time|forget|organize|priority|boring|interesting enough|warm[- ]?up|ramp|activation energy|getting into\b/.test(text)) score += 14;
+  if (/\bfocus|attention|task|start|finish|time|forget|organize|priority|boring|interesting enough|warm[- ]?up|ramp|activation energy|getting into|setup steps|getting started|task friction|lost momentum|motivation\b/.test(text)) score += 14;
   if (/\bfrustrat|overwhelm|hard|stuck|too much|can't|cant|cannot\b/.test(text)) score += 8;
   if (/\bi\b|\bme\b|\bmy\b/.test(text)) score += 4;
   if (/\bneed|want|only|simple|exactly|make sure\b/.test(text)) score += 3;
@@ -1907,13 +1931,13 @@ function normalizeAnalysisExplanation(value) {
 
 function cardAnalysisExplanation(value, options = {}) {
   let text = removeRepeatedHighlightSentences(normalizeAnalysisExplanation(value), options.highlightText);
-  text = normalizeCardAnalysisTone(text, options.trait);
+  text = normalizeCardAnalysisTone(text, options.trait, options.seedText);
   if (isThinAnalysisText(text)) {
     text = traitCardSummary(options) || text;
   } else {
     text = addMissingCardDetails(text, options);
   }
-  return completeSentenceClip(cleanCardAnalysisArtifacts(text), 560);
+  return completeSentenceClip(cleanCardAnalysisArtifacts(text, options), 560);
 }
 
 function removeRepeatedHighlightSentences(value, highlightText) {
@@ -1966,9 +1990,9 @@ function traitCardSummary(options = {}) {
   const details = cardConcreteDetails(options.sourceText, options.highlightText, "").slice(0, 3);
   const parts = [];
   if (options.highlightExplanation) {
-    parts.push(`I read the ${trait} signal as ${analysisPhraseFromExplanation(options.highlightExplanation)}.`);
+    parts.push(traitSignalLead(options.trait, options.highlightExplanation, options.seedText));
   } else {
-    parts.push(`I read the selected line as the strongest ${trait} clue in this note.`);
+    parts.push(traitFallbackLead(options.trait, options.seedText));
   }
   if (details.length) {
     parts.push(supportDetailsSentence(details));
@@ -1980,27 +2004,29 @@ function traitCardSummary(options = {}) {
     : score >= 50
       ? "The score stays in the middle because the signal is real, but it is mixed with ordinary task or situation context."
       : "The score stays lower because the note has some signal, but not enough detail to make it a main proof document.";
-  parts.push(`I read it as ${strength}. ${boundary}`);
+  parts.push(`That reads as ${strength}. ${boundary}`);
   return parts.join(" ");
 }
 
-function normalizeCardAnalysisTone(value, trait = "autism") {
-  const label = trait === "adhd" ? "ADHD" : "autism";
+function normalizeCardAnalysisTone(value, trait = "autism", seedText = "") {
   return normalizeAnalysisExplanation(value)
     .replace(/^That line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
-      return `I read the ${label} signal as ${analysisPhraseFromExplanation(explanation)}. `;
+      return `${traitSignalLead(trait, explanation, seedText)} `;
     })
     .replace(/^The selected (?:autism|ADHD) line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
-      return `I read the ${label} signal as ${analysisPhraseFromExplanation(explanation)}. `;
+      return `${traitSignalLead(trait, explanation, seedText)} `;
     })
     .replace(/\.\s*;\s*/g, ". The rest of the note adds: ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function cleanCardAnalysisArtifacts(value) {
+function cleanCardAnalysisArtifacts(value, options = {}) {
   return normalizeAnalysisExplanation(value)
     .replace(/^["'“”]\s*/, "")
+    .replace(/\bI read the (ADHD|autism) signal as ([^.]+)\./gi, (_match, label, phrase) => {
+      return traitSignalLead(label.toLowerCase() === "adhd" ? "adhd" : "autism", phrase, options.seedText);
+    })
     .replace(/\bI read it as ([^.]+?) because the (?:ADHD|autism)-relevant weight is\b/gi, "I score it as $1 because")
     .replace(/\bThe (?:ADHD|autism)-relevant weight is\b/gi, "The signal is")
     .replace(/\bThat puts it in the middle rather than the diagnostic-letter range\./g, "That keeps it in the middle instead of treating it like a diagnosis letter.")
@@ -2009,6 +2035,65 @@ function cleanCardAnalysisArtifacts(value) {
     .replace(/\s*;\s*(?:The score is not even higher|The note is not higher|The score is not higher|The entry is not higher)[^.]*\.?/gi, "")
     .replace(/\bpdf\s+(?=(?:This entry|This note|The note)\b)/gi, "")
     .replace(/\bThe phrase is (autism|ADHD)-shaped because\s+/gi, "I read that phrase as $1-shaped because ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function traitSignalLead(trait, explanationOrPhrase, seedText = "") {
+  const label = trait === "adhd" ? "ADHD" : "autism";
+  const phrase = analysisLeadPhrase(explanationOrPhrase) || "the strongest pattern in this note";
+  const templates = trait === "adhd"
+    ? [
+      `The ADHD signal here is ${phrase}.`,
+      `For ADHD, this points to ${phrase}.`,
+      `The main ADHD-shaped pattern is ${phrase}.`,
+      `What stands out for ADHD is ${phrase}.`,
+      `The clearest ADHD-shaped part is ${phrase}.`,
+    ]
+    : [
+      `The autism signal here is ${phrase}.`,
+      `For autism, this points to ${phrase}.`,
+      `The main autism-shaped pattern is ${phrase}.`,
+      `What stands out for autism is ${phrase}.`,
+      `The clearest autism-shaped part is ${phrase}.`,
+    ];
+  return templates[stableAnalysisIndex(`${label}:${phrase}:${seedText}`, templates.length)];
+}
+
+function traitFallbackLead(trait, seedText = "") {
+  const templates = trait === "adhd"
+    ? [
+      "The ADHD read starts from the strongest attention or task-friction clue available in this note.",
+      "The ADHD card is using the clearest attention, task, time, or regulation clue in the text.",
+      "For ADHD, the note gives a weaker but still readable attention-and-execution pattern.",
+      "The ADHD score is based on the strongest executive-function clue the note gives.",
+    ]
+    : [
+      "The autism read starts from the strongest predictability, sensory, social, or exactness clue available in this note.",
+      "The autism card is using the clearest certainty, routine, sensory, or social-meaning clue in the text.",
+      "For autism, the note gives a weaker but still readable autistic-trait pattern.",
+      "The autism score is based on the strongest autism-shaped clue the note gives.",
+    ];
+  return templates[stableAnalysisIndex(`${trait}:${seedText}:fallback`, templates.length)];
+}
+
+function stableAnalysisIndex(value, length) {
+  if (!length) return 0;
+  const text = String(value || "");
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash) % length;
+}
+
+function analysisLeadPhrase(value) {
+  return analysisPhraseFromExplanation(value)
+    .replace(/^the hard part is\s+/i, "")
+    .replace(/^the need for\s+/i, "a need for ")
+    .replace(/^the pressure to\s+/i, "pressure to ")
+    .replace(/^the body wanting\s+/i, "the body wanting ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -2247,6 +2332,28 @@ function highlightExplanationForPhrase(value) {
   return "It is the strongest personal pattern in this note, even though the note itself is lower-signal overall.";
 }
 
+function lowSignalAdhdBaseline(readableText, anchors = []) {
+  const text = String(readableText || "");
+  if (text.length < 20) return { score: 6, cap: 10 };
+  const lengthPoints = text.length >= 2200
+    ? 8
+    : text.length >= 1200
+      ? 6
+      : text.length >= 600
+        ? 4
+        : text.length >= 180
+          ? 2
+          : 0;
+  const personalAnchorCount = anchors.filter((anchor) => {
+    return /\b(?:i|me|my|want|need|can't|cant|cannot|hard|frustrat|overwhelm|focus|start|finish|time|plan|forget|lost|momentum|motivation|step|task)\b/i.test(anchor);
+  }).length;
+  const anchorStrength = anchors.slice(0, 6).reduce((sum, anchor) => {
+    return sum + Math.min(6, Math.max(0, anchorScore(anchor) - 4));
+  }, 0);
+  const score = Math.max(7, Math.min(26, 7 + lengthPoints + personalAnchorCount + Math.round(anchorStrength / 4)));
+  return { score, cap: Math.max(12, Math.min(30, score + 4)) };
+}
+
 function analyzeAdhdText(value) {
   const readableSource = normalizeForPdf(value);
   const text = readableSource.toLowerCase();
@@ -2254,14 +2361,14 @@ function analyzeAdhdText(value) {
   const anchors = extractAnalysisAnchors(readableSource);
   const formal = matchStats(text, /\badhd letter\b|\battention[- ]deficit\/?hyperactivity disorder\b|\bdiagnos(?:ed|is) (?:with|of) adhd\b|\bmeets criteria for adhd\b|\battention[- ]deficit hyperactivity disorder\b/g);
   const direct = matchStats(text, /\badhd\b|\battention[- ]deficit\b|\bexecutive function(?:ing)?\b|\binattention\b|\bhyperactiv(?:e|ity)\b|\bimpulsiv(?:e|ity)\b/g);
-  const attention = matchStats(text, /\battention\b|\bfocus\b|\bfocusing\b|\bdistract(?:ed|ible|ion)?\b|\bsustain(?:ed)? attention\b|\bboring\b|\binteresting\b|\bzoning out\b|\bcan't concentrate\b|\bcant concentrate\b/g);
-  const executive = matchStats(text, /\bexecutive function(?:ing)?\b|\bprocrastinat(?:e|ing|ion)\b|\bfollow through\b|\bfinish(?:ing)? (?:the )?task\b|\bstart(?:ing)? (?:the )?task\b|\btask(?:s)?\b|\btoo many steps\b|\bget started\b|\bstuck (?:on|with) (?:the )?task\b|\bmental load\b|\bwarm[- ]?up period\b|\bramp(?:ing)? up\b|\bactivation energy\b|\bgetting into\b|\bstart friction\b/g);
-  const organization = matchStats(text, /\bforget(?:ting|s|ful)?\b|\blose\b|\blost\b|\bmisplace\b|\btime(?: blindness)?\b|\bdeadline\b|\blate\b|\bappointment\b|\bcalendar\b|\borganize(?:d|ing|ation)?\b|\bplan(?:ning)?\b|\bpriorit(?:y|ize|izing)\b/g);
+  const attention = matchStats(text, /\battention\b|\bfocus\b|\bfocusing\b|\bdistract(?:ed|ible|ion)?\b|\bsustain(?:ed)? attention\b|\bboring\b|\binteresting\b|\bzoning out\b|\bcan't concentrate\b|\bcant concentrate\b|\bone thing\b|\bstay on\b/g);
+  const executive = matchStats(text, /\bexecutive function(?:ing)?\b|\bprocrastinat(?:e|ing|ion)\b|\bfollow through\b|\bfinish(?:ing)? (?:the )?task\b|\bstart(?:ing)? (?:the )?task\b|\bcan't start\b|\bcant start\b|\bcannot start\b|\btask(?:s)?\b|\btoo many steps\b|\bsetup steps\b|\bmake myself\b|\bget started\b|\bgetting started\b|\bstuck (?:on|with) (?:the )?task\b|\bmental load\b|\bwarm[- ]?up period\b|\bramp(?:ing)? up\b|\bactivation energy\b|\bgetting into\b|\bstart friction\b|\btask friction\b|\blost momentum\b|\bmotivation\b/g);
+  const organization = matchStats(text, /\bforget(?:ting|s|ful)?\b|\blose\b|\blost\b|\bmisplace\b|\btime(?: blindness)?\b|\bdeadline\b|\blate\b|\bappointment\b|\bcalendar\b|\bschedule\b|\borganize(?:d|ing|ation)?\b|\bplan(?:ning)?\b|\bpriorit(?:y|ize|izing)\b/g);
   const impulsivity = matchStats(text, /\bimpuls(?:e|ive|ivity)\b|\binterrupt\b|\bblurting?\b|\bcan't wait\b|\bcant wait\b|\bspend(?:ing)?\b|\bbuy(?:ing)?\b|\bswitch tabs\b|\bjump(?:ing)? between\b|\bact first\b/g);
   const restlessness = matchStats(text, /\brestless\b|\bfidget(?:ing)?\b|\bsquirm\b|\bon the go\b|\bdriven by a motor\b|\bcan't sit\b|\bcant sit\b|\bpace\b|\bpacing\b|\bbody wants to move\b/g);
   const regulation = matchStats(text, /\boverwhelm(?:ed|ing)?\b|\bfrustrat(?:ed|ion|ing)?\b|\birritab(?:le|ility)\b|\bangry\b|\bannoy(?:ed|ing)?\b|\bstress(?:ed|ful)?\b|\bemotion(?:al|ally)?\b|\bmood\b|\bpanic\b|\btoo much\b/g);
-  const hyperfocus = matchStats(text, /\bhyperfocus\b|\bdeep focus\b|\bintense focus\b|\bfixat(?:e|ed|ion)\b|\binterest(?:ing)? enough\b|\bcan focus for hours\b|\bone thing for hours\b/g);
-  const impact = matchStats(text, /\bwork\b|\bschool\b|\brelationship\b|\bdaily life\b|\bfunction(?:ing)?\b|\bneed(?:s|ed)? help\b|\bsupport\b|\baccommodation(?:s)?\b|\bhard for me\b|\bdifficult(?:y)?\b|\baffects?\b/g);
+  const hyperfocus = matchStats(text, /\bhyperfocus\b|\bdeep focus\b|\bintense focus\b|\bfixat(?:e|ed|ion)\b|\binterest(?:ing)? enough\b|\bcan focus for hours\b|\bone thing for hours\b|\blocked in\b/g);
+  const impact = matchStats(text, /\bwork\b|\bschool\b|\brelationship\b|\bdaily life\b|\bfunction(?:ing)?\b|\bneed(?:s|ed)? help\b|\bsupport\b|\baccommodation(?:s)?\b|\bhard for me\b|\bhard to\b|\bdifficult(?:y)?\b|\baffects?\b|\bcan't do\b|\bcant do\b/g);
   const autism = matchStats(text, /\bautis(?:m|tic)\b|\basd\b|\bsensory\b|\broutine\b|\bsameness\b|\bmasking\b/g);
 
   const formalPoints = formal.count ? 34 + Math.min(12, formal.count * 5) : 0;
@@ -2280,7 +2387,8 @@ function analyzeAdhdText(value) {
   const contextDomains = [regulation, hyperfocus, impact].filter((stats) => stats.count > 0).length;
   const evidenceDomains = coreDomains + contextDomains;
 
-  let cap = 12;
+  const baseline = lowSignalAdhdBaseline(readableText, anchors);
+  let cap = baseline.cap;
   if (formal.count && direct.count && evidenceDomains >= 3) cap = 98;
   else if (formal.count || (direct.count && evidenceDomains >= 5)) cap = 96;
   else if (direct.count && evidenceDomains >= 4) cap = 94;
@@ -2292,9 +2400,9 @@ function analyzeAdhdText(value) {
   else if (evidenceDomains === 3) cap = 68;
   else if (evidenceDomains === 2) cap = 54;
   else if (evidenceDomains === 1) cap = 38;
-  else if (autism.count) cap = 28;
+  else if (autism.count) cap = Math.max(cap, 28);
 
-  const baselineScore = readableText.length >= 20 ? 12 : 8;
+  const baselineScore = baseline.score;
   let signalFloor = baselineScore;
   if (formal.count || direct.count) signalFloor = Math.max(signalFloor, 58);
   if (coreDomains >= 1) signalFloor = Math.max(signalFloor, 30);
@@ -2349,7 +2457,7 @@ function highlightExplanationForAdhdPhrase(value) {
   if (/\bfocus|attention|distract|concentrate|boring|interesting\b/.test(text)) {
     return "It shows focus depending on interest instead of staying available just because the task needs it.";
   }
-  if (/\bexecutive|procrastinat|finish|start|task|follow through|too many steps|stuck|warm[- ]?up|ramp|activation energy|getting into\b/.test(text)) {
+  if (/\bexecutive|procrastinat|finish|start|can't start|cant start|cannot start|task|follow through|too many steps|setup steps|make myself|getting started|stuck|warm[- ]?up|ramp|activation energy|getting into|task friction|lost momentum|motivation\b/.test(text)) {
     return "It shows the hard part is getting the task started, sequenced, or finished.";
   }
   if (/\bforget|lose|lost|time|deadline|late|calendar|organize|plan|priority\b/.test(text)) {
@@ -2370,6 +2478,20 @@ function highlightExplanationForAdhdPhrase(value) {
   return "It is the closest attention, task, time, or regulation clue in a lower-signal ADHD note.";
 }
 
+function adhdLowSignalLead(anchors = [], seedText = "") {
+  const topic = anchors.length
+    ? `the readable parts are mostly about ${humanJoin(anchors.slice(0, 2))}`
+    : "there is not much ADHD-specific readable detail";
+  const templates = [
+    `The ADHD signal is light here because ${topic}.`,
+    `This stays low for ADHD because ${topic}.`,
+    `The ADHD read is only a weak background signal because ${topic}.`,
+    `There is some ADHD-shaped material here, but ${topic}.`,
+    `For ADHD, this entry gives a small signal because ${topic}.`,
+  ];
+  return templates[stableAnalysisIndex(`${seedText}:${topic}:adhd-low`, templates.length)];
+}
+
 function adhdAnalysisText(score, evidence) {
   const anchors = evidence.anchors || [];
   const highlight = evidence.highlight || {};
@@ -2377,8 +2499,7 @@ function adhdAnalysisText(score, evidence) {
     if (!evidence.hasReadableText) {
       return "This file has almost no readable text for ADHD analysis. I am leaving it at a low baseline, not calling it 0 or treating it as proof of no ADHD traits.";
     }
-    const anchorText = anchors.length ? ` The readable parts are mostly about ${humanJoin(anchors.slice(0, 2))}.` : "";
-    return `This is low-signal for ADHD from the readable text, but it is not a 0 and not proof of no attention or executive-function traits.${anchorText}`;
+    return `${adhdLowSignalLead(anchors, `${highlight.text || ""}:${score}`)} Low does not mean zero; it means this note does not give much attention, task-starting, time, memory, restlessness, or impulsivity evidence.`;
   }
   const reasons = [];
   if (evidence.formal.count) reasons.push("the ADHD diagnosis or letter context");
@@ -2410,8 +2531,8 @@ function adhdAnalysisText(score, evidence) {
         : "That keeps it in the middle instead of treating it like a diagnosis letter.";
   if (highlight.text) {
     const reason = highlight.explanation
-      ? `I read the ADHD signal as ${analysisPhraseFromExplanation(highlight.explanation)}.`
-      : "I read the selected line as the clearest ADHD-shaped part of the note.";
+      ? traitSignalLead("adhd", highlight.explanation, `${highlight.text}:${anchors[0] || ""}`)
+      : traitFallbackLead("adhd", `${highlight.text}:${anchors[0] || ""}`);
     const detailAnchors = anchors
       .filter((anchor) => anchorSimilarity(anchor, highlight.text) < 0.62)
       .slice(0, 3);
@@ -2550,6 +2671,7 @@ function anchorScore(value) {
     /\broutine|switch|transition|change|same|stable|commit|back and forth\b/,
     /\boverwhelm|panic|shutdown|meltdown|stress|anxiety|hard to handle|too much\b/,
     /\bfocus|fixed|interest|exact|details|pattern|rule|category|audi|car\b/,
+    /\btask|start|finish|setup steps|getting started|lost momentum|motivation|deadline|schedule|forget|time\b/,
     /\bmask|normal|fit in|hide|compensat|camouflag\b/,
     /\badhd|executive function|attention|hyperfocus\b/,
     /\bautis|asd|diagnos|evaluation|assessment\b/,

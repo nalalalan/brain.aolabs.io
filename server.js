@@ -108,6 +108,7 @@ async function analyzeWithAi(payload) {
           "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, exactness, attention, task, time, memory, restlessness, impulsivity, or focus evidence.",
           "Prefer self-contained complete phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, focus, or know. Do not end the phrase on a dangling word or half-thought like that, that's kind, while, to, I, can't, cant, like, of, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
+          "Do not start most paragraphs with the same phrase such as 'I read'. Vary the first sentence naturally across notes so neighboring cards do not look copied and pasted.",
           "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
           "Make the autism and ADHD paragraphs parallel in shape. Each should talk directly about its chosen phrase, then explain the score in normal human language.",
           "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it as the selected line, that line, or that phrase, then use other concrete details from the input.",
@@ -265,7 +266,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     analysis = `${analysis} Other concrete details carry the read too: ${humanJoin(anchors.slice(0, 3))}.`;
   }
   if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
-    analysis = `${analysis} I read the selected autism line as ${analysisPhraseFromExplanation(highlightExplanation)}.`;
+    analysis = `${analysis} The selected autism line points to ${analysisPhraseFromExplanation(highlightExplanation)}.`;
   }
   analysis = trimIncompleteSentence(analysis);
 
@@ -285,7 +286,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     adhdAnalysis = `${adhdAnalysis} Other concrete details carry the read too: ${humanJoin(adhdAnchors.slice(0, 3))}.`;
   }
   if (adhdHighlightText && adhdHighlightExplanation && !analysisMentionsDetails(adhdAnalysis, [adhdHighlightText, adhdHighlightExplanation])) {
-    adhdAnalysis = `${adhdAnalysis} I read the selected ADHD line as ${analysisPhraseFromExplanation(adhdHighlightExplanation)}.`;
+    adhdAnalysis = `${adhdAnalysis} The selected ADHD line points to ${analysisPhraseFromExplanation(adhdHighlightExplanation)}.`;
   }
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
