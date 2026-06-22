@@ -108,7 +108,9 @@ async function analyzeWithAi(payload) {
           "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, exactness, attention, task, time, memory, restlessness, impulsivity, or focus evidence.",
           "Prefer self-contained phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, or know. Do not end the phrase on a dangling word like that, to, I, can't, cant, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
-          "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen bold phrase is trait-shaped. Use short paraphrases, not long quotes.",
+          "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
+          "Make the autism and ADHD paragraphs parallel in shape. Each should talk directly about its chosen phrase, then explain the score in normal human language.",
+          "The ADHD paragraph must not sound like a separate clinical rubric or abstract executive-function lecture. Start from the chosen ADHD phrase when possible and explain how that exact phrase shows attention, task-starting, time, memory, restlessness, quick switching, frustration, or hyperfocus.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
           "Do not quote long sensitive passages. Keep analysis to one compact paragraph, and finish in complete sentences.",
@@ -260,7 +262,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     analysis = `${analysis} The concrete pieces I am weighing here are ${humanJoin(anchors.slice(0, 3))}.`;
   }
   if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
-    analysis = `${analysis} The selected phrase matters because ${lowercaseFirst(highlightExplanation)}`;
+    analysis = `${analysis} "${highlightText}" matters because ${lowercaseFirst(highlightExplanation)}`;
   }
   analysis = trimIncompleteSentence(analysis);
 
@@ -279,7 +281,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     adhdAnalysis = `${adhdAnalysis} The concrete pieces I am weighing here are ${humanJoin(adhdAnchors.slice(0, 3))}.`;
   }
   if (adhdHighlightText && adhdHighlightExplanation && !analysisMentionsDetails(adhdAnalysis, [adhdHighlightText, adhdHighlightExplanation])) {
-    adhdAnalysis = `${adhdAnalysis} The selected phrase matters because ${lowercaseFirst(adhdHighlightExplanation)}`;
+    adhdAnalysis = `${adhdAnalysis} "${adhdHighlightText}" is the center of the ADHD read because ${lowercaseFirst(adhdHighlightExplanation)}`;
   }
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
