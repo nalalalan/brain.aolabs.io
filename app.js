@@ -689,7 +689,7 @@ async function refreshSyncFiles() {
 }
 
 function normalizeSyncFile(file) {
-  return {
+  const normalized = {
     id: file.id,
     type: "file",
     name: file.name,
@@ -710,17 +710,26 @@ function normalizeSyncFile(file) {
     autismScoreConfidence: autismScoreConfidenceForRecord(file),
     autismScoreWarning: autismScoreWarningForRecord(file),
     autismTextChars: autismTextCharsForRecord(file),
-    adhdScore: adhdScoreForRecord(file),
-    adhdScoreExplanation: adhdExplanationForRecord(file),
-    adhdHighlightText: adhdHighlightTextForRecord(file),
-    adhdHighlightExplanation: adhdHighlightExplanationForRecord(file),
-    adhdScoreSource: adhdScoreSourceForRecord(file),
-    adhdScoreModel: adhdScoreModelForRecord(file),
-    adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
-    adhdScoreWarning: adhdScoreWarningForRecord(file),
-    adhdTextChars: adhdTextCharsForRecord(file),
     source: "sync",
   };
+  const needsPdfAdhdAnalysis = isGeneratedPdf(normalized)
+    && !file.adhdScoreExplanation
+    && !file.adhdHighlightText
+    && !file.sourceText;
+  if (!needsPdfAdhdAnalysis) {
+    Object.assign(normalized, {
+      adhdScore: adhdScoreForRecord(file),
+      adhdScoreExplanation: adhdExplanationForRecord(file),
+      adhdHighlightText: adhdHighlightTextForRecord(file),
+      adhdHighlightExplanation: adhdHighlightExplanationForRecord(file),
+      adhdScoreSource: adhdScoreSourceForRecord(file),
+      adhdScoreModel: adhdScoreModelForRecord(file),
+      adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
+      adhdScoreWarning: adhdScoreWarningForRecord(file),
+      adhdTextChars: adhdTextCharsForRecord(file),
+    });
+  }
+  return normalized;
 }
 
 async function postJson(url, payload) {
@@ -1759,7 +1768,7 @@ function stripGeneratedAnalysisLeak(value) {
 }
 
 function recordAnalysisBasis(item) {
-  return [
+  return stripGeneratedAnalysisLeak([
     item?.sourceText,
     item?.name,
     item?.kind,
@@ -1767,7 +1776,7 @@ function recordAnalysisBasis(item) {
     item?.autismScoreExplanation,
     item?.autismHighlightText,
     item?.autismHighlightExplanation,
-  ].filter(Boolean).join(" ");
+  ].filter(Boolean).join(" "));
 }
 
 function normalizeAnalysisExplanation(value) {
