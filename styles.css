@@ -318,7 +318,8 @@ input {
   overflow-wrap: anywhere;
 }
 
-.autism-score {
+.autism-score,
+.adhd-score {
   width: max-content;
   max-width: 100%;
   margin: 0;
@@ -333,7 +334,14 @@ input {
   text-transform: lowercase;
 }
 
-.autism-score-why {
+.adhd-score {
+  border-color: color-mix(in srgb, #214f8f 38%, var(--line));
+  background: #e8eef8;
+  color: #214f8f;
+}
+
+.autism-score-why,
+.adhd-score-why {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
@@ -344,7 +352,7 @@ input {
 
 .autism-signal {
   margin: 0;
-  color: #315d58;
+  color: #6f3a41;
   font-size: 12px;
   font-weight: 720;
   line-height: 1.28;
@@ -352,8 +360,16 @@ input {
 }
 
 .autism-signal strong {
-  color: #1e403a;
+  color: #8f3d4b;
   font-weight: 900;
+}
+
+.adhd-signal {
+  color: #264c7f;
+}
+
+.adhd-signal strong {
+  color: #214f8f;
 }
 
 .vault-meta,

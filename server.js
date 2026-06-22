@@ -64,12 +64,14 @@ async function analyzeWithAi(payload) {
 
   const sourceText = compactAnalysisText(payload.text || "");
   const fallbackScore = clampScore(payload.fallbackScore);
+  const fallbackAdhdScore = clampScore(payload.fallbackAdhdScore);
   const sourceAnchors = extractAnalysisAnchors(sourceText);
   const input = [
     `Name: ${String(payload.name || "untitled").slice(0, 160)}`,
     `Kind: ${String(payload.kind || "text").slice(0, 80)}`,
     `MIME: ${String(payload.mime || "").slice(0, 80)}`,
-    `Heuristic fallback score: ${fallbackScore}/100`,
+    `Heuristic autism fallback score: ${fallbackScore}/100`,
+    `Heuristic ADHD fallback score: ${fallbackAdhdScore}/100`,
     "",
     "Distinctive details from this saved input:",
     ...(sourceAnchors.length ? sourceAnchors.map((anchor) => `- ${anchor}`) : ["- no short readable details extracted"]),
@@ -92,19 +94,21 @@ async function analyzeWithAi(payload) {
         model: openAiModel,
         store: false,
         reasoning: { effort: "low" },
-        max_output_tokens: 950,
+        max_output_tokens: 1300,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
-          "Return a nuanced autism-trait signal score from 1 to 100 for this entry, not a clinical diagnosis and not a severity label.",
-          "Never output 0. A low score means this entry has weak autism-specific signal, not that the person has no autistic traits.",
-          "Do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
-          "Also choose exactly one short phrase from the saved input that is the strongest autism-trait signal in the entry. This phrase will be bolded in the generated PDF.",
-          "The bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
-          "A strong bolded phrase usually shows one of these: need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
-          "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, or exactness evidence.",
+          "Return two nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal and ADHD-trait signal. These are not clinical diagnoses and not severity labels.",
+          "Never output 0 for either score. A low score means this entry has weak trait-specific signal, not that the person has no traits.",
+          "For autism, do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
+          "For ADHD, do not rely only on keywords. Read attention regulation, executive-function load, starting/finishing tasks, time and organization friction, forgetfulness, impulsivity, restlessness, emotional regulation under task friction, hyperfocus, and functional impact.",
+          "Choose exactly one short phrase from the saved input that is the strongest autism-trait signal and exactly one short phrase that is the strongest ADHD-trait signal. These phrases will be bolded in the generated PDF.",
+          "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
+          "A strong autism phrase usually shows need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
+          "A strong ADHD phrase usually shows attention being interest-driven, starting or finishing friction, too many steps, time/memory/organization friction, quick switching, restlessness, emotional load from task friction, or hyperfocus.",
+          "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, exactness, attention, task, time, memory, restlessness, impulsivity, or focus evidence.",
           "Prefer self-contained phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, or know. Do not end the phrase on a dangling word like that, to, I, can't, cant, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
-          "The paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen bold phrase is autism-shaped. Use short paraphrases, not long quotes.",
+          "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen bold phrase is trait-shaped. Use short paraphrases, not long quotes.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
           "Do not quote long sensitive passages. Keep analysis to one compact paragraph, and finish in complete sentences.",
@@ -155,8 +159,43 @@ async function analyzeWithAi(payload) {
                   maxLength: 280,
                   description: "One short human sentence explaining why the highlighted phrase is autism-shaped.",
                 },
+                adhdScore: {
+                  type: "integer",
+                  minimum: 1,
+                  maximum: 100,
+                  description: "ADHD-trait signal score for this entry only.",
+                },
+                adhdAnalysis: {
+                  type: "string",
+                  minLength: 80,
+                  maxLength: 900,
+                  description: "One unique human paragraph explaining the ADHD score without point math. It must mention concrete details from this exact input and avoid reusable template language.",
+                },
+                adhdSpecificDetails: {
+                  type: "array",
+                  minItems: 2,
+                  maxItems: 5,
+                  description: "Short paraphrases of concrete ADHD-relevant details from this input that made the analysis unique.",
+                  items: {
+                    type: "string",
+                    minLength: 4,
+                    maxLength: 90,
+                  },
+                },
+                adhdHighlightText: {
+                  type: "string",
+                  minLength: 4,
+                  maxLength: 100,
+                  description: "One exact 4-14 word phrase from the saved input that should be bolded as the strongest ADHD-trait signal.",
+                },
+                adhdHighlightExplanation: {
+                  type: "string",
+                  minLength: 30,
+                  maxLength: 280,
+                  description: "One short human sentence explaining why the highlighted phrase is ADHD-shaped.",
+                },
               },
-              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation"],
+              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation", "adhdScore", "adhdAnalysis", "adhdSpecificDetails", "adhdHighlightText", "adhdHighlightExplanation"],
             },
           },
         },
@@ -167,7 +206,7 @@ async function analyzeWithAi(payload) {
       const message = body?.error?.message || `OpenAI analysis failed (${response.status})`;
       throw Object.assign(new Error(message), { status: response.status >= 500 ? 502 : 400 });
     }
-    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, sourceText.length, sourceAnchors, sourceText);
+    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, fallbackAdhdScore, sourceText.length, sourceAnchors, sourceText);
   } catch (error) {
     if (error?.name === "AbortError") throw Object.assign(new Error("AI analysis timed out"), { status: 504 });
     throw error;
@@ -207,7 +246,7 @@ function extractResponseText(body) {
   return parts.join("").trim();
 }
 
-function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors = [], sourceText = "") {
+function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars = 0, sourceAnchors = [], sourceText = "") {
   const score = clampScore(value?.score || fallbackScore || 1);
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
@@ -221,14 +260,37 @@ function normalizeAiAnalysis(value, fallbackScore, textChars = 0, sourceAnchors 
     analysis = `${analysis} The concrete pieces I am weighing here are ${humanJoin(anchors.slice(0, 3))}.`;
   }
   if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
-    analysis = `${analysis} The bolded phrase matters because ${lowercaseFirst(highlightExplanation)}`;
+    analysis = `${analysis} The selected phrase matters because ${lowercaseFirst(highlightExplanation)}`;
   }
   analysis = trimIncompleteSentence(analysis);
+
+  const adhdScore = clampScore(value?.adhdScore || fallbackAdhdScore || 1);
+  const adhdDetails = Array.isArray(value?.adhdSpecificDetails)
+    ? value.adhdSpecificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
+    : [];
+  const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText);
+  const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
+  let adhdAnalysis = cleanExplanation(value?.adhdAnalysis);
+  if (!adhdAnalysis || adhdAnalysis.length < 40) {
+    adhdAnalysis = "This entry has limited ADHD-specific readable detail, so I keep the ADHD score close to the fallback and treat the result as a low-confidence signal rather than a diagnosis.";
+  }
+  const adhdAnchors = [...sourceAnchors, ...adhdDetails].map((item) => cleanExplanation(item)).filter(Boolean);
+  if (adhdAnchors.length >= 2 && !analysisMentionsDetails(adhdAnalysis, adhdAnchors)) {
+    adhdAnalysis = `${adhdAnalysis} The concrete pieces I am weighing here are ${humanJoin(adhdAnchors.slice(0, 3))}.`;
+  }
+  if (adhdHighlightText && adhdHighlightExplanation && !analysisMentionsDetails(adhdAnalysis, [adhdHighlightText, adhdHighlightExplanation])) {
+    adhdAnalysis = `${adhdAnalysis} The selected phrase matters because ${lowercaseFirst(adhdHighlightExplanation)}`;
+  }
+  adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
     score: Math.max(1, score),
     explanation: cleanExplanation(analysis).slice(0, 1100),
     highlightText,
     highlightExplanation,
+    adhdScore: Math.max(1, adhdScore),
+    adhdExplanation: cleanExplanation(adhdAnalysis).slice(0, 1100),
+    adhdHighlightText,
+    adhdHighlightExplanation,
     model: openAiModel,
     textChars: Math.max(0, Number(textChars || 0)),
   };
@@ -460,6 +522,15 @@ async function saveUploadedFile(payload) {
     autismScoreConfidence: scoreConfidence(payload.autismScoreConfidence),
     autismScoreWarning: cleanExplanation(payload.autismScoreWarning).slice(0, 180),
     autismTextChars: Math.max(0, Number(payload.autismTextChars || 0)),
+    adhdScore: clampScore(payload.adhdScore),
+    adhdScoreExplanation: cleanExplanation(payload.adhdScoreExplanation),
+    adhdHighlightText: cleanExplanation(payload.adhdHighlightText).slice(0, 160),
+    adhdHighlightExplanation: cleanExplanation(payload.adhdHighlightExplanation).slice(0, 360),
+    adhdScoreSource: scoreSource(payload.adhdScoreSource),
+    adhdScoreModel: cleanExplanation(payload.adhdScoreModel).slice(0, 80),
+    adhdScoreConfidence: scoreConfidence(payload.adhdScoreConfidence),
+    adhdScoreWarning: cleanExplanation(payload.adhdScoreWarning).slice(0, 180),
+    adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
     storageName,
     previewStorageName,
     previewMime,

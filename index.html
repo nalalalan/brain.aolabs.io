@@ -24,9 +24,9 @@
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260612-ai-highlight-signal">
+  <link rel="stylesheet" href="./styles.css?v=20260622-adhd-scores">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260612-score-provenance" defer></script>
+  <script src="./app.js?v=20260622-adhd-scores" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -46,6 +46,10 @@
       <p>Brain PDF bank for documents, text, files, and images.</p>
       <div id="overall-autism-score" class="overall-score" aria-live="polite">
         <span>overall autism score</span>
+        <strong>calculating</strong>
+      </div>
+      <div id="overall-adhd-score" class="overall-score" aria-live="polite">
+        <span>overall adhd score</span>
         <strong>calculating</strong>
       </div>
     </section>
@@ -79,6 +83,8 @@
             <span class="vault-title">autism evaluation</span>
             <span class="autism-score">autism score 96/100</span>
             <span class="autism-score-why">This is the formal diagnostic source, so it carries the bank. I am not making it 100 because it confirms autism without saying the highest support category.</span>
+            <span class="adhd-score">adhd score 26/100</span>
+            <span class="adhd-score-why">This is mainly an autism diagnostic source. It can still matter as neurodevelopmental context, but it is not the ADHD proof document.</span>
             <span class="vault-meta">pdf</span>
           </span>
           <span class="vault-actions">
@@ -94,6 +100,8 @@
             <span class="vault-title">adhd letter</span>
             <span class="autism-score">autism score 34/100</span>
             <span class="autism-score-why">This mostly documents ADHD and executive function. It belongs here as neurodivergent context, but it is weaker autism evidence by itself.</span>
+            <span class="adhd-score">adhd score 96/100</span>
+            <span class="adhd-score-why">This is the formal ADHD source, so it carries the ADHD side of the bank without turning every later note into proof by itself.</span>
             <span class="vault-meta">1 page</span>
           </span>
           <span class="vault-actions">
@@ -112,6 +120,9 @@
         <li>National Institute of Mental Health. <a href="https://www.nimh.nih.gov/health/publications/autism-spectrum-disorder">Autism Spectrum Disorder</a>. Adult-readable examples include back-and-forth conversation difficulty, intense interests, transition difficulty, and sensory differences.</li>
         <li>National Institute for Health and Care Excellence. <a href="https://www.nice.org.uk/guidance/cg142/chapter/recommendations">Autism spectrum disorder in adults: diagnosis and management, CG142</a>. Adult assessment uses clinical judgement, context, functioning, and support needs.</li>
         <li>Hull L. et al. <a href="https://pubmed.ncbi.nlm.nih.gov/28527095/">Putting on My Best Normal: Social Camouflaging in Adults with Autism Spectrum Conditions</a>. Journal of Autism and Developmental Disorders, 2017.</li>
+        <li>Centers for Disease Control and Prevention. <a href="https://www.cdc.gov/adhd/about/adhd-in-adults.html">ADHD in Adults</a>. Adult ADHD can affect attention, lengthy tasks, organization, behavior control, and internal restlessness.</li>
+        <li>National Institute of Mental Health. <a href="https://www.nimh.nih.gov/health/publications/attention-deficit-hyperactivity-disorder-what-you-need-to-know">Attention-Deficit/Hyperactivity Disorder: What You Need to Know</a>. Adult ADHD can involve inattention, restlessness, impulsivity, frustration tolerance, stress tolerance, and mood changes.</li>
+        <li>National Institute for Health and Care Excellence. <a href="https://www.nice.org.uk/guidance/ng87">Attention deficit hyperactivity disorder: diagnosis and management, NG87</a>. Adult ADHD recognition, diagnosis, management, and care quality.</li>
       </ol>
     </section>
   </main>
