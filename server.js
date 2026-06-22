@@ -106,7 +106,7 @@ async function analyzeWithAi(payload) {
           "A strong autism phrase usually shows need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
           "A strong ADHD phrase usually shows attention being interest-driven, starting or finishing friction, too many steps, time/memory/organization friction, quick switching, restlessness, emotional load from task friction, or hyperfocus.",
           "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, exactness, attention, task, time, memory, restlessness, impulsivity, or focus evidence.",
-          "Prefer self-contained phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, or know. Do not end the phrase on a dangling word like that, to, I, can't, cant, or because.",
+          "Prefer self-contained complete phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, focus, or know. Do not end the phrase on a dangling word or half-thought like that, that's kind, while, to, I, can't, cant, like, of, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
           "Make the autism and ADHD paragraphs parallel in shape. Each should talk directly about its chosen phrase, then explain the score in normal human language.",
@@ -309,36 +309,74 @@ function normalizedHighlightText(value, anchors = [], sourceText = "") {
 }
 
 function completeHighlightPhrase(value, sourceText = "") {
-  const phrase = shortHighlightPhrase(value);
+  const phrase = shortHighlightPhrase(bestCompleteHighlightSegment(value, 18), 18);
   if (!phrase || !isDanglingHighlight(phrase)) return phrase;
   const source = cleanExplanation(sourceText).replace(/\s+/g, " ");
   if (!source) return phrase;
   const pattern = new RegExp(phrase.split(/\s+/).map(escapeRegex).join("\\s+"), "i");
   const match = pattern.exec(source);
   if (!match) return phrase;
-  const words = source.slice(match.index).split(/\s+/).filter(Boolean).slice(0, 14).join(" ");
+  const words = source.slice(match.index).split(/\s+/).filter(Boolean).slice(0, 18).join(" ");
   const sentence = words.match(/^(.+?[.!?;:])(?:\s|$)/)?.[1] || words;
-  return shortHighlightPhrase(sentence.replace(/[.!?;:]+$/g, ""));
+  return shortHighlightPhrase(sentence.replace(/[.!?;:]+$/g, ""), 18);
+}
+
+function bestCompleteHighlightSegment(value, maxWords = 18) {
+  const text = stripHighlightLeadIn(cleanExplanation(value).replace(/\s+/g, " ").trim());
+  if (!text) return "";
+  const parts = text.split(/\s+(?:because|but|so|and then|and i|and it|when|whereas|which)\s+|\s*\(/i)
+    .map((part) => part.trim())
+    .filter((part) => part.split(/\s+/).filter(Boolean).length >= 3);
+  const candidates = [text, ...parts];
+  return candidates.sort((a, b) => highlightSegmentScore(b, maxWords) - highlightSegmentScore(a, maxWords))[0] || text;
+}
+
+function stripHighlightLeadIn(value) {
+  return String(value || "")
+    .replace(/^(?:and|but|so)\s+/i, "")
+    .replace(/^i think\s+/i, "")
+    .replace(/^i mean\s+/i, "")
+    .trim();
+}
+
+function highlightSegmentScore(value, maxWords) {
+  const text = cleanExplanation(value).toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  let score = 0;
+  if (words >= 4) score += 20;
+  if (words <= maxWords) score += 20;
+  if (!isDanglingHighlight(text)) score += 12;
+  if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus)\b/.test(text)) score += 18;
+  if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body)\b/.test(text)) score += 12;
+  if (words > maxWords) score -= 20;
+  return score - Math.abs(words - Math.min(maxWords, 10));
 }
 
 function isDanglingHighlight(value) {
   const text = cleanExplanation(value).toLowerCase();
-  return /\b(?:kind of|sort of)$/.test(text) || /\b(?:that|to|i|im|i'm|cant|can't|cannot|because|like|of|for|with|when|if|the|a|an|and|or|but)$/.test(text);
+  return /\b(?:kind of|sort of|a lot of|one of|because of)$/.test(text)
+    || /\b(?:that|that's|to|i|im|i'm|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as)$/.test(text)
+    || /\b(?:that's|that is)\s+kind$/.test(text);
 }
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function shortHighlightPhrase(value) {
-  return cleanExplanation(value)
+function shortHighlightPhrase(value, maxWords = 18) {
+  const words = cleanExplanation(value)
     .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
     .replace(/\*\*/g, "")
     .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 14)
-    .join(" ")
-    .slice(0, 100);
+    .filter(Boolean);
+  const output = words.slice(0, Math.max(1, maxWords));
+  while (output.length < words.length && isDanglingHighlight(output.join(" "))) {
+    output.push(words[output.length]);
+  }
+  while (output.length > 1 && isDanglingHighlight(output.join(" "))) {
+    output.pop();
+  }
+  return output.join(" ").slice(0, 160).trim();
 }
 
 function lowercaseFirst(value) {

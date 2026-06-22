@@ -1134,14 +1134,12 @@ function alternateAdhdRangeAvoiding(text, blockedRanges) {
     const trimmed = raw.trim();
     const words = trimmed.split(/\s+/).filter(Boolean);
     if (words.length < 4) continue;
-    const phrase = words.slice(0, 10).join(" ");
-    const start = source.indexOf(phrase, match.index);
-    if (start < 0) continue;
-    const range = { start, end: start + phrase.length };
+    const range = clauseRangeForPhrase(source, trimmed, match.index, 18);
+    if (!range) continue;
     if (rangeOverlapsAny(range, blockedRanges)) continue;
     candidates.push({
       ...range,
-      score: fallbackAdhdClauseScore(phrase),
+      score: fallbackAdhdClauseScore(source.slice(range.start, range.end)),
     });
   }
   if (!candidates.length) return null;
@@ -1191,8 +1189,8 @@ function adhdFlavorRanges(text, highlightText = "") {
     { pattern: /\b(?:i\s+)?(?:can'?t|cant|cannot) concentrate unless [^,.;:!?]{0,80}?(?:interesting|lock onto|locks on)\b[^,.;:!?]*/gi, weight: 150, exact: false },
     { pattern: /\b(?:i\s+)?(?:can'?t|cant|cannot) focus unless [^,.;:!?]{0,80}?(?:interesting|urgent|lock onto|locks on)\b[^,.;:!?]*/gi, weight: 148, exact: false },
     { pattern: /\b(?:can't concentrate|cant concentrate|attention gets pulled|hard to focus|focus for hours|only focus if|interesting enough)\b/gi, weight: 132, exact: true },
-    { pattern: /\b(?:attention|focus|focusing|distract(?:ed|ible|ion)?|sustained attention|too boring|boring|zoning out|concentrate)\b/gi, weight: 108 },
-    { pattern: /\b(?:executive function(?:ing)?|procrastinat(?:e|ing|ion)|follow through|finish(?:ing)? (?:the )?task|starting? (?:the )?task|task(?:s)?|too many steps|get started|stuck (?:on|with) (?:the )?task|mental load)\b/gi, weight: 112 },
+    { pattern: /\b(?:attention|focus|focusing|distract(?:ed|ible|ion)?|sustained attention|too boring|boring|zoning out|concentrate|one simple thing to focus on)\b/gi, weight: 108 },
+    { pattern: /\b(?:executive function(?:ing)?|procrastinat(?:e|ing|ion)|follow through|finish(?:ing)? (?:the )?task|starting? (?:the )?task|task(?:s)?|too many steps|get started|stuck (?:on|with) (?:the )?task|mental load|warm[- ]?up period|ramp(?:ing)? up|activation energy|getting into|start friction)\b/gi, weight: 112 },
     { pattern: /\b(?:forget(?:ting|s|ful)?|lose|lost|misplace|time(?: blindness)?|deadline|late|appointment|calendar|organize(?:d|ing|ation)?|planning|priority|prioritize)\b/gi, weight: 104 },
     { pattern: /\b(?:impuls(?:e|ive|ivity)|interrupt|blurting?|can't wait|cant wait|impulse spend(?:ing)?|spend(?:ing)? impulsively|impulse buy(?:ing)?|buy(?:ing)? impulsively|switch tabs|jump(?:ing)? between|act first)\b/gi, weight: 100 },
     { pattern: /\b(?:restless|fidget(?:ing)?|squirm|on the go|driven by a motor|can't sit|cant sit|pace|pacing|body wants to move)\b/gi, weight: 96 },
@@ -1231,15 +1229,13 @@ function fallbackAdhdFlavorRange(text) {
     clause,
     score: fallbackAdhdClauseScore(clause),
   })).sort((a, b) => b.score - a.score || b.clause.length - a.clause.length);
-  const phrase = scored[0].clause.split(/\s+/).slice(0, 10).join(" ");
-  const start = source.indexOf(phrase);
-  return start >= 0 ? { start, end: start + phrase.length } : null;
+  return clauseRangeForPhrase(source, scored[0].clause, 0, 18);
 }
 
 function fallbackAdhdClauseScore(clause) {
   const text = clause.toLowerCase();
   let score = Math.min(16, clause.length / 6);
-  if (/\bfocus|attention|task|start|finish|time|forget|organize|priority|boring|interesting enough\b/.test(text)) score += 14;
+  if (/\bfocus|attention|task|start|finish|time|forget|organize|priority|boring|interesting enough|warm[- ]?up|ramp|activation energy|getting into\b/.test(text)) score += 14;
   if (/\bfrustrat|overwhelm|hard|stuck|too much|can't|cant|cannot\b/.test(text)) score += 8;
   if (/\bi\b|\bme\b|\bmy\b/.test(text)) score += 4;
   if (/\bneed|want|only|simple|exactly|make sure\b/.test(text)) score += 3;
@@ -1277,9 +1273,7 @@ function fallbackAutismFlavorRange(text) {
     clause,
     score: fallbackClauseScore(clause),
   })).sort((a, b) => b.score - a.score || b.clause.length - a.clause.length);
-  const phrase = scored[0].clause.split(/\s+/).slice(0, 8).join(" ");
-  const start = source.indexOf(phrase);
-  return start >= 0 ? { start, end: start + phrase.length } : null;
+  return clauseRangeForPhrase(source, scored[0].clause, 0, 16);
 }
 
 function fallbackClauseScore(clause) {
@@ -1296,7 +1290,7 @@ function expandAutismFlavorRange(text, start, end) {
   const rightMatch = text.slice(end).match(/^[^,.;:!?]*/);
   const rawStart = leftBoundary;
   const rawEnd = end + (rightMatch ? rightMatch[0].length : 0);
-  return trimRangeToWords(text, rawStart, rawEnd, start, end, 8);
+  return trimRangeToWords(text, rawStart, rawEnd, start, end, 16);
 }
 
 function expandAdhdFlavorRange(text, start, end) {
@@ -1304,25 +1298,138 @@ function expandAdhdFlavorRange(text, start, end) {
   const rightMatch = text.slice(end).match(/^[^,.;:!?]*/);
   const rawStart = leftBoundary;
   const rawEnd = end + (rightMatch ? rightMatch[0].length : 0);
-  return trimRangeToWords(text, rawStart, rawEnd, start, end, 9);
+  return trimRangeToWords(text, rawStart, rawEnd, start, end, 18);
 }
 
 function trimRangeToWords(text, start, end, focusStart, focusEnd, maxWords) {
-  const prefix = text.slice(start, focusStart).trim().split(/\s+/).filter(Boolean);
-  const focus = text.slice(focusStart, focusEnd).trim().split(/\s+/).filter(Boolean);
-  const suffix = text.slice(focusEnd, end).trim().split(/\s+/).filter(Boolean);
-  let leftCount = Math.max(0, Math.floor((maxWords - focus.length) / 2));
-  let rightCount = Math.max(0, maxWords - focus.length - leftCount);
-  const words = [
-    ...prefix.slice(-leftCount),
-    ...focus,
-    ...suffix.slice(0, rightCount),
-  ];
-  if (!words.length) return { start: focusStart, end: focusEnd };
-  const phrase = words.join(" ");
-  const phraseIndex = text.indexOf(phrase, Math.max(0, start - 1));
-  if (phraseIndex >= 0) return { start: phraseIndex, end: phraseIndex + phrase.length };
+  const source = String(text || "");
+  const clippedStart = Math.max(0, Math.min(start, source.length));
+  const clippedEnd = Math.max(clippedStart, Math.min(end, source.length));
+  const raw = source.slice(clippedStart, clippedEnd).trim();
+  if (!raw) return { start: focusStart, end: focusEnd };
+  const focusRawStart = Math.max(0, focusStart - clippedStart);
+  const focusRawEnd = Math.max(focusRawStart, focusEnd - clippedStart);
+  const phrase = completePhraseAroundFocus(raw, focusRawStart, focusRawEnd, maxWords);
+  const phraseIndex = source.indexOf(phrase, clippedStart);
+  if (phrase && phraseIndex >= 0) return { start: phraseIndex, end: phraseIndex + phrase.length };
   return { start: focusStart, end: focusEnd };
+}
+
+function clauseRangeForPhrase(source, phrase, fromIndex = 0, maxWords = 18) {
+  const clean = completeHighlightPhrase(phrase, maxWords);
+  if (!clean) return null;
+  const start = String(source || "").indexOf(clean, Math.max(0, fromIndex));
+  return start >= 0 ? { start, end: start + clean.length } : null;
+}
+
+function completePhraseAroundFocus(raw, focusStart, focusEnd, maxWords = 18) {
+  const source = String(raw || "").replace(/\s+/g, " ").trim();
+  if (!source) return "";
+  const focusMid = Math.max(0, Math.min(source.length, Math.floor((focusStart + focusEnd) / 2)));
+  const candidates = completePhraseCandidates(source)
+    .filter((candidate) => candidate.start <= focusMid && candidate.end >= focusMid)
+    .sort((a, b) => phraseFitScore(b.text, maxWords) - phraseFitScore(a.text, maxWords));
+  const best = candidates[0]?.text || source;
+  return completeHighlightPhrase(best, maxWords);
+}
+
+function completePhraseCandidates(source) {
+  const text = String(source || "").replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  const splits = [];
+  const pattern = /\s+(?:because|but|so|and then|and i|and it|when|whereas|which)\s+/gi;
+  let match;
+  while ((match = pattern.exec(text))) {
+    splits.push(match.index);
+    splits.push(match.index + match[0].length);
+  }
+  const paren = text.indexOf("(");
+  if (paren > 0) {
+    splits.push(paren);
+    splits.push(paren + 1);
+  }
+  const points = [...new Set([0, ...splits, text.length])].sort((a, b) => a - b);
+  const candidates = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+    const value = text.slice(start, end).trim();
+    if (value.split(/\s+/).filter(Boolean).length >= 3) {
+      const leadingSpaces = text.slice(start).search(/\S/);
+      const actualStart = leadingSpaces >= 0 ? start + leadingSpaces : start;
+      candidates.push({ start: actualStart, end: end, text: value });
+    }
+  }
+  candidates.push({ start: 0, end: text.length, text });
+  return candidates;
+}
+
+function phraseFitScore(value, maxWords) {
+  const words = String(value || "").split(/\s+/).filter(Boolean).length;
+  let score = 0;
+  if (words >= 4) score += 20;
+  if (words <= maxWords) score += 20;
+  if (!isDanglingHighlight(value)) score += 12;
+  if (words >= 5 && words <= Math.max(8, maxWords)) score += 8;
+  return score - Math.abs(words - Math.min(maxWords, 10));
+}
+
+function completeHighlightPhrase(value, maxWords = 18) {
+  const clean = stripHighlightLeadIn(textPdfSource(value || "")
+    .replace(/^["']+|["']+$/g, "")
+    .replace(/\*\*/g, "")
+    .trim());
+  if (!clean) return "";
+  const candidate = bestCompleteHighlightSegment(clean, maxWords);
+  const words = candidate.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords && !isDanglingHighlight(candidate)) return candidate;
+  const clipped = clippedCompleteWords(words, maxWords);
+  return clipped.join(" ");
+}
+
+function bestCompleteHighlightSegment(value, maxWords) {
+  const candidates = completePhraseCandidates(value)
+    .map((candidate) => candidate.text.trim())
+    .filter((candidate) => candidate.split(/\s+/).filter(Boolean).length >= 3);
+  if (candidates.length <= 1) return value;
+  return candidates
+    .sort((a, b) => completeHighlightSegmentScore(b, maxWords) - completeHighlightSegmentScore(a, maxWords))[0];
+}
+
+function completeHighlightSegmentScore(value, maxWords) {
+  const text = textPdfSource(value || "").toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  let score = phraseFitScore(text, maxWords);
+  if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus)\b/.test(text)) score += 18;
+  if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body)\b/.test(text)) score += 12;
+  if (words > maxWords) score -= 20;
+  return score;
+}
+
+function clippedCompleteWords(words, maxWords) {
+  const output = words.slice(0, Math.max(1, maxWords));
+  while (output.length < words.length && isDanglingHighlight(output.join(" "))) {
+    output.push(words[output.length]);
+  }
+  while (output.length > 1 && isDanglingHighlight(output.join(" "))) {
+    output.pop();
+  }
+  return output;
+}
+
+function stripHighlightLeadIn(value) {
+  return String(value || "")
+    .replace(/^(?:and|but|so)\s+/i, "")
+    .replace(/^i think\s+/i, "")
+    .replace(/^i mean\s+/i, "")
+    .trim();
+}
+
+function isDanglingHighlight(value) {
+  const text = textPdfSource(value || "").toLowerCase();
+  return /\b(?:kind of|sort of|a lot of|one of|because of)$/.test(text)
+    || /\b(?:that|that's|to|i|i'm|im|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as)$/.test(text)
+    || /\b(?:that's|that is)\s+kind$/.test(text);
 }
 
 function pdfTextWidth(text, bold = false, fontSize = 10.5) {
@@ -1423,7 +1530,7 @@ async function readableUploadText(file) {
 
 async function analyzeRecordText({ name, mime, kind, text }) {
   const readable = textPdfSource(text || "");
-  const fallbackBasis = `${name || ""} ${kind || ""} ${mime || ""} ${readable}`;
+  const fallbackBasis = readable || `${name || ""} ${kind || ""} ${mime || ""}`;
   const fallback = {
     autism: analyzeAutismText(fallbackBasis),
     adhd: analyzeAdhdText(fallbackBasis),
@@ -1768,8 +1875,8 @@ function stripGeneratedAnalysisLeak(value) {
 }
 
 function recordAnalysisBasis(item) {
+  if (item?.sourceText) return stripGeneratedAnalysisLeak(item.sourceText);
   return stripGeneratedAnalysisLeak([
-    item?.sourceText,
     item?.name,
     item?.kind,
     item?.mime,
@@ -1949,7 +2056,7 @@ function analyzeAdhdText(value) {
   const formal = matchStats(text, /\badhd letter\b|\battention[- ]deficit\/?hyperactivity disorder\b|\bdiagnos(?:ed|is) (?:with|of) adhd\b|\bmeets criteria for adhd\b|\battention[- ]deficit hyperactivity disorder\b/g);
   const direct = matchStats(text, /\badhd\b|\battention[- ]deficit\b|\bexecutive function(?:ing)?\b|\binattention\b|\bhyperactiv(?:e|ity)\b|\bimpulsiv(?:e|ity)\b/g);
   const attention = matchStats(text, /\battention\b|\bfocus\b|\bfocusing\b|\bdistract(?:ed|ible|ion)?\b|\bsustain(?:ed)? attention\b|\bboring\b|\binteresting\b|\bzoning out\b|\bcan't concentrate\b|\bcant concentrate\b/g);
-  const executive = matchStats(text, /\bexecutive function(?:ing)?\b|\bprocrastinat(?:e|ing|ion)\b|\bfollow through\b|\bfinish(?:ing)? (?:the )?task\b|\bstart(?:ing)? (?:the )?task\b|\btask(?:s)?\b|\btoo many steps\b|\bget started\b|\bstuck (?:on|with) (?:the )?task\b|\bmental load\b/g);
+  const executive = matchStats(text, /\bexecutive function(?:ing)?\b|\bprocrastinat(?:e|ing|ion)\b|\bfollow through\b|\bfinish(?:ing)? (?:the )?task\b|\bstart(?:ing)? (?:the )?task\b|\btask(?:s)?\b|\btoo many steps\b|\bget started\b|\bstuck (?:on|with) (?:the )?task\b|\bmental load\b|\bwarm[- ]?up period\b|\bramp(?:ing)? up\b|\bactivation energy\b|\bgetting into\b|\bstart friction\b/g);
   const organization = matchStats(text, /\bforget(?:ting|s|ful)?\b|\blose\b|\blost\b|\bmisplace\b|\btime(?: blindness)?\b|\bdeadline\b|\blate\b|\bappointment\b|\bcalendar\b|\borganize(?:d|ing|ation)?\b|\bplan(?:ning)?\b|\bpriorit(?:y|ize|izing)\b/g);
   const impulsivity = matchStats(text, /\bimpuls(?:e|ive|ivity)\b|\binterrupt\b|\bblurting?\b|\bcan't wait\b|\bcant wait\b|\bspend(?:ing)?\b|\bbuy(?:ing)?\b|\bswitch tabs\b|\bjump(?:ing)? between\b|\bact first\b/g);
   const restlessness = matchStats(text, /\brestless\b|\bfidget(?:ing)?\b|\bsquirm\b|\bon the go\b|\bdriven by a motor\b|\bcan't sit\b|\bcant sit\b|\bpace\b|\bpacing\b|\bbody wants to move\b/g);
@@ -1989,8 +2096,16 @@ function analyzeAdhdText(value) {
   else if (autism.count) cap = 28;
 
   const baselineScore = readableText.length >= 20 ? 12 : 8;
+  let signalFloor = baselineScore;
+  if (formal.count || direct.count) signalFloor = Math.max(signalFloor, 58);
+  if (coreDomains >= 1) signalFloor = Math.max(signalFloor, 30);
+  if (coreDomains >= 1 && contextDomains >= 1) signalFloor = Math.max(signalFloor, 42);
+  if (evidenceDomains >= 3) signalFloor = Math.max(signalFloor, 52);
+  if (evidenceDomains >= 4) signalFloor = Math.max(signalFloor, 64);
+  if (evidenceDomains >= 5) signalFloor = Math.max(signalFloor, 74);
+  if (evidenceDomains >= 6) signalFloor = Math.max(signalFloor, 82);
   const highlight = heuristicAdhdHighlightForText(readableSource);
-  const finalScore = clampAutismScore(Math.max(baselineScore, Math.min(rawScore, cap)));
+  const finalScore = clampAutismScore(Math.max(signalFloor, Math.min(baselineScore + rawScore, cap)));
   return {
     score: finalScore,
     explanation: adhdAnalysisText(finalScore, {
@@ -2035,7 +2150,7 @@ function highlightExplanationForAdhdPhrase(value) {
   if (/\bfocus|attention|distract|concentrate|boring|interesting\b/.test(text)) {
     return "It shows focus depending on interest instead of staying available just because the task needs it.";
   }
-  if (/\bexecutive|procrastinat|finish|start|task|follow through|too many steps|stuck\b/.test(text)) {
+  if (/\bexecutive|procrastinat|finish|start|task|follow through|too many steps|stuck|warm[- ]?up|ramp|activation energy|getting into\b/.test(text)) {
     return "It shows the hard part is getting the task started, sequenced, or finished.";
   }
   if (/\bforget|lose|lost|time|deadline|late|calendar|organize|plan|priority\b/.test(text)) {
@@ -2107,14 +2222,7 @@ function adhdAnalysisText(score, evidence) {
 }
 
 function normalizeHighlightText(value) {
-  return textPdfSource(value || "")
-    .replace(/^["']+|["']+$/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 14)
-    .join(" ")
-    .slice(0, 100);
+  return completeHighlightPhrase(value, 18).slice(0, 160).trim();
 }
 
 function normalizeHighlightExplanation(value) {
