@@ -544,16 +544,23 @@ async function createVaultItem(item) {
   const title = document.createElement("p");
   title.className = "vault-title";
   title.textContent = item.name || "saved file";
+  const cardSourceText = await cardSourceTextForRecord(item);
   const adhd = await adhdAnalysisForRecord(item);
+  const signal = autismHighlightForRecord(item);
   const score = document.createElement("p");
   score.className = "autism-score";
   score.textContent = `autism score ${autismScoreForRecord(item)}/100`;
   const scoreWhy = document.createElement("p");
   scoreWhy.className = "autism-score-why";
   const autismExplanation = autismExplanationForRecord(item);
-  scoreWhy.textContent = cardAnalysisExplanation(autismExplanation);
+  scoreWhy.textContent = cardAnalysisExplanation(autismExplanation, {
+    highlightText: signal.text,
+    highlightExplanation: signal.explanation,
+    sourceText: cardSourceText,
+    score: autismScoreForRecord(item),
+    trait: "autism",
+  });
   scoreWhy.title = autismExplanation;
-  const signal = autismHighlightForRecord(item);
   const signalWhy = document.createElement("p");
   signalWhy.className = "autism-signal";
   if (signal.text) {
@@ -568,7 +575,13 @@ async function createVaultItem(item) {
   const adhdWhy = document.createElement("p");
   adhdWhy.className = "adhd-score-why";
   const adhdExplanation = adhd.explanation;
-  adhdWhy.textContent = cardAnalysisExplanation(adhdExplanation);
+  adhdWhy.textContent = cardAnalysisExplanation(adhdExplanation, {
+    highlightText: adhd.highlightText,
+    highlightExplanation: adhd.highlightExplanation,
+    sourceText: cardSourceText,
+    score: adhd.score,
+    trait: "adhd",
+  });
   adhdWhy.title = adhdExplanation;
   const adhdSignalWhy = document.createElement("p");
   adhdSignalWhy.className = "autism-signal adhd-signal";
@@ -1882,8 +1895,6 @@ function recordAnalysisBasis(item) {
   if (item?.sourceText) return stripGeneratedAnalysisLeak(item.sourceText);
   return stripGeneratedAnalysisLeak([
     item?.name,
-    item?.kind,
-    item?.mime,
     item?.autismScoreExplanation,
     item?.autismHighlightText,
     item?.autismHighlightExplanation,
@@ -1894,21 +1905,188 @@ function normalizeAnalysisExplanation(value) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, 900);
 }
 
-function cardAnalysisExplanation(value) {
+function cardAnalysisExplanation(value, options = {}) {
+  let text = removeRepeatedHighlightSentences(normalizeAnalysisExplanation(value), options.highlightText);
+  text = normalizeCardAnalysisTone(text, options.trait);
+  if (isThinAnalysisText(text)) {
+    text = traitCardSummary(options) || text;
+  } else {
+    text = addMissingCardDetails(text, options);
+  }
+  return completeSentenceClip(cleanCardAnalysisArtifacts(text), 560);
+}
+
+function removeRepeatedHighlightSentences(value, highlightText) {
   const text = normalizeAnalysisExplanation(value);
-  if (text.length <= 230) return text;
+  const phrase = comparableAnalysisText(highlightText);
+  if (!text || !phrase) return text;
+  const sentences = analysisSentences(text);
+  const kept = sentences.filter((sentence, index) => {
+    const comparable = comparableAnalysisText(sentence);
+    if (!comparable.includes(phrase)) return true;
+    if (/center of|selected|highlight|bolded|phrase|matters because|is .*shaped|is .*read/i.test(sentence)) return false;
+    return !(index === 0 && comparable.indexOf(phrase) <= 4);
+  });
+  return (kept.length ? kept.join(" ") : text).replace(/\s+/g, " ").trim();
+}
+
+function analysisSentences(value) {
+  const text = normalizeAnalysisExplanation(value);
   const sentences = text.match(/[^.!?]+[.!?]+(?=\s|$)/g) || [];
+  if (sentences.length) return sentences.map((sentence) => sentence.replace(/\s+/g, " ").trim()).filter(Boolean);
+  return text ? [text] : [];
+}
+
+function comparableAnalysisText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
+    .replace(/[^a-z0-9']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isThinAnalysisText(value) {
+  const text = normalizeAnalysisExplanation(value);
+  if (text.length < 170) return true;
+  return /^i read (?:the )?(?:entry|note) as\b/i.test(text)
+    || /^the rest of the .* weight is\b/i.test(text)
+    || /^that puts it in the middle\b/i.test(text);
+}
+
+function addMissingCardDetails(value, options = {}) {
+  const text = normalizeAnalysisExplanation(value);
+  const details = cardConcreteDetails(options.sourceText, options.highlightText, text).slice(0, 3);
+  if (details.length < 2 || analysisMentionsDetails(text, details)) return text;
+  return `${text} ${supportDetailsSentence(details)}`;
+}
+
+function traitCardSummary(options = {}) {
+  const trait = options.trait === "adhd" ? "ADHD" : "autism";
+  const details = cardConcreteDetails(options.sourceText, options.highlightText, "").slice(0, 3);
+  const parts = [];
+  if (options.highlightExplanation) {
+    parts.push(`I read the ${trait} signal as ${analysisPhraseFromExplanation(options.highlightExplanation)}.`);
+  } else {
+    parts.push(`I read the selected line as the strongest ${trait} clue in this note.`);
+  }
+  if (details.length) {
+    parts.push(supportDetailsSentence(details));
+  }
+  const score = clampAutismScore(options.score);
+  const strength = traitStrengthLabel(score, trait);
+  const boundary = score >= 80
+    ? "The score is high because more than one part of the note points the same way."
+    : score >= 50
+      ? "The score stays in the middle because the signal is real, but it is mixed with ordinary task or situation context."
+      : "The score stays lower because the note has some signal, but not enough detail to make it a main proof document.";
+  parts.push(`I read it as ${strength}. ${boundary}`);
+  return parts.join(" ");
+}
+
+function normalizeCardAnalysisTone(value, trait = "autism") {
+  const label = trait === "adhd" ? "ADHD" : "autism";
+  return normalizeAnalysisExplanation(value)
+    .replace(/^That line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
+      return `I read the ${label} signal as ${analysisPhraseFromExplanation(explanation)}. `;
+    })
+    .replace(/^The selected (?:autism|ADHD) line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
+      return `I read the ${label} signal as ${analysisPhraseFromExplanation(explanation)}. `;
+    })
+    .replace(/\.\s*;\s*/g, ". The rest of the note adds: ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanCardAnalysisArtifacts(value) {
+  return normalizeAnalysisExplanation(value)
+    .replace(/^["'“”]\s*/, "")
+    .replace(/\bI read it as ([^.]+?) because the (?:ADHD|autism)-relevant weight is\b/gi, "I score it as $1 because")
+    .replace(/\bThe (?:ADHD|autism)-relevant weight is\b/gi, "The signal is")
+    .replace(/\bThat puts it in the middle rather than the diagnostic-letter range\./g, "That keeps it in the middle instead of treating it like a diagnosis letter.")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/\.\s*;\s*/g, ". The rest of the note adds: ")
+    .replace(/\s*;\s*(?:The score is not even higher|The note is not higher|The score is not higher|The entry is not higher)[^.]*\.?/gi, "")
+    .replace(/\bpdf\s+(?=(?:This entry|This note|The note)\b)/gi, "")
+    .replace(/\bThe phrase is (autism|ADHD)-shaped because\s+/gi, "I read that phrase as $1-shaped because ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function analysisPhraseFromExplanation(value) {
+  return lowercaseFirst(String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.!?]+$/g, "")
+    .replace(/^it shows\s+/i, "")
+    .replace(/^it is\s+/i, "")
+    .replace(/^the phrase is\s+/i, "")
+    .replace(/^the line is\s+/i, ""));
+}
+
+function supportDetailsSentence(details) {
+  const cleaned = details.map((detail) => cleanAnchor(detail)).filter(Boolean).slice(0, 3);
+  if (!cleaned.length) return "";
+  return `The rest of the note adds: ${cleaned.join("; ")}.`;
+}
+
+function traitStrengthLabel(score, trait) {
+  if (score >= 94) return `very strong ${trait} evidence`;
+  if (score >= 80) return `strongly ${trait}-shaped`;
+  if (score >= 50) return `a real ${trait}-trait signal`;
+  return `a lighter ${trait}-trait signal`;
+}
+
+function cardConcreteDetails(sourceText, highlightText, analysisText = "") {
+  const source = String(sourceText || "").replace(/\s+/g, " ").trim().slice(0, 1800);
+  if (!source) return [];
+  const highlight = comparableAnalysisText(highlightText);
+  const analysis = comparableAnalysisText(analysisText);
+  return extractAnalysisAnchors(source)
+    .filter((anchor) => {
+      const comparable = comparableAnalysisText(anchor);
+      if (!comparable || comparable.length < 12) return false;
+      if (highlight && (comparable.includes(highlight) || anchorSimilarity(comparable, highlight) > 0.62)) return false;
+      if (analysis && analysis.includes(comparable.slice(0, Math.min(24, comparable.length)))) return false;
+      return true;
+    })
+    .slice(0, 4);
+}
+
+function analysisMentionsDetails(analysis, details) {
+  const text = comparableAnalysisText(analysis);
+  let matches = 0;
+  for (const detail of details) {
+    const tokens = comparableAnalysisText(detail).split(/\s+/).filter((token) => token.length >= 5);
+    if (tokens.some((token) => text.includes(token))) matches += 1;
+    if (matches >= 2) return true;
+  }
+  return false;
+}
+
+function completeSentenceClip(value, maxChars) {
+  const text = normalizeAnalysisExplanation(value);
+  if (text.length <= maxChars) return text;
+  const sentences = analysisSentences(text);
   let selected = "";
   for (const sentence of sentences) {
-    const clean = sentence.replace(/\s+/g, " ").trim();
-    if (!clean) continue;
-    const next = selected ? `${selected} ${clean}` : clean;
-    if (next.length > 230 && selected) break;
+    const next = selected ? `${selected} ${sentence}` : sentence;
+    if (next.length > maxChars && selected) break;
     selected = next;
-    if (selected.length >= 150) break;
+    if (selected.length >= Math.min(380, maxChars - 80)) break;
   }
   if (selected) return selected;
   return text;
+}
+
+async function cardSourceTextForRecord(item) {
+  if (item?.sourceText) return item.sourceText;
+  const basis = recordAnalysisBasis(item);
+  const basisDetails = cardConcreteDetails(basis, "", "").length;
+  if (!isGeneratedPdf(item) || (basis.length >= 220 && basisDetails >= 2)) return basis;
+  const text = await pdfTextForRecord(item);
+  if (text && item) item.sourceText = text;
+  return text || basis;
 }
 
 function isGeneratedPdf(item) {
@@ -2229,17 +2407,23 @@ function adhdAnalysisText(score, evidence) {
       ? "That is high because the attention/execution pattern stacks across more than one setting, not because one word appears."
       : score < 40
         ? "That keeps it low-signal, not zero."
-        : "That puts it in the middle rather than the diagnostic-letter range.";
+        : "That keeps it in the middle instead of treating it like a diagnosis letter.";
   if (highlight.text) {
     const reason = highlight.explanation
-      ? ` because ${lowercaseFirst(highlight.explanation).replace(/[.!?]+$/g, "")}`
+      ? `I read the ADHD signal as ${analysisPhraseFromExplanation(highlight.explanation)}.`
+      : "I read the selected line as the clearest ADHD-shaped part of the note.";
+    const detailAnchors = anchors
+      .filter((anchor) => anchorSimilarity(anchor, highlight.text) < 0.62)
+      .slice(0, 3);
+    const detailText = detailAnchors.length
+      ? ` ${supportDetailsSentence(detailAnchors)}`
       : "";
-    return `"${highlight.text}" is the center of the ADHD read${reason}. I read the entry as ${strength}. The rest of the ADHD weight is ${mainReason}. ${boundary}`;
+    return `${reason}${detailText} I score it as ${strength} because ${mainReason}. ${boundary}`;
   }
   const anchorLead = anchors.length
     ? `This entry turns on ${humanJoin(anchors.slice(0, 3))}.`
     : "This entry has enough readable material to judge the ADHD-trait signal.";
-  return `${anchorLead} I read that as ${strength}. The ADHD-relevant weight is ${mainReason}. ${boundary}`;
+  return `${anchorLead} I score that as ${strength}. The signal is ${mainReason}. ${boundary}`;
 }
 
 function normalizeHighlightText(value) {
@@ -2308,7 +2492,7 @@ function autismAnalysisText(score, evidence) {
     boundary = "That is why it lands in the middle instead of the very top band.";
   }
 
-  return `${lead} The autism-relevant weight is ${mainReason}. ${boundary}`;
+  return `${lead} The signal is ${mainReason}. ${boundary}`;
 }
 
 function extractAnalysisAnchors(value) {
@@ -2336,10 +2520,20 @@ function extractAnalysisAnchors(value) {
 }
 
 function cleanAnchor(value) {
-  const text = String(value || "")
+  let text = String(value || "")
     .replace(/^[\s\-*\u2022\d.)\]]+/, "")
+    .replace(/\b(and|but|because|so)\s+\1\b/gi, "$1")
     .replace(/\s+/g, " ")
     .trim();
+  for (let i = 0; i < 3; i += 1) {
+    text = text
+      .replace(/^(?:,|\.)+\s*/, "")
+      .replace(/^(?:and|but|because|so|then|while|when)\b[\s,]*/i, "")
+      .trim();
+  }
+  if (/\b(?:application\/pdf|pdf generated|generated pdf|autism score|adhd score|score \d|synced -|browser heuristic)\b/i.test(text)) return "";
+  if (/^(?:this entry|this note|the note|the score|i read|the selected|the phrase|the concrete pieces|other details carry|the autism-relevant|the adhd-relevant)\b/i.test(text)) return "";
+  if (/\b(?:autism-shaped|adhd-shaped|autism-trait signal|adhd-trait signal|diagnostic-letter range|low-signal|high-signal saved note)\b/i.test(text)) return "";
   if (!text || text.length < 12) return "";
   const words = text.split(/\s+/).filter(Boolean);
   if (words.length < 4) return "";

@@ -110,6 +110,8 @@ async function analyzeWithAi(payload) {
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
           "Make the autism and ADHD paragraphs parallel in shape. Each should talk directly about its chosen phrase, then explain the score in normal human language.",
+          "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it as the selected line, that line, or that phrase, then use other concrete details from the input.",
+          "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least two concrete details besides the selected phrase whenever the input provides them.",
           "The ADHD paragraph must not sound like a separate clinical rubric or abstract executive-function lecture. Start from the chosen ADHD phrase when possible and explain how that exact phrase shows attention, task-starting, time, memory, restlessness, quick switching, frustration, or hyperfocus.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
@@ -258,11 +260,12 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
   const anchors = [...sourceAnchors, ...details].map((item) => cleanExplanation(item)).filter(Boolean);
+  analysis = removeRepeatedHighlightSentences(analysis, highlightText);
   if (anchors.length >= 2 && !analysisMentionsDetails(analysis, anchors)) {
-    analysis = `${analysis} The concrete pieces I am weighing here are ${humanJoin(anchors.slice(0, 3))}.`;
+    analysis = `${analysis} Other concrete details carry the read too: ${humanJoin(anchors.slice(0, 3))}.`;
   }
   if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
-    analysis = `${analysis} "${highlightText}" matters because ${lowercaseFirst(highlightExplanation)}`;
+    analysis = `${analysis} I read the selected autism line as ${analysisPhraseFromExplanation(highlightExplanation)}.`;
   }
   analysis = trimIncompleteSentence(analysis);
 
@@ -277,11 +280,12 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     adhdAnalysis = "This entry has limited ADHD-specific readable detail, so I keep the ADHD score close to the fallback and treat the result as a low-confidence signal rather than a diagnosis.";
   }
   const adhdAnchors = [...sourceAnchors, ...adhdDetails].map((item) => cleanExplanation(item)).filter(Boolean);
+  adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   if (adhdAnchors.length >= 2 && !analysisMentionsDetails(adhdAnalysis, adhdAnchors)) {
-    adhdAnalysis = `${adhdAnalysis} The concrete pieces I am weighing here are ${humanJoin(adhdAnchors.slice(0, 3))}.`;
+    adhdAnalysis = `${adhdAnalysis} Other concrete details carry the read too: ${humanJoin(adhdAnchors.slice(0, 3))}.`;
   }
   if (adhdHighlightText && adhdHighlightExplanation && !analysisMentionsDetails(adhdAnalysis, [adhdHighlightText, adhdHighlightExplanation])) {
-    adhdAnalysis = `${adhdAnalysis} "${adhdHighlightText}" is the center of the ADHD read because ${lowercaseFirst(adhdHighlightExplanation)}`;
+    adhdAnalysis = `${adhdAnalysis} I read the selected ADHD line as ${analysisPhraseFromExplanation(adhdHighlightExplanation)}.`;
   }
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
@@ -384,12 +388,46 @@ function lowercaseFirst(value) {
   return text ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : "";
 }
 
+function analysisPhraseFromExplanation(value) {
+  return lowercaseFirst(cleanExplanation(value)
+    .replace(/[.!?]+$/g, "")
+    .replace(/^it shows\s+/i, "")
+    .replace(/^it is\s+/i, "")
+    .replace(/^the phrase is\s+/i, "")
+    .replace(/^the line is\s+/i, ""));
+}
+
 function trimIncompleteSentence(value) {
   const text = cleanExplanation(value);
   if (!text || /[.!?]["')\]]?$/.test(text)) return text;
   const lastStop = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"));
   if (lastStop >= 80) return text.slice(0, lastStop + 1).trim();
   return text;
+}
+
+function removeRepeatedHighlightSentences(value, highlightText) {
+  const text = cleanExplanation(value);
+  const phrase = comparableAnalysisText(highlightText);
+  if (!text || !phrase) return text;
+  const sentences = text.match(/[^.!?]+[.!?]+(?=\s|$)/g) || [text];
+  const kept = sentences
+    .map((sentence) => cleanExplanation(sentence))
+    .filter((sentence, index) => {
+      const comparable = comparableAnalysisText(sentence);
+      if (!comparable.includes(phrase)) return true;
+      if (/center of|selected|highlight|bolded|phrase|matters because|is .*shaped|is .*read/i.test(sentence)) return false;
+      return !(index === 0 && comparable.indexOf(phrase) <= 4);
+    });
+  return (kept.length ? kept.join(" ") : text).replace(/\s+/g, " ").trim();
+}
+
+function comparableAnalysisText(value) {
+  return cleanExplanation(value)
+    .toLowerCase()
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
+    .replace(/[^a-z0-9']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function extractAnalysisAnchors(value) {
@@ -417,10 +455,20 @@ function extractAnalysisAnchors(value) {
 }
 
 function cleanAnchor(value) {
-  const text = String(value || "")
+  let text = String(value || "")
     .replace(/^[\s\-*\u2022\d.)\]]+/, "")
+    .replace(/\b(and|but|because|so)\s+\1\b/gi, "$1")
     .replace(/\s+/g, " ")
     .trim();
+  for (let i = 0; i < 3; i += 1) {
+    text = text
+      .replace(/^(?:,|\.)+\s*/, "")
+      .replace(/^(?:and|but|because|so|then|while|when)\b[\s,]*/i, "")
+      .trim();
+  }
+  if (/\b(?:application\/pdf|pdf generated|generated pdf|autism score|adhd score|score \d|synced -|browser heuristic)\b/i.test(text)) return "";
+  if (/^(?:this entry|this note|the note|i read|the selected|the phrase|the concrete pieces|other concrete details|the autism-relevant|the adhd-relevant)\b/i.test(text)) return "";
+  if (/\b(?:autism-shaped|adhd-shaped|autism-trait signal|adhd-trait signal|diagnostic-letter range|low-signal|high-signal saved note)\b/i.test(text)) return "";
   if (!text || text.length < 12) return "";
   const words = text.split(/\s+/).filter(Boolean);
   if (words.length < 4) return "";
