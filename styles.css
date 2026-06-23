@@ -282,7 +282,7 @@ input {
 
 .vault-thumb {
   width: 100%;
-  aspect-ratio: 4 / 5.15;
+  aspect-ratio: 4 / 3.35;
   min-height: 0;
   display: grid;
   place-items: center;
@@ -342,7 +342,6 @@ input {
 
 .autism-score-why,
 .adhd-score-why {
-  min-height: calc(1.28em * 5);
   margin: 0;
   color: var(--muted);
   font-size: 12px;

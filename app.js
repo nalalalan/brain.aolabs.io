@@ -407,27 +407,6 @@ async function renderVault() {
   for (const item of sortRecords(state)) {
     vaultList.append(await createVaultItem(item));
   }
-  syncVaultAnalysisHeights();
-}
-
-let vaultHeightSyncTimer = 0;
-
-window.addEventListener("resize", () => {
-  window.clearTimeout(vaultHeightSyncTimer);
-  vaultHeightSyncTimer = window.setTimeout(syncVaultAnalysisHeights, 120);
-});
-
-function syncVaultAnalysisHeights() {
-  if (!vaultList) return;
-  for (const card of vaultList.querySelectorAll(".vault-item")) {
-    const blocks = [...card.querySelectorAll(".autism-score-why, .adhd-score-why")];
-    if (blocks.length < 2) continue;
-    for (const block of blocks) block.style.height = "auto";
-    const lineHeight = Number.parseFloat(window.getComputedStyle(blocks[0]).lineHeight) || 15.5;
-    const minHeight = Math.ceil(lineHeight * 5);
-    const height = Math.ceil(Math.max(minHeight, ...blocks.map((block) => block.scrollHeight)));
-    for (const block of blocks) block.style.height = `${height}px`;
-  }
 }
 
 function renderOverallScore() {
@@ -575,14 +554,14 @@ async function createVaultItem(item) {
   const scoreWhy = document.createElement("p");
   scoreWhy.className = "autism-score-why";
   const autismExplanation = autismExplanationForRecord(item);
-  scoreWhy.textContent = cardAnalysisExplanation(autismExplanation, {
+  const autismCardOptions = {
     highlightText: signal.text,
     highlightExplanation: signal.explanation,
     sourceText: cardSourceText,
     score: autismScoreForRecord(item),
     trait: "autism",
     seedText: itemSeed,
-  });
+  };
   scoreWhy.title = autismExplanation;
   const signalWhy = document.createElement("p");
   signalWhy.className = "autism-signal";
@@ -590,7 +569,8 @@ async function createVaultItem(item) {
     const strong = document.createElement("strong");
     strong.textContent = `"${signal.text}"`;
     signalWhy.append(strong);
-    if (signal.explanation) signalWhy.append(document.createTextNode(` ${signal.explanation}`));
+    if (signal.explanation) signalWhy.append(document.createTextNode(` ${cardSignalExplanation(signal.explanation)}`));
+    signalWhy.title = [signal.text, signal.explanation].filter(Boolean).join(" ");
   }
   const adhdScore = document.createElement("p");
   adhdScore.className = "adhd-score";
@@ -598,14 +578,22 @@ async function createVaultItem(item) {
   const adhdWhy = document.createElement("p");
   adhdWhy.className = "adhd-score-why";
   const adhdExplanation = adhd.explanation;
-  adhdWhy.textContent = cardAnalysisExplanation(adhdExplanation, {
+  const adhdCardOptions = {
     highlightText: adhd.highlightText,
     highlightExplanation: adhd.highlightExplanation,
     sourceText: cardSourceText,
     score: adhd.score,
     trait: "adhd",
     seedText: itemSeed,
-  });
+  };
+  const pairedAnalysis = pairedCardAnalysisText(
+    cardAnalysisExplanation(autismExplanation, autismCardOptions),
+    cardAnalysisExplanation(adhdExplanation, adhdCardOptions),
+    autismCardOptions,
+    adhdCardOptions
+  );
+  scoreWhy.textContent = pairedAnalysis.autism;
+  adhdWhy.textContent = pairedAnalysis.adhd;
   adhdWhy.title = adhdExplanation;
   const adhdSignalWhy = document.createElement("p");
   adhdSignalWhy.className = "autism-signal adhd-signal";
@@ -613,7 +601,8 @@ async function createVaultItem(item) {
     const strong = document.createElement("strong");
     strong.textContent = `"${adhd.highlightText}"`;
     adhdSignalWhy.append(strong);
-    if (adhd.highlightExplanation) adhdSignalWhy.append(document.createTextNode(` ${adhd.highlightExplanation}`));
+    if (adhd.highlightExplanation) adhdSignalWhy.append(document.createTextNode(` ${cardSignalExplanation(adhd.highlightExplanation)}`));
+    adhdSignalWhy.title = [adhd.highlightText, adhd.highlightExplanation].filter(Boolean).join(" ");
   }
   const meta = document.createElement("p");
   meta.className = "vault-meta";
@@ -1930,6 +1919,8 @@ function normalizeAnalysisExplanation(value) {
 }
 
 function cardAnalysisExplanation(value, options = {}) {
+  const cardSummary = traitCardSummary(options);
+  if (cardSummary) return compactCardAnalysis(cardSummary, options, 260);
   let text = removeRepeatedHighlightSentences(normalizeAnalysisExplanation(value), options.highlightText);
   text = normalizeCardAnalysisTone(text, options.trait, options.seedText);
   if (isThinAnalysisText(text)) {
@@ -1937,7 +1928,83 @@ function cardAnalysisExplanation(value, options = {}) {
   } else {
     text = addMissingCardDetails(text, options);
   }
-  return completeSentenceClip(cleanCardAnalysisArtifacts(text, options), 560);
+  return compactCardAnalysis(cleanCardAnalysisArtifacts(text, options), options, 260);
+}
+
+function pairedCardAnalysisText(autismText, adhdText, autismOptions = {}, adhdOptions = {}) {
+  let autism = compactCardAnalysis(autismText, autismOptions, 250);
+  let adhd = compactCardAnalysis(adhdText, adhdOptions, 250);
+  autism = fillShortCardAnalysis(autism, autismOptions, 150);
+  adhd = fillShortCardAnalysis(adhd, adhdOptions, 150);
+  const autismLength = visibleAnalysisLength(autism);
+  const adhdLength = visibleAnalysisLength(adhd);
+  const longest = Math.max(autismLength, adhdLength);
+  const shortest = Math.max(120, Math.min(autismLength, adhdLength));
+  if (longest - shortest > 80) {
+    const cap = Math.min(250, shortest + 65);
+    if (autismLength > adhdLength) autism = compactCardAnalysis(autism, autismOptions, cap);
+    if (adhdLength > autismLength) adhd = compactCardAnalysis(adhd, adhdOptions, cap);
+  }
+  return { autism, adhd };
+}
+
+function compactCardAnalysis(value, options = {}, maxChars = 300) {
+  let text = cleanCardAnalysisArtifacts(value, options);
+  if (!text) text = traitCardSummary(options);
+  text = firstSentences(text, 2);
+  text = cardSentenceClip(text, maxChars);
+  return trimIncompleteSentence(text) || text;
+}
+
+function fillShortCardAnalysis(value, options = {}, minChars = 150) {
+  let text = normalizeAnalysisExplanation(value);
+  if (visibleAnalysisLength(text) >= minChars) return text;
+  const boundary = scoreBoundarySentence(options.score, options.trait);
+  return cardSentenceClip(`${text} ${boundary}`, 250);
+}
+
+function cardSignalExplanation(value) {
+  return cardSentenceClip(cleanCardAnalysisArtifacts(value), 130);
+}
+
+function cardSentenceClip(value, maxChars = 250) {
+  const text = normalizeAnalysisExplanation(value);
+  if (text.length <= maxChars) return text;
+  const sentenceClip = completeSentenceClip(text, maxChars);
+  if (sentenceClip.length <= maxChars + 12) return sentenceClip;
+  return shortenLongSentence(sentenceClip, maxChars);
+}
+
+function shortenLongSentence(value, maxChars = 250) {
+  const text = normalizeAnalysisExplanation(value).replace(/[.!?]+$/g, "");
+  const chunks = text.split(/:\s+|;\s+|,\s+(?:and|but|then|while|because)\s+/).map((chunk) => chunk.trim()).filter(Boolean);
+  let selected = "";
+  for (const chunk of chunks) {
+    const next = selected ? `${selected}; ${chunk}` : chunk;
+    if (next.length > maxChars - 1 && selected) break;
+    selected = next;
+    if (selected.length >= Math.min(130, maxChars - 40)) break;
+  }
+  if (!selected) selected = text.split(/\s+/).slice(0, 22).join(" ");
+  selected = selected.replace(/\s+[,;:]$/g, "").trim();
+  return selected ? `${selected}.` : "";
+}
+
+function firstSentences(value, count = 2) {
+  const sentences = analysisSentences(value).slice(0, count);
+  return sentences.length ? sentences.join(" ") : normalizeAnalysisExplanation(value);
+}
+
+function visibleAnalysisLength(value) {
+  return normalizeAnalysisExplanation(value).length;
+}
+
+function scoreBoundarySentence(score, trait = "autism") {
+  const label = trait === "adhd" ? "ADHD" : "autism";
+  const value = clampAutismScore(score);
+  if (value >= 80) return `The ${label} score is high because the note gives more than one real signal.`;
+  if (value >= 50) return `The ${label} score stays in the middle because the signal is real but mixed.`;
+  return `The ${label} score stays lower because the clue is present but not the main point of the note.`;
 }
 
 function removeRepeatedHighlightSentences(value, highlightText) {
@@ -1986,26 +2053,10 @@ function addMissingCardDetails(value, options = {}) {
 }
 
 function traitCardSummary(options = {}) {
-  const trait = options.trait === "adhd" ? "ADHD" : "autism";
-  const details = cardConcreteDetails(options.sourceText, options.highlightText, "").slice(0, 3);
-  const parts = [];
-  if (options.highlightExplanation) {
-    parts.push(traitSignalLead(options.trait, options.highlightExplanation, options.seedText));
-  } else {
-    parts.push(traitFallbackLead(options.trait, options.seedText));
-  }
-  if (details.length) {
-    parts.push(supportDetailsSentence(details));
-  }
-  const score = clampAutismScore(options.score);
-  const strength = traitStrengthLabel(score, trait);
-  const boundary = score >= 80
-    ? "The score is high because more than one part of the note points the same way."
-    : score >= 50
-      ? "The score stays in the middle because the signal is real, but it is mixed with ordinary task or situation context."
-      : "The score stays lower because the note has some signal, but not enough detail to make it a main proof document.";
-  parts.push(`That reads as ${strength}. ${boundary}`);
-  return parts.join(" ");
+  const lead = options.highlightExplanation
+    ? traitSignalLead(options.trait, options.highlightExplanation, options.seedText)
+    : traitFallbackLead(options.trait, options.seedText);
+  return `${lead} ${scoreBoundarySentence(options.score, options.trait)}`;
 }
 
 function normalizeCardAnalysisTone(value, trait = "autism", seedText = "") {
@@ -2103,23 +2154,22 @@ function analysisPhraseFromExplanation(value) {
     .replace(/\s+/g, " ")
     .trim()
     .replace(/[.!?]+$/g, "")
-    .replace(/^it shows\s+/i, "")
-    .replace(/^it is\s+/i, "")
+    .split(/\s*;\s*/)[0]
+    .replace(/^(?:it|this)\s+(?:directly\s+)?shows\s+/i, "")
+    .replace(/^(?:it|this)\s+is\s+(?:autism|adhd)-shaped\s+because\s+/i, "")
+    .replace(/^(?:it|this)\s+(?:directly\s+)?shows\s+/i, "")
+    .replace(/^(?:it|this)\s+is\s+/i, "")
     .replace(/^the phrase is\s+/i, "")
     .replace(/^the line is\s+/i, ""));
 }
 
 function supportDetailsSentence(details) {
-  const cleaned = details.map((detail) => cleanAnchor(detail)).filter(Boolean).slice(0, 3);
+  const cleaned = details
+    .map((detail) => cleanAnchor(detail).replace(/^[\s;:,.]+/, "").replace(/\s*[;:]\s*$/g, ""))
+    .filter(Boolean)
+    .slice(0, 3);
   if (!cleaned.length) return "";
   return `The rest of the note adds: ${cleaned.join("; ")}.`;
-}
-
-function traitStrengthLabel(score, trait) {
-  if (score >= 94) return `very strong ${trait} evidence`;
-  if (score >= 80) return `strongly ${trait}-shaped`;
-  if (score >= 50) return `a real ${trait}-trait signal`;
-  return `a lighter ${trait}-trait signal`;
 }
 
 function cardConcreteDetails(sourceText, highlightText, analysisText = "") {
@@ -2161,6 +2211,14 @@ function completeSentenceClip(value, maxChars) {
     if (selected.length >= Math.min(380, maxChars - 80)) break;
   }
   if (selected) return selected;
+  return text;
+}
+
+function trimIncompleteSentence(value) {
+  const text = normalizeAnalysisExplanation(value);
+  if (!text || /[.!?]["')\]]?$/.test(text)) return text;
+  const lastStop = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"));
+  if (lastStop >= 80) return text.slice(0, lastStop + 1).trim();
   return text;
 }
 
@@ -2642,7 +2700,7 @@ function extractAnalysisAnchors(value) {
 
 function cleanAnchor(value) {
   let text = String(value || "")
-    .replace(/^[\s\-*\u2022\d.)\]]+/, "")
+    .replace(/^[\s\-*\u2022\d.)\];:]+/, "")
     .replace(/\b(and|but|because|so)\s+\1\b/gi, "$1")
     .replace(/\s+/g, " ")
     .trim();

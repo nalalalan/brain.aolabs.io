@@ -110,7 +110,7 @@ async function analyzeWithAi(payload) {
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "Do not start most paragraphs with the same phrase such as 'I read'. Vary the first sentence naturally across notes so neighboring cards do not look copied and pasted.",
           "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
-          "Make the autism and ADHD paragraphs parallel in shape. Each should talk directly about its chosen phrase, then explain the score in normal human language.",
+          "Make the autism and ADHD paragraphs parallel in shape and length. Each should be two compact complete sentences, about 150-260 characters, talk directly about its chosen phrase, then explain the score in normal human language.",
           "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it as the selected line, that line, or that phrase, then use other concrete details from the input.",
           "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least two concrete details besides the selected phrase whenever the input provides them.",
           "The ADHD paragraph must not sound like a separate clinical rubric or abstract executive-function lecture. Start from the chosen ADHD phrase when possible and explain how that exact phrase shows attention, task-starting, time, memory, restlessness, quick switching, frustration, or hyperfocus.",
@@ -138,8 +138,8 @@ async function analyzeWithAi(payload) {
                 analysis: {
                   type: "string",
                   minLength: 80,
-                  maxLength: 900,
-                  description: "One unique human paragraph explaining the score without point math. It must mention concrete details from this exact input and avoid reusable template language.",
+                  maxLength: 420,
+                  description: "One unique two-sentence human paragraph explaining the score without point math. It must be compact, parallel to the ADHD analysis, mention concrete details from this exact input, and avoid reusable template language.",
                 },
                 specificDetails: {
                   type: "array",
@@ -173,8 +173,8 @@ async function analyzeWithAi(payload) {
                 adhdAnalysis: {
                   type: "string",
                   minLength: 80,
-                  maxLength: 900,
-                  description: "One unique human paragraph explaining the ADHD score without point math. It must mention concrete details from this exact input and avoid reusable template language.",
+                  maxLength: 420,
+                  description: "One unique two-sentence human paragraph explaining the ADHD score without point math. It must be compact, parallel to the autism analysis, mention concrete details from this exact input, and avoid reusable template language.",
                 },
                 adhdSpecificDetails: {
                   type: "array",
