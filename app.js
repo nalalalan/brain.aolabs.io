@@ -1071,10 +1071,6 @@ function countPdfSpaces(segments) {
 function tokenizePdfSegments(segments) {
   const tokens = [];
   for (const segment of segments) {
-    if (segment.bold) {
-      tokens.push({ text: segment.text, bold: true, kind: segment.kind || "autism" });
-      continue;
-    }
     for (const part of String(segment.text || "").split(/(\s+)/).filter(Boolean)) {
       tokens.push({ text: part, bold: segment.bold, kind: segment.kind || "text" });
     }
