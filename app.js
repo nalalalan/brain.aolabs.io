@@ -1,6 +1,7 @@
 const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
+const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
 
 let state = loadState();
 let pendingFiles = [];
@@ -192,6 +193,7 @@ function convertTextToPendingPdf() {
     adhdScoreConfidence: adhd.scoreConfidence || "low",
     adhdScoreWarning: adhd.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
     adhdTextChars: adhd.textChars || sourceText.length,
+    generatedNoteLayoutVersion,
     sourceText,
     blob: result.blob,
   };
@@ -279,6 +281,7 @@ function rebuildGeneratedPdf(file, text) {
     pages: result.pages,
     previewDataUrl: createTextPreviewDataUrl(sourceText, createdAt, highlights),
     sourceText,
+    generatedNoteLayoutVersion,
     blob: result.blob,
   };
 }
@@ -325,6 +328,25 @@ async function uploadToSync(file) {
     adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
     adhdScoreWarning: adhdScoreWarningForRecord(file),
     adhdTextChars: adhdTextCharsForRecord(file),
+    sourceText: textPdfSource(file.sourceText || ""),
+    generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
+  });
+  return normalizeSyncFile(response.file);
+}
+
+async function rebuildSyncGeneratedNote(file, rebuilt) {
+  const dataUrl = await blobToDataUrl(rebuilt.blob);
+  const response = await postJson(`${sync.base}/api/files/${encodeURIComponent(file.id)}/rebuild`, {
+    dataUrl,
+    size: rebuilt.size,
+    pages: rebuilt.pages || 0,
+    previewDataUrl: rebuilt.previewDataUrl || "",
+    sourceText: textPdfSource(rebuilt.sourceText || ""),
+    generatedNoteLayoutVersion,
+    autismHighlightText: autismHighlightTextForRecord(rebuilt),
+    autismHighlightExplanation: autismHighlightExplanationForRecord(rebuilt),
+    adhdHighlightText: adhdHighlightTextForRecord(rebuilt),
+    adhdHighlightExplanation: adhdHighlightExplanationForRecord(rebuilt),
   });
   return normalizeSyncFile(response.file);
 }
@@ -360,6 +382,8 @@ function fileRecordFromPending(file, kind, source) {
     adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
     adhdScoreWarning: adhdScoreWarningForRecord(file),
     adhdTextChars: adhdTextCharsForRecord(file),
+    sourceText: textPdfSource(file.sourceText || ""),
+    generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
   };
 }
 
@@ -716,6 +740,7 @@ async function refreshSyncFiles() {
   state = sortRecords([...synced, ...localOnly]);
   persistState();
   renderVault();
+  void rebuildOutdatedGeneratedNotes();
 }
 
 function normalizeSyncFile(file) {
@@ -740,6 +765,8 @@ function normalizeSyncFile(file) {
     autismScoreConfidence: autismScoreConfidenceForRecord(file),
     autismScoreWarning: autismScoreWarningForRecord(file),
     autismTextChars: autismTextCharsForRecord(file),
+    sourceText: textPdfSource(file.sourceText || ""),
+    generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
     source: "sync",
   };
   const needsPdfAdhdAnalysis = isGeneratedPdf(normalized)
@@ -760,6 +787,29 @@ function normalizeSyncFile(file) {
     });
   }
   return normalized;
+}
+
+async function rebuildOutdatedGeneratedNotes() {
+  if (sync.status !== "connected") return;
+  const outdated = state.filter((item) => item.source === "sync"
+    && isGeneratedPdf(item)
+    && item.mime === "application/pdf"
+    && item.generatedNoteLayoutVersion !== generatedNoteLayoutVersion);
+  if (!outdated.length) return;
+  for (const item of outdated) {
+    if (sync.status !== "connected") break;
+    const sourceText = textPdfSource(item.sourceText || await pdfTextForRecord(item));
+    if (!sourceText) continue;
+    const rebuilt = rebuildGeneratedPdf({ ...item, generatedNoteLayoutVersion }, sourceText);
+    try {
+      const synced = await rebuildSyncGeneratedNote(item, rebuilt);
+      state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
+      persistState();
+      renderVault();
+    } catch {
+      break;
+    }
+  }
 }
 
 async function postJson(url, payload) {

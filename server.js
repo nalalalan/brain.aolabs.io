@@ -620,6 +620,8 @@ async function saveUploadedFile(payload) {
     adhdScoreConfidence: scoreConfidence(payload.adhdScoreConfidence),
     adhdScoreWarning: cleanExplanation(payload.adhdScoreWarning).slice(0, 180),
     adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
+    sourceText: cleanSourceText(payload.sourceText),
+    generatedNoteLayoutVersion: cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80),
     storageName,
     previewStorageName,
     previewMime,
@@ -633,6 +635,38 @@ async function saveUploadedFile(payload) {
 function publicEntry(entry) {
   const { storageName, previewStorageName, previewMime, ...rest } = entry;
   return { ...rest, hasPreview: Boolean(previewStorageName), previewMime: previewMime || "" };
+}
+
+async function rebuildGeneratedEntry(id, payload) {
+  const { files, entry } = await findEntry(id);
+  if (!entry) throw Object.assign(new Error("File not found"), { status: 404 });
+  if ((entry.kind || "").toLowerCase() !== "generated pdf" || entry.mime !== "application/pdf") {
+    throw Object.assign(new Error("Only generated PDFs can be rebuilt"), { status: 400 });
+  }
+  const decoded = dataUrlToBuffer(payload.dataUrl);
+  if (decoded.data.length > maxUploadBytes) throw Object.assign(new Error("Upload too large"), { status: 413 });
+  const preview = payload.previewDataUrl ? dataUrlToBuffer(payload.previewDataUrl) : null;
+  if (preview && !String(preview.mime || "").startsWith("image/")) throw Object.assign(new Error("Invalid preview payload"), { status: 400 });
+  const filePath = path.resolve(storageRoot, entry.storageName || "");
+  if (!isInside(storageRoot, filePath)) throw Object.assign(new Error("Invalid file path"), { status: 403 });
+  await fsp.writeFile(filePath, decoded.data);
+  if (preview) {
+    if (!entry.previewStorageName) entry.previewStorageName = `${entry.id}-preview.png`;
+    const previewPath = path.resolve(storageRoot, entry.previewStorageName);
+    if (!isInside(storageRoot, previewPath)) throw Object.assign(new Error("Invalid preview path"), { status: 403 });
+    await fsp.writeFile(previewPath, preview.data);
+    entry.previewMime = preview.mime || "image/png";
+  }
+  entry.size = decoded.data.length;
+  entry.pages = Number(payload.pages || entry.pages || 0);
+  entry.sourceText = cleanSourceText(payload.sourceText || entry.sourceText);
+  entry.generatedNoteLayoutVersion = cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80);
+  if (payload.autismHighlightText !== undefined) entry.autismHighlightText = cleanExplanation(payload.autismHighlightText).slice(0, 160);
+  if (payload.autismHighlightExplanation !== undefined) entry.autismHighlightExplanation = cleanExplanation(payload.autismHighlightExplanation).slice(0, 360);
+  if (payload.adhdHighlightText !== undefined) entry.adhdHighlightText = cleanExplanation(payload.adhdHighlightText).slice(0, 160);
+  if (payload.adhdHighlightExplanation !== undefined) entry.adhdHighlightExplanation = cleanExplanation(payload.adhdHighlightExplanation).slice(0, 360);
+  await writeIndex(files);
+  return entry;
 }
 
 function scoreSource(value) {
@@ -653,6 +687,10 @@ function clampScore(value) {
 
 function cleanExplanation(value) {
   return repairQuestionArtifacts(String(value || "").replace(/\s+/g, " ").trim()).slice(0, 1200);
+}
+
+function cleanSourceText(value) {
+  return repairQuestionArtifacts(String(value || "").replace(/\s+/g, " ").trim()).slice(0, 20000);
 }
 
 function repairQuestionArtifacts(value) {
@@ -763,6 +801,13 @@ const server = http.createServer(async (req, res) => {
 
     if (requestUrl.pathname === "/api/files" && req.method === "POST") {
       const entry = await saveUploadedFile(await readJson(req));
+      sendJson(res, 200, { file: publicEntry(entry) });
+      return;
+    }
+
+    const rebuildMatch = requestUrl.pathname.match(/^\/api\/files\/([^/]+)\/rebuild$/);
+    if (rebuildMatch && req.method === "POST") {
+      const entry = await rebuildGeneratedEntry(rebuildMatch[1], await readJson(req));
       sendJson(res, 200, { file: publicEntry(entry) });
       return;
     }
