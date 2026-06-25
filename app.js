@@ -1529,7 +1529,7 @@ function isWeakHighlight(value) {
   if (/^(?:about|the thing|thing|stuff|while|when|because|like|ok so)\b/.test(text)) return true;
   if (/^(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know|this uncertainty is making me kind|i was telling me how this is the same thing)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua|thing that does something and then the giant thing)\b/.test(text)) return true;
   const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
   return pronouns / words.length > 0.45;
 }
@@ -1537,6 +1537,7 @@ function isWeakHighlight(value) {
 function isDanglingHighlight(value) {
   const text = textPdfSource(value || "").toLowerCase();
   return /\b(?:kind of|sort of|a lot of|one of|because of)$/.test(text)
+    || /[,;:]$/.test(text)
     || /\b(?:that|that's|to|i|i'm|im|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as)$/.test(text)
     || /\b(?:that's|that is)\s+kind$/.test(text);
 }

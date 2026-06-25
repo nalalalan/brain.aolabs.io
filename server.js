@@ -282,7 +282,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     ? value.adhdSpecificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
   const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
-  if (highlightText && comparableAnalysisText(adhdHighlightText) === comparableAnalysisText(highlightText)) {
+  if (highlightText && (comparableAnalysisText(adhdHighlightText) === comparableAnalysisText(highlightText) || anchorSimilarity(highlightText, adhdHighlightText) > 0.72)) {
     throw Object.assign(new Error("AI analysis repeated the same highlight for both traits"), { status: 502 });
   }
   const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
@@ -294,11 +294,11 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
     score: Math.max(1, score),
-    explanation: cleanExplanation(analysis).slice(0, 1100),
+    explanation: cleanAnalysisParagraph(analysis).slice(0, 1100),
     highlightText,
     highlightExplanation,
     adhdScore: Math.max(1, adhdScore),
-    adhdExplanation: cleanExplanation(adhdAnalysis).slice(0, 1100),
+    adhdExplanation: cleanAnalysisParagraph(adhdAnalysis).slice(0, 1100),
     adhdHighlightText,
     adhdHighlightExplanation,
     model: openAiModel,
@@ -495,7 +495,7 @@ function isBadHighlightFragment(value) {
   if (/^(?:about|the thing|thing|stuff|while|when|because|like|ok so)\b/.test(text)) return true;
   if (/^(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know|this uncertainty is making me kind|i was telling me how this is the same thing)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua|thing that does something and then the giant thing)\b/.test(text)) return true;
   return false;
 }
 
@@ -519,6 +519,7 @@ function sourceComparableText(value) {
 function isDanglingHighlight(value) {
   const text = cleanExplanation(value).toLowerCase();
   return /\b(?:kind of|sort of|a lot of|one of|because of)$/.test(text)
+    || /[,;:]$/.test(text)
     || /\b(?:that|that's|to|i|im|i'm|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as)$/.test(text)
     || /\b(?:that's|that is)\s+kind$/.test(text);
 }
@@ -549,6 +550,10 @@ function trimIncompleteSentence(value) {
   const lastStop = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"));
   if (lastStop >= 80) return text.slice(0, lastStop + 1).trim();
   return text;
+}
+
+function cleanAnalysisParagraph(value) {
+  return cleanExplanation(value).replace(/^["'`]\s*/g, "").trim();
 }
 
 function removeRepeatedHighlightSentences(value, highlightText) {
