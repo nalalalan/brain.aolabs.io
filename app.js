@@ -1529,7 +1529,7 @@ function isWeakHighlight(value) {
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time)\b/.test(text)) return true;
   const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
   return pronouns / words.length > 0.45;
 }

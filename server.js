@@ -273,9 +273,6 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   if (anchors.length >= 2 && !analysisMentionsDetails(analysis, anchors)) {
     analysis = `${analysis} Other concrete details carry the read too: ${humanJoin(anchors.slice(0, 3))}.`;
   }
-  if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
-    analysis = appendHighlightMechanismSentence(analysis, "autism", highlightExplanation);
-  }
   analysis = trimIncompleteSentence(analysis);
 
   const adhdScore = clampScore(value?.adhdScore || fallbackAdhdScore || 1);
@@ -298,9 +295,6 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   if (adhdAnchors.length >= 2 && !analysisMentionsDetails(adhdAnalysis, adhdAnchors)) {
     adhdAnalysis = `${adhdAnalysis} Other concrete details carry the read too: ${humanJoin(adhdAnchors.slice(0, 3))}.`;
-  }
-  if (adhdHighlightText && adhdHighlightExplanation && !analysisMentionsDetails(adhdAnalysis, [adhdHighlightText, adhdHighlightExplanation])) {
-    adhdAnalysis = appendHighlightMechanismSentence(adhdAnalysis, "ADHD", adhdHighlightExplanation);
   }
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
@@ -458,7 +452,7 @@ function isWeakHighlight(value, trait = "") {
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time)\b/.test(text)) return true;
   const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
   if (pronouns / words.length > 0.45) return true;
   if (trait === "adhd" && adhdPhraseSignal(text) === 0 && words.length < 8) return true;
