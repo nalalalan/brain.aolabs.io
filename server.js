@@ -287,7 +287,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     : [];
   let adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
   if (highlightText && comparableAnalysisText(adhdHighlightText) === comparableAnalysisText(highlightText)) {
-    const alternate = bestSourceHighlight(sourceText, [...sourceAnchors, ...adhdDetails], "adhd", adhdHighlightText);
+    const alternate = bestSourceHighlight(sourceText, sourceAnchors, "adhd", adhdHighlightText);
     if (alternate && comparableAnalysisText(alternate) !== comparableAnalysisText(highlightText)) {
       adhdHighlightText = alternate;
     }
@@ -324,11 +324,15 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
     .trim();
   if (text.split(/\s+/).filter(Boolean).length >= 2) {
     const phrase = completeHighlightPhrase(text, sourceText);
-    return isWeakHighlight(phrase, trait) ? bestSourceHighlight(sourceText, anchors, trait, phrase) : phrase;
+    return isWeakHighlight(phrase, trait) || !sourceContainsPhrase(sourceText, phrase)
+      ? bestSourceHighlight(sourceText, anchors, trait, phrase)
+      : phrase;
   }
   const fallback = anchors.find((anchor) => String(anchor || "").split(/\s+/).filter(Boolean).length >= 2) || "";
   const phrase = shortHighlightPhrase(text || fallback);
-  return isWeakHighlight(phrase, trait) ? bestSourceHighlight(sourceText, anchors, trait, phrase) : phrase;
+  return isWeakHighlight(phrase, trait) || !sourceContainsPhrase(sourceText, phrase)
+    ? bestSourceHighlight(sourceText, anchors, trait, phrase)
+    : phrase;
 }
 
 function completeHighlightPhrase(value, sourceText = "") {
@@ -389,11 +393,12 @@ function bestSourceHighlight(sourceText = "", anchors = [], trait = "autism", av
       };
     })
     .filter((item) => item.phrase)
+    .filter((item) => sourceContainsPhrase(sourceText, item.phrase))
     .sort((a, b) => b.score - a.score || a.index - b.index);
   const best = ranked.find((item) => !isWeakHighlight(item.phrase, trait))
     || ranked.find((item) => !isBadHighlightFragment(item.phrase))
     || ranked[0];
-  return best?.phrase || shortHighlightPhrase(avoided || anchors[0] || sourceText, 18);
+  return best?.phrase || shortHighlightPhrase(sourceHighlightCandidates(sourceText)[0] || sourceText, 18);
 }
 
 function sourceHighlightCandidates(sourceText = "") {
@@ -471,8 +476,25 @@ function isBadHighlightFragment(value) {
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time)\b/.test(text)) return true;
   return false;
+}
+
+function sourceContainsPhrase(sourceText = "", phrase = "") {
+  const source = sourceComparableText(sourceText);
+  const text = sourceComparableText(phrase);
+  if (!source || !text) return false;
+  const pattern = new RegExp(text.split(/\s+/).map(escapeRegex).join("\\s+"), "i");
+  return pattern.test(source);
+}
+
+function sourceComparableText(value) {
+  return repairQuestionArtifacts(String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u0000/g, ""))
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function isDanglingHighlight(value) {
