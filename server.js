@@ -409,7 +409,7 @@ function sourceHighlightCandidates(sourceText = "") {
   const text = repairQuestionArtifacts(String(sourceText || "").replace(/\r\n?/g, "\n").replace(/\u0000/g, "")).replace(/\s+/g, " ").trim();
   if (!text) return [];
   const chunks = [];
-  const sentenceParts = text.split(/(?<=[.!?;])\s+|,\s+(?=(?:and|but|because|when|while|then|so|if|i|the)\b)/i);
+  const sentenceParts = text.split(/(?<=[.!?;])\s+|,\s+|[()]/i);
   for (const part of sentenceParts) {
     const clean = cleanExplanation(part);
     const words = clean.split(/\s+/).filter(Boolean);
