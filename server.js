@@ -316,7 +316,7 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
   }
   const phrase = completeHighlightPhrase(text, sourceText);
   if (isWeakHighlight(phrase, trait)) {
-    throw Object.assign(new Error(`AI ${trait} highlight failed quality gate`), { status: 502 });
+    throw Object.assign(new Error(`AI ${trait} highlight failed quality gate: ${phrase.slice(0, 120)}`), { status: 502 });
   }
   if (!sourceContainsPhrase(sourceText, phrase)) {
     throw Object.assign(new Error(`AI ${trait} highlight was not source-backed`), { status: 502 });
