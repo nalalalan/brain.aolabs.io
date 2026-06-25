@@ -119,7 +119,7 @@ async function analyzeWithAi(payload) {
           "Do not start most paragraphs with the same phrase such as 'I read'. Vary the first sentence naturally across notes so neighboring cards do not look copied and pasted.",
           "Each paragraph must be anchored in this exact input. Name at least three concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text when the note provides them. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
           "Make the autism and ADHD paragraphs parallel in shape and length. Each should be two compact complete sentences, about 150-260 characters, talk directly about its chosen phrase, then explain the score in normal human language.",
-          "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it as the selected line, that line, or that phrase, then use other concrete details from the input.",
+          "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it naturally as that line, that wording, or that phrase, then use other concrete details from the input. Do not say 'selected line'.",
           "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least three concrete details besides the selected phrase whenever the input provides them.",
           "The ADHD paragraph must not sound like a separate clinical rubric or abstract executive-function lecture. Start from the chosen ADHD phrase when possible and explain how that exact phrase shows attention, task-starting, time, memory, restlessness, quick switching, frustration, or hyperfocus.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
@@ -274,11 +274,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   const highlightExplanation = cleanExplanation(value?.highlightExplanation).slice(0, 320);
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
-  const anchors = [...sourceAnchors, ...details].map((item) => cleanExplanation(item)).filter(Boolean);
   analysis = removeRepeatedHighlightSentences(analysis, highlightText);
-  if (anchors.length >= 2 && !analysisMentionsDetails(analysis, anchors)) {
-    analysis = `${analysis} Other concrete details carry the read too: ${humanJoin(anchors.slice(0, 3))}.`;
-  }
   analysis = trimIncompleteSentence(analysis);
 
   const adhdScore = clampScore(value?.adhdScore || fallbackAdhdScore || 1);
@@ -297,11 +293,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   if (!adhdAnalysis || adhdAnalysis.length < 40) {
     adhdAnalysis = "This entry has limited ADHD-specific readable detail, so I keep the ADHD score close to the fallback and treat the result as a low-confidence signal rather than a diagnosis.";
   }
-  const adhdAnchors = [...sourceAnchors, ...adhdDetails].map((item) => cleanExplanation(item)).filter(Boolean);
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
-  if (adhdAnchors.length >= 2 && !analysisMentionsDetails(adhdAnalysis, adhdAnchors)) {
-    adhdAnalysis = `${adhdAnalysis} Other concrete details carry the read too: ${humanJoin(adhdAnchors.slice(0, 3))}.`;
-  }
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
     score: Math.max(1, score),
@@ -528,31 +520,6 @@ function shortHighlightPhrase(value, maxWords = 18) {
   return output.join(" ").slice(0, 160).trim();
 }
 
-function lowercaseFirst(value) {
-  const text = cleanExplanation(value);
-  return text ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : "";
-}
-
-function analysisPhraseFromExplanation(value) {
-  return lowercaseFirst(cleanExplanation(value)
-    .replace(/[.!?]+$/g, "")
-    .replace(/^it shows\s+/i, "")
-    .replace(/^it is\s+/i, "")
-    .replace(/^it centers on\s+/i, "")
-    .replace(/^it directly signals\s+/i, "")
-    .replace(/^it directly shows\s+/i, "")
-    .replace(/^this centers on\s+/i, "")
-    .replace(/^this signals\s+/i, "")
-    .replace(/^the phrase is\s+/i, "")
-    .replace(/^the line is\s+/i, ""));
-}
-
-function appendHighlightMechanismSentence(analysis, trait, explanation) {
-  const mechanism = analysisPhraseFromExplanation(explanation);
-  if (!mechanism) return analysis;
-  return `${analysis} The selected ${trait} line points to ${mechanism}.`;
-}
-
 function trimIncompleteSentence(value) {
   const text = cleanExplanation(value);
   if (!text || /[.!?]["')\]]?$/.test(text)) return text;
@@ -664,29 +631,6 @@ function anchorSimilarity(a, b) {
     if (right.has(token)) overlap += 1;
   }
   return overlap / Math.min(left.size, right.size);
-}
-
-function analysisMentionsDetails(analysis, details) {
-  const text = analysis.toLowerCase();
-  const tokens = new Set(
-    details
-      .join(" ")
-      .toLowerCase()
-      .split(/[^a-z0-9']+/)
-      .filter((token) => token.length >= 5)
-  );
-  let matches = 0;
-  for (const token of tokens) {
-    if (text.includes(token)) matches += 1;
-    if (matches >= 2) return true;
-  }
-  return false;
-}
-
-function humanJoin(items) {
-  if (items.length <= 1) return items[0] || "";
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
 function dataUrlToBuffer(dataUrl) {
