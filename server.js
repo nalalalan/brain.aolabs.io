@@ -456,8 +456,6 @@ function isWeakHighlight(value, trait = "") {
   if (isBadHighlightFragment(text)) return true;
   const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
   if (pronouns / words.length > 0.45) return true;
-  if (trait === "adhd" && adhdPhraseSignal(text) === 0 && words.length < 8) return true;
-  if (trait === "autism" && autismPhraseSignal(text) === 0 && words.length < 8) return true;
   return false;
 }
 
