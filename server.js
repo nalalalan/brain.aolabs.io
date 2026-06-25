@@ -105,7 +105,7 @@ async function analyzeWithAi(payload) {
           "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
           "The selected phrase must make sense by itself. It needs enough concrete context that a card reader can understand what it refers to without rereading the full note.",
           "Never select vague fragments such as 'about that every day', 'that every day', 'the thing', 'this is hard', 'about it', 'that part', 'while driving', 'ok so in the movie', 'this uncertainty is making me kind', or any phrase built mostly from pronouns. Expand to the surrounding concrete sentence or choose a better sentence.",
-          "Never select a phrase that is only a topic label, tool mention, object mention, or random memorable sentence. Bad selections include phrases like 'i do a lot of prompting for codex and chatgpt', 'i mean theres silly and then theres hi hitler', 'thinking about research for the day, playing violin for the day', or 'sparkling water is like the same' unless the analysis can point to a concrete trait mechanism inside that exact wording.",
+          "Never select a phrase that is only a topic label, tool mention, object mention, food/object list, or random memorable sentence. Bad selections include phrases like 'i do a lot of prompting for codex and chatgpt', 'i mean theres silly and then theres hi hitler', 'thinking about research for the day, playing violin for the day', 'same with da ua, banh bo nuong', or 'sparkling water is like the same' unless the analysis can point to a concrete trait mechanism inside that exact wording.",
           "Never include ellipses, truncated quotes, trailing punctuation fragments, or preview-style clipped text in highlightText or adhdHighlightText. The selected phrase must be copied as a continuous exact phrase from the source.",
           "For ADHD, a good phrase must itself show attention load, task friction, time/memory/organization strain, impulsivity, restlessness, hyperfocus, or emotional regulation under executive load. Do not use a general anxiety phrase as ADHD evidence unless you explain the attention/executive part concretely.",
           "For autism, a good phrase must itself show predictability, sensory/body mapping, exactness, sameness, social meaning, masking, transition cost, or fixed-focus evidence. Do not use a general worry phrase as autism evidence unless the concrete autism-shaped mechanism is present.",
@@ -117,7 +117,7 @@ async function analyzeWithAi(payload) {
           "Prefer self-contained complete phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, focus, or know. Do not end the phrase on a dangling word or half-thought like that, that's kind, while, to, I, can't, cant, like, of, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "Do not start most paragraphs with the same phrase such as 'I read'. Vary the first sentence naturally across notes so neighboring cards do not look copied and pasted.",
-          "Each paragraph must be anchored in this exact input. Name at least three concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text when the note provides them. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
+          "Each paragraph must be anchored in this exact input. Name at least three concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text when the note provides them. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes. The explanation must describe the same chosen phrase, not a different line from the note.",
           "Make the autism and ADHD paragraphs parallel in shape and length. Each should be two compact complete sentences, about 150-260 characters, talk directly about its chosen phrase, then explain the score in normal human language.",
           "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it naturally as that line, that wording, or that phrase, then use other concrete details from the input. Do not say 'selected line'.",
           "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least three concrete details besides the selected phrase whenever the input provides them.",
@@ -281,12 +281,9 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   const adhdDetails = Array.isArray(value?.adhdSpecificDetails)
     ? value.adhdSpecificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  let adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
+  const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
   if (highlightText && comparableAnalysisText(adhdHighlightText) === comparableAnalysisText(highlightText)) {
-    const alternate = bestSourceHighlight(sourceText, sourceAnchors, "adhd", adhdHighlightText);
-    if (alternate && comparableAnalysisText(alternate) !== comparableAnalysisText(highlightText)) {
-      adhdHighlightText = alternate;
-    }
+    throw Object.assign(new Error("AI analysis repeated the same highlight for both traits"), { status: 502 });
   }
   const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
   let adhdAnalysis = cleanExplanation(value?.adhdAnalysis);
@@ -314,17 +311,17 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
     .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
     .replace(/\*\*/g, "")
     .trim();
-  if (text.split(/\s+/).filter(Boolean).length >= 2) {
-    const phrase = completeHighlightPhrase(text, sourceText);
-    return isWeakHighlight(phrase, trait) || !sourceContainsPhrase(sourceText, phrase)
-      ? bestSourceHighlight(sourceText, anchors, trait, phrase)
-      : phrase;
+  if (text.split(/\s+/).filter(Boolean).length < 2) {
+    throw Object.assign(new Error(`AI ${trait} highlight was too short`), { status: 502 });
   }
-  const fallback = anchors.find((anchor) => String(anchor || "").split(/\s+/).filter(Boolean).length >= 2) || "";
-  const phrase = shortHighlightPhrase(text || fallback);
-  return isWeakHighlight(phrase, trait) || !sourceContainsPhrase(sourceText, phrase)
-    ? bestSourceHighlight(sourceText, anchors, trait, phrase)
-    : phrase;
+  const phrase = completeHighlightPhrase(text, sourceText);
+  if (isWeakHighlight(phrase, trait)) {
+    throw Object.assign(new Error(`AI ${trait} highlight failed quality gate`), { status: 502 });
+  }
+  if (!sourceContainsPhrase(sourceText, phrase)) {
+    throw Object.assign(new Error(`AI ${trait} highlight was not source-backed`), { status: 502 });
+  }
+  return phrase;
 }
 
 function completeHighlightPhrase(value, sourceText = "") {
@@ -472,7 +469,7 @@ function isBadHighlightFragment(value) {
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like|ok so)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know|this uncertainty is making me kind|i was telling me how this is the same thing)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua)\b/.test(text)) return true;
   return false;
 }
 

@@ -2,7 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
-const analysisQualityVersion = "20260624-quote-quality-v4";
+const analysisQualityVersion = "20260624-strict-match-v5";
 
 let state = loadState();
 let pendingFiles = [];
@@ -1529,7 +1529,7 @@ function isWeakHighlight(value) {
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like|ok so)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know|this uncertainty is making me kind|i was telling me how this is the same thing)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
-  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves)\b/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua)\b/.test(text)) return true;
   const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
   return pronouns / words.length > 0.45;
 }
@@ -1647,19 +1647,24 @@ async function analyzeRecordText({ name, mime, kind, text }) {
   if (sync.status !== "connected" || !sync.base) {
     return fallbackAnalysis(fallback, "sync not connected");
   }
-  try {
-    const response = await postJson(`${sync.base}/api/analyze`, {
-      name: name || "",
-      kind: kind || "",
-      mime: mime || "",
-      text: readable,
-      fallbackScore: fallback.autism.score,
-      fallbackAdhdScore: fallback.adhd.score,
-    });
-    return normalizeRemoteAnalysis(response.analysis, fallback);
-  } catch {
-    return fallbackAnalysis(fallback, "AI analysis unavailable");
+  let lastError = "";
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await postJson(`${sync.base}/api/analyze`, {
+        name: name || "",
+        kind: kind || "",
+        mime: mime || "",
+        text: readable,
+        fallbackScore: fallback.autism.score,
+        fallbackAdhdScore: fallback.adhd.score,
+      });
+      return normalizeRemoteAnalysis(response.analysis, fallback);
+    } catch (error) {
+      lastError = error?.message || "AI analysis unavailable";
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 900 * attempt));
+    }
   }
+  return fallbackAnalysis(fallback, lastError || "AI analysis unavailable");
 }
 
 function normalizeRemoteAnalysis(analysis, fallback) {
