@@ -274,7 +274,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     analysis = `${analysis} Other concrete details carry the read too: ${humanJoin(anchors.slice(0, 3))}.`;
   }
   if (highlightText && highlightExplanation && !analysisMentionsDetails(analysis, [highlightText, highlightExplanation])) {
-    analysis = `${analysis} The selected autism line points to ${analysisPhraseFromExplanation(highlightExplanation)}.`;
+    analysis = appendHighlightMechanismSentence(analysis, "autism", highlightExplanation);
   }
   analysis = trimIncompleteSentence(analysis);
 
@@ -300,7 +300,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     adhdAnalysis = `${adhdAnalysis} Other concrete details carry the read too: ${humanJoin(adhdAnchors.slice(0, 3))}.`;
   }
   if (adhdHighlightText && adhdHighlightExplanation && !analysisMentionsDetails(adhdAnalysis, [adhdHighlightText, adhdHighlightExplanation])) {
-    adhdAnalysis = `${adhdAnalysis} The selected ADHD line points to ${analysisPhraseFromExplanation(adhdHighlightExplanation)}.`;
+    adhdAnalysis = appendHighlightMechanismSentence(adhdAnalysis, "ADHD", adhdHighlightExplanation);
   }
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   return {
@@ -503,8 +503,19 @@ function analysisPhraseFromExplanation(value) {
     .replace(/[.!?]+$/g, "")
     .replace(/^it shows\s+/i, "")
     .replace(/^it is\s+/i, "")
+    .replace(/^it centers on\s+/i, "")
+    .replace(/^it directly signals\s+/i, "")
+    .replace(/^it directly shows\s+/i, "")
+    .replace(/^this centers on\s+/i, "")
+    .replace(/^this signals\s+/i, "")
     .replace(/^the phrase is\s+/i, "")
     .replace(/^the line is\s+/i, ""));
+}
+
+function appendHighlightMechanismSentence(analysis, trait, explanation) {
+  const mechanism = analysisPhraseFromExplanation(explanation);
+  if (!mechanism) return analysis;
+  return `${analysis} The selected ${trait} line points to ${mechanism}.`;
 }
 
 function trimIncompleteSentence(value) {
