@@ -2,6 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
+const analysisQualityVersion = "20260624-self-contained-quotes-v1";
 
 let state = loadState();
 let pendingFiles = [];
@@ -194,6 +195,7 @@ function convertTextToPendingPdf() {
     adhdScoreWarning: adhd.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
     adhdTextChars: adhd.textChars || sourceText.length,
     generatedNoteLayoutVersion,
+    analysisQualityVersion,
     sourceText,
     blob: result.blob,
   };
@@ -282,6 +284,7 @@ function rebuildGeneratedPdf(file, text) {
     previewDataUrl: createTextPreviewDataUrl(sourceText, createdAt, highlights),
     sourceText,
     generatedNoteLayoutVersion,
+    analysisQualityVersion,
     blob: result.blob,
   };
 }
@@ -330,6 +333,7 @@ async function uploadToSync(file) {
     adhdTextChars: adhdTextCharsForRecord(file),
     sourceText: textPdfSource(file.sourceText || ""),
     generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
+    analysisQualityVersion: file.analysisQualityVersion || "",
   });
   return normalizeSyncFile(response.file);
 }
@@ -343,10 +347,25 @@ async function rebuildSyncGeneratedNote(file, rebuilt) {
     previewDataUrl: rebuilt.previewDataUrl || "",
     sourceText: textPdfSource(rebuilt.sourceText || ""),
     generatedNoteLayoutVersion,
+    analysisQualityVersion,
+    autismScore: autismScoreForRecord(rebuilt),
+    autismScoreExplanation: autismExplanationForRecord(rebuilt),
     autismHighlightText: autismHighlightTextForRecord(rebuilt),
     autismHighlightExplanation: autismHighlightExplanationForRecord(rebuilt),
+    autismScoreSource: autismScoreSourceForRecord(rebuilt),
+    autismScoreModel: autismScoreModelForRecord(rebuilt),
+    autismScoreConfidence: autismScoreConfidenceForRecord(rebuilt),
+    autismScoreWarning: autismScoreWarningForRecord(rebuilt),
+    autismTextChars: autismTextCharsForRecord(rebuilt),
+    adhdScore: adhdScoreForRecord(rebuilt),
+    adhdScoreExplanation: adhdExplanationForRecord(rebuilt),
     adhdHighlightText: adhdHighlightTextForRecord(rebuilt),
     adhdHighlightExplanation: adhdHighlightExplanationForRecord(rebuilt),
+    adhdScoreSource: adhdScoreSourceForRecord(rebuilt),
+    adhdScoreModel: adhdScoreModelForRecord(rebuilt),
+    adhdScoreConfidence: adhdScoreConfidenceForRecord(rebuilt),
+    adhdScoreWarning: adhdScoreWarningForRecord(rebuilt),
+    adhdTextChars: adhdTextCharsForRecord(rebuilt),
   });
   return normalizeSyncFile(response.file);
 }
@@ -384,6 +403,7 @@ function fileRecordFromPending(file, kind, source) {
     adhdTextChars: adhdTextCharsForRecord(file),
     sourceText: textPdfSource(file.sourceText || ""),
     generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
+    analysisQualityVersion: file.analysisQualityVersion || "",
   };
 }
 
@@ -767,6 +787,7 @@ function normalizeSyncFile(file) {
     autismTextChars: autismTextCharsForRecord(file),
     sourceText: textPdfSource(file.sourceText || ""),
     generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
+    analysisQualityVersion: file.analysisQualityVersion || "",
     source: "sync",
   };
   const needsPdfAdhdAnalysis = isGeneratedPdf(normalized)
@@ -1478,6 +1499,7 @@ function completeHighlightSegmentScore(value, maxWords) {
   let score = phraseFitScore(text, maxWords);
   if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus)\b/.test(text)) score += 18;
   if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body)\b/.test(text)) score += 12;
+  if (isWeakHighlight(text)) score -= 45;
   if (words > maxWords) score -= 20;
   return score;
 }
@@ -1496,9 +1518,18 @@ function clippedCompleteWords(words, maxWords) {
 function stripHighlightLeadIn(value) {
   return String(value || "")
     .replace(/^(?:and|but|so)\s+/i, "")
-    .replace(/^i think\s+/i, "")
-    .replace(/^i mean\s+/i, "")
     .trim();
+}
+
+function isWeakHighlight(value) {
+  const text = textPdfSource(value || "").toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  if (!text || words.length < 5) return true;
+  if (isDanglingHighlight(text)) return true;
+  if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
+  if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
+  const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
+  return pronouns / words.length > 0.45;
 }
 
 function isDanglingHighlight(value) {
@@ -1713,6 +1744,7 @@ function analysisRecordFields(analysis, textChars = 0, file = {}) {
     adhdScoreConfidence: adhd?.scoreConfidence || "low",
     adhdScoreWarning: adhd?.scoreWarning || "",
     adhdTextChars: Math.max(0, Number(adhd?.textChars || textChars || 0)),
+    analysisQualityVersion,
   };
 }
 

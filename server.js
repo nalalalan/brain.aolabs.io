@@ -103,16 +103,20 @@ async function analyzeWithAi(payload) {
           "For ADHD, do not rely only on keywords. Read attention regulation, executive-function load, starting/finishing tasks, time and organization friction, forgetfulness, impulsivity, restlessness, emotional regulation under task friction, hyperfocus, and functional impact.",
           "Choose exactly one short phrase from the saved input that is the strongest autism-trait signal and exactly one short phrase that is the strongest ADHD-trait signal. These phrases will be bolded in the generated PDF.",
           "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
+          "The selected phrase must make sense by itself. It needs enough concrete context that a card reader can understand what it refers to without rereading the full note.",
+          "Never select vague fragments such as 'about that every day', 'that every day', 'the thing', 'this is hard', 'about it', 'that part', 'while driving', or any phrase built mostly from pronouns. Expand to the surrounding concrete sentence or choose a better sentence.",
+          "For ADHD, a good phrase must itself show attention load, task friction, time/memory/organization strain, impulsivity, restlessness, hyperfocus, or emotional regulation under executive load. Do not use a general anxiety phrase as ADHD evidence unless you explain the attention/executive part concretely.",
+          "For autism, a good phrase must itself show predictability, sensory/body mapping, exactness, sameness, social meaning, masking, transition cost, or fixed-focus evidence. Do not use a general worry phrase as autism evidence unless the concrete autism-shaped mechanism is present.",
           "A strong autism phrase usually shows need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
           "A strong ADHD phrase usually shows attention being interest-driven, starting or finishing friction, too many steps, time/memory/organization friction, quick switching, restlessness, emotional load from task friction, or hyperfocus.",
           "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, exactness, attention, task, time, memory, restlessness, impulsivity, or focus evidence.",
           "Prefer self-contained complete phrases with words like need, can't, only, should, make sure, exact, same, first, predictable, comfortable, safe, normal, switch, focus, or know. Do not end the phrase on a dangling word or half-thought like that, that's kind, while, to, I, can't, cant, like, of, or because.",
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "Do not start most paragraphs with the same phrase such as 'I read'. Vary the first sentence naturally across notes so neighboring cards do not look copied and pasted.",
-          "Each paragraph must be anchored in this exact input. Name at least two concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
+          "Each paragraph must be anchored in this exact input. Name at least three concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text when the note provides them. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes.",
           "Make the autism and ADHD paragraphs parallel in shape and length. Each should be two compact complete sentences, about 150-260 characters, talk directly about its chosen phrase, then explain the score in normal human language.",
           "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it as the selected line, that line, or that phrase, then use other concrete details from the input.",
-          "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least two concrete details besides the selected phrase whenever the input provides them.",
+          "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least three concrete details besides the selected phrase whenever the input provides them.",
           "The ADHD paragraph must not sound like a separate clinical rubric or abstract executive-function lecture. Start from the chosen ADHD phrase when possible and explain how that exact phrase shows attention, task-starting, time, memory, restlessness, quick switching, frustration, or hyperfocus.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
           "Be direct but bounded: say what the entry suggests, what weighs most, and why the score is not higher or lower when relevant.",
@@ -156,7 +160,7 @@ async function analyzeWithAi(payload) {
                   type: "string",
                   minLength: 4,
                   maxLength: 100,
-                  description: "One exact 4-14 word phrase from the saved input that should be bolded as the strongest autism-trait signal.",
+                  description: "One exact 6-18 word self-contained phrase from the saved input that should be bolded as the strongest autism-trait signal. It must include concrete context, not just a pronoun fragment.",
                 },
                 highlightExplanation: {
                   type: "string",
@@ -191,7 +195,7 @@ async function analyzeWithAi(payload) {
                   type: "string",
                   minLength: 4,
                   maxLength: 100,
-                  description: "One exact 4-14 word phrase from the saved input that should be bolded as the strongest ADHD-trait signal.",
+                  description: "One exact 6-18 word self-contained phrase from the saved input that should be bolded as the strongest ADHD-trait signal. It must include concrete context, not just a pronoun fragment.",
                 },
                 adhdHighlightExplanation: {
                   type: "string",
@@ -256,7 +260,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  const highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors, sourceText);
+  const highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors, sourceText, "autism");
   const highlightExplanation = cleanExplanation(value?.highlightExplanation).slice(0, 320);
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
@@ -274,7 +278,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   const adhdDetails = Array.isArray(value?.adhdSpecificDetails)
     ? value.adhdSpecificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText);
+  const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
   const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
   let adhdAnalysis = cleanExplanation(value?.adhdAnalysis);
   if (!adhdAnalysis || adhdAnalysis.length < 40) {
@@ -303,14 +307,18 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   };
 }
 
-function normalizedHighlightText(value, anchors = [], sourceText = "") {
+function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "autism") {
   const text = cleanExplanation(value)
     .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
     .replace(/\*\*/g, "")
     .trim();
-  if (text.split(/\s+/).filter(Boolean).length >= 2) return completeHighlightPhrase(text, sourceText);
+  if (text.split(/\s+/).filter(Boolean).length >= 2) {
+    const phrase = completeHighlightPhrase(text, sourceText);
+    return isWeakHighlight(phrase, trait) ? bestSourceHighlight(sourceText, anchors, trait, phrase) : phrase;
+  }
   const fallback = anchors.find((anchor) => String(anchor || "").split(/\s+/).filter(Boolean).length >= 2) || "";
-  return shortHighlightPhrase(text || fallback);
+  const phrase = shortHighlightPhrase(text || fallback);
+  return isWeakHighlight(phrase, trait) ? bestSourceHighlight(sourceText, anchors, trait, phrase) : phrase;
 }
 
 function completeHighlightPhrase(value, sourceText = "") {
@@ -339,8 +347,6 @@ function bestCompleteHighlightSegment(value, maxWords = 18) {
 function stripHighlightLeadIn(value) {
   return String(value || "")
     .replace(/^(?:and|but|so)\s+/i, "")
-    .replace(/^i think\s+/i, "")
-    .replace(/^i mean\s+/i, "")
     .trim();
 }
 
@@ -353,8 +359,99 @@ function highlightSegmentScore(value, maxWords) {
   if (!isDanglingHighlight(text)) score += 12;
   if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus)\b/.test(text)) score += 18;
   if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body)\b/.test(text)) score += 12;
+  if (isWeakHighlight(text, "adhd") && isWeakHighlight(text, "autism")) score -= 45;
   if (words > maxWords) score -= 20;
   return score - Math.abs(words - Math.min(maxWords, 10));
+}
+
+function bestSourceHighlight(sourceText = "", anchors = [], trait = "autism", avoided = "") {
+  const candidates = [
+    ...sourceHighlightCandidates(sourceText),
+    ...anchors.map((anchor) => cleanExplanation(anchor)).filter(Boolean),
+  ];
+  const ranked = candidates
+    .map((candidate, index) => {
+      const phrase = completeHighlightPhrase(candidate, sourceText);
+      return {
+        phrase,
+        index,
+        score: sourceHighlightScore(phrase, trait, avoided),
+      };
+    })
+    .filter((item) => item.phrase)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+  const best = ranked.find((item) => !isWeakHighlight(item.phrase, trait)) || ranked[0];
+  return best?.phrase || shortHighlightPhrase(avoided || anchors[0] || sourceText, 18);
+}
+
+function sourceHighlightCandidates(sourceText = "") {
+  const text = repairQuestionArtifacts(String(sourceText || "").replace(/\r\n?/g, "\n").replace(/\u0000/g, "")).replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  const chunks = [];
+  const sentenceParts = text.split(/(?<=[.!?;])\s+|,\s+(?=(?:and|but|because|when|while|then|so|if|i|the)\b)/i);
+  for (const part of sentenceParts) {
+    const clean = cleanExplanation(part);
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length >= 5 && words.length <= 26) chunks.push(clean);
+    if (words.length > 18) {
+      for (let index = 0; index <= words.length - 6; index += 4) {
+        chunks.push(words.slice(index, index + 18).join(" "));
+      }
+    }
+  }
+  return chunks.filter((item, index, list) => list.findIndex((other) => anchorSimilarity(item, other) > 0.82) === index);
+}
+
+function sourceHighlightScore(value, trait, avoided = "") {
+  const text = cleanExplanation(value).toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  let score = highlightSegmentScore(text, 18);
+  if (trait === "adhd") score += adhdPhraseSignal(text) * 16 + autismPhraseSignal(text) * 2;
+  else score += autismPhraseSignal(text) * 16 + adhdPhraseSignal(text) * 2;
+  if (/\bi\b|\bmy\b|\bme\b/.test(text)) score += 6;
+  if (words >= 6 && words <= 16) score += 10;
+  if (isWeakHighlight(text, trait)) score -= 60;
+  if (avoided && comparableAnalysisText(text) === comparableAnalysisText(avoided)) score -= 18;
+  return score;
+}
+
+function adhdPhraseSignal(text) {
+  const value = cleanExplanation(text).toLowerCase();
+  const patterns = [
+    /\bpay attention\b/,
+    /\bfocus|concentrat|distract|attention\b/,
+    /\btask|start|finish|step|organize|priority|plan|time|deadline|remember|forget|memory\b/,
+    /\bfrustrat|overwhelm|annoy|stress|restless|fidget|impuls|hyperfocus|switch\b/,
+    /\bcan'?t keep|keep track|too many|all at once\b/,
+  ];
+  return patterns.reduce((count, pattern) => count + (pattern.test(value) ? 1 : 0), 0);
+}
+
+function autismPhraseSignal(text) {
+  const value = cleanExplanation(text).toLowerCase();
+  const patterns = [
+    /\bpredict|certainty|uncertain|know exactly|make sure|assume|rule\b/,
+    /\bsame|consistent|routine|stable|switch|change|transition\b/,
+    /\bsensory|sound|texture|comfortable|comfort|safe|safety|body|spatial|blind spot|every inch\b/,
+    /\bsocial|conversation|relationship|mask|normal|tone|misread\b/,
+    /\bexact|precise|pattern|category|fixed|interest|all the details\b/,
+    /\boverwhelm|panic|shutdown|too much\b/,
+  ];
+  return patterns.reduce((count, pattern) => count + (pattern.test(value) ? 1 : 0), 0);
+}
+
+function isWeakHighlight(value, trait = "") {
+  const text = cleanExplanation(value).toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  if (!text || words.length < 5) return true;
+  if (isDanglingHighlight(text)) return true;
+  if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
+  if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
+  const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
+  if (pronouns / words.length > 0.45) return true;
+  if (trait === "adhd" && adhdPhraseSignal(text) === 0 && words.length < 8) return true;
+  if (trait === "autism" && autismPhraseSignal(text) === 0 && words.length < 8) return true;
+  return false;
 }
 
 function isDanglingHighlight(value) {
@@ -622,6 +719,7 @@ async function saveUploadedFile(payload) {
     adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
     sourceText: cleanSourceText(payload.sourceText),
     generatedNoteLayoutVersion: cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80),
+    analysisQualityVersion: cleanExplanation(payload.analysisQualityVersion).slice(0, 80),
     storageName,
     previewStorageName,
     previewMime,
@@ -661,10 +759,25 @@ async function rebuildGeneratedEntry(id, payload) {
   entry.pages = Number(payload.pages || entry.pages || 0);
   entry.sourceText = cleanSourceText(payload.sourceText || entry.sourceText);
   entry.generatedNoteLayoutVersion = cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80);
+  if (payload.analysisQualityVersion !== undefined) entry.analysisQualityVersion = cleanExplanation(payload.analysisQualityVersion).slice(0, 80);
+  if (payload.autismScore !== undefined) entry.autismScore = clampScore(payload.autismScore);
+  if (payload.autismScoreExplanation !== undefined) entry.autismScoreExplanation = cleanExplanation(payload.autismScoreExplanation);
   if (payload.autismHighlightText !== undefined) entry.autismHighlightText = cleanExplanation(payload.autismHighlightText).slice(0, 160);
   if (payload.autismHighlightExplanation !== undefined) entry.autismHighlightExplanation = cleanExplanation(payload.autismHighlightExplanation).slice(0, 360);
+  if (payload.autismScoreSource !== undefined) entry.autismScoreSource = scoreSource(payload.autismScoreSource);
+  if (payload.autismScoreModel !== undefined) entry.autismScoreModel = cleanExplanation(payload.autismScoreModel).slice(0, 80);
+  if (payload.autismScoreConfidence !== undefined) entry.autismScoreConfidence = scoreConfidence(payload.autismScoreConfidence);
+  if (payload.autismScoreWarning !== undefined) entry.autismScoreWarning = cleanExplanation(payload.autismScoreWarning).slice(0, 180);
+  if (payload.autismTextChars !== undefined) entry.autismTextChars = Math.max(0, Number(payload.autismTextChars || 0));
+  if (payload.adhdScore !== undefined) entry.adhdScore = clampScore(payload.adhdScore);
+  if (payload.adhdScoreExplanation !== undefined) entry.adhdScoreExplanation = cleanExplanation(payload.adhdScoreExplanation);
   if (payload.adhdHighlightText !== undefined) entry.adhdHighlightText = cleanExplanation(payload.adhdHighlightText).slice(0, 160);
   if (payload.adhdHighlightExplanation !== undefined) entry.adhdHighlightExplanation = cleanExplanation(payload.adhdHighlightExplanation).slice(0, 360);
+  if (payload.adhdScoreSource !== undefined) entry.adhdScoreSource = scoreSource(payload.adhdScoreSource);
+  if (payload.adhdScoreModel !== undefined) entry.adhdScoreModel = cleanExplanation(payload.adhdScoreModel).slice(0, 80);
+  if (payload.adhdScoreConfidence !== undefined) entry.adhdScoreConfidence = scoreConfidence(payload.adhdScoreConfidence);
+  if (payload.adhdScoreWarning !== undefined) entry.adhdScoreWarning = cleanExplanation(payload.adhdScoreWarning).slice(0, 180);
+  if (payload.adhdTextChars !== undefined) entry.adhdTextChars = Math.max(0, Number(payload.adhdTextChars || 0));
   await writeIndex(files);
   return entry;
 }
