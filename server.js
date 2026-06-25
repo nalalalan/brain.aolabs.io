@@ -390,7 +390,9 @@ function bestSourceHighlight(sourceText = "", anchors = [], trait = "autism", av
     })
     .filter((item) => item.phrase)
     .sort((a, b) => b.score - a.score || a.index - b.index);
-  const best = ranked.find((item) => !isWeakHighlight(item.phrase, trait)) || ranked[0];
+  const best = ranked.find((item) => !isWeakHighlight(item.phrase, trait))
+    || ranked.find((item) => !isBadHighlightFragment(item.phrase))
+    || ranked[0];
   return best?.phrase || shortHighlightPhrase(avoided || anchors[0] || sourceText, 18);
 }
 
@@ -453,16 +455,23 @@ function autismPhraseSignal(text) {
 function isWeakHighlight(value, trait = "") {
   const text = cleanExplanation(value).toLowerCase();
   const words = text.split(/\s+/).filter(Boolean);
+  if (isBadHighlightFragment(text)) return true;
+  const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
+  if (pronouns / words.length > 0.45) return true;
+  if (trait === "adhd" && adhdPhraseSignal(text) === 0 && words.length < 8) return true;
+  if (trait === "autism" && autismPhraseSignal(text) === 0 && words.length < 8) return true;
+  return false;
+}
+
+function isBadHighlightFragment(value) {
+  const text = cleanExplanation(value).toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
   if (!text || words.length < 5) return true;
   if (isDanglingHighlight(text)) return true;
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
   if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time)\b/.test(text)) return true;
-  const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
-  if (pronouns / words.length > 0.45) return true;
-  if (trait === "adhd" && adhdPhraseSignal(text) === 0 && words.length < 8) return true;
-  if (trait === "autism" && autismPhraseSignal(text) === 0 && words.length < 8) return true;
   return false;
 }
 
