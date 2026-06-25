@@ -316,7 +316,7 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
   }
   const phrase = completeHighlightPhrase(text, sourceText);
   if (isWeakHighlight(phrase, trait)) {
-    throw Object.assign(new Error(`AI ${trait} highlight failed quality gate: ${phrase.slice(0, 120)}`), { status: 502 });
+    throw Object.assign(new Error(`AI ${trait} highlight failed quality gate`), { status: 502 });
   }
   if (!sourceContainsPhrase(sourceText, phrase)) {
     throw Object.assign(new Error(`AI ${trait} highlight was not source-backed`), { status: 502 });
@@ -481,7 +481,7 @@ function isBadHighlightFragment(value) {
   if (!text || words.length < 5) return true;
   if (isDanglingHighlight(text)) return true;
   if (/^(?:about|the thing|thing|stuff|while|when|because|like|ok so)\b/.test(text)) return true;
-  if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know|this uncertainty is making me kind|i was telling me how this is the same thing)\b/.test(text)) return true;
+  if (/^(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know|this uncertainty is making me kind|i was telling me how this is the same thing)\b/.test(text)) return true;
   if (/\.\.\.|…/.test(text)) return true;
   if (/\b(?:i do a lot of prompting for codex and chatgpt|does a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same|relationships are fucking learning all the time|the main strain is starting not the topics themselves|same with da ua)\b/.test(text)) return true;
   return false;
