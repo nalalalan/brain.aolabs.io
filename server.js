@@ -93,7 +93,7 @@ async function analyzeWithAi(payload) {
       body: JSON.stringify({
         model: openAiModel,
         store: false,
-        reasoning: { effort: "low" },
+        reasoning: { effort: "medium" },
         max_output_tokens: 1300,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
@@ -105,8 +105,12 @@ async function analyzeWithAi(payload) {
           "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
           "The selected phrase must make sense by itself. It needs enough concrete context that a card reader can understand what it refers to without rereading the full note.",
           "Never select vague fragments such as 'about that every day', 'that every day', 'the thing', 'this is hard', 'about it', 'that part', 'while driving', or any phrase built mostly from pronouns. Expand to the surrounding concrete sentence or choose a better sentence.",
+          "Never select a phrase that is only a topic label, tool mention, object mention, or random memorable sentence. Bad selections include phrases like 'i do a lot of prompting for codex and chatgpt', 'i mean theres silly and then theres hi hitler', 'thinking about research for the day, playing violin for the day', or 'sparkling water is like the same' unless the analysis can point to a concrete trait mechanism inside that exact wording.",
+          "Never include ellipses, truncated quotes, trailing punctuation fragments, or preview-style clipped text in highlightText or adhdHighlightText. The selected phrase must be copied as a continuous exact phrase from the source.",
           "For ADHD, a good phrase must itself show attention load, task friction, time/memory/organization strain, impulsivity, restlessness, hyperfocus, or emotional regulation under executive load. Do not use a general anxiety phrase as ADHD evidence unless you explain the attention/executive part concretely.",
           "For autism, a good phrase must itself show predictability, sensory/body mapping, exactness, sameness, social meaning, masking, transition cost, or fixed-focus evidence. Do not use a general worry phrase as autism evidence unless the concrete autism-shaped mechanism is present.",
+          "The autism phrase and ADHD phrase should be different unless the note only contains one concrete trait-shaped sentence. If they are the same, explain different mechanisms in each paragraph and keep one score lower when the second trait is weaker.",
+          "If the note has weak signal for a trait, choose the least-bad concrete phrase and score it low. Do not make the quote or explanation sound stronger than the text actually supports.",
           "A strong autism phrase usually shows need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
           "A strong ADHD phrase usually shows attention being interest-driven, starting or finishing friction, too many steps, time/memory/organization friction, quick switching, restlessness, emotional load from task friction, or hyperfocus.",
           "The phrase itself must contain the signal. Do not choose lead-in/setup words such as 'when I click', 'the thing', or 'the part is' unless the chosen phrase also contains the actual need, rule, discomfort, certainty, switching, masking, sensory, exactness, attention, task, time, memory, restlessness, impulsivity, or focus evidence.",
@@ -278,7 +282,13 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   const adhdDetails = Array.isArray(value?.adhdSpecificDetails)
     ? value.adhdSpecificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
+  let adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
+  if (highlightText && comparableAnalysisText(adhdHighlightText) === comparableAnalysisText(highlightText)) {
+    const alternate = bestSourceHighlight(sourceText, [...sourceAnchors, ...adhdDetails], "adhd", adhdHighlightText);
+    if (alternate && comparableAnalysisText(alternate) !== comparableAnalysisText(highlightText)) {
+      adhdHighlightText = alternate;
+    }
+  }
   const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
   let adhdAnalysis = cleanExplanation(value?.adhdAnalysis);
   if (!adhdAnalysis || adhdAnalysis.length < 40) {
@@ -447,6 +457,8 @@ function isWeakHighlight(value, trait = "") {
   if (isDanglingHighlight(text)) return true;
   if (/^(?:about|that|this|it|the thing|thing|stuff|while|when|because|like)\b/.test(text)) return true;
   if (/\b(?:about that every day|that every day|about it|that part|the thing|this thing|that thing|while driving|kind of frustrating because i don't know)\b/.test(text)) return true;
+  if (/\.\.\.|…/.test(text)) return true;
+  if (/\b(?:i do a lot of prompting for codex and chatgpt|i mean theres silly and then theres hi hitler|thinking about research for the day|playing violin for the day|sparkling water is like the same)\b/.test(text)) return true;
   const pronouns = words.filter((word) => /^(?:i|me|my|it|that|this|they|them|he|she|we|you|something|thing|stuff)$/i.test(word)).length;
   if (pronouns / words.length > 0.45) return true;
   if (trait === "adhd" && adhdPhraseSignal(text) === 0 && words.length < 8) return true;
