@@ -325,16 +325,32 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
 }
 
 function completeHighlightPhrase(value, sourceText = "") {
-  const phrase = shortHighlightPhrase(bestCompleteHighlightSegment(value, 18), 18);
-  if (!phrase || !isDanglingHighlight(phrase)) return phrase;
-  const source = cleanExplanation(sourceText).replace(/\s+/g, " ");
-  if (!source) return phrase;
+  let phrase = shortHighlightPhrase(bestCompleteHighlightSegment(value, 18), 18);
+  const wordCount = phrase.split(/\s+/).filter(Boolean).length;
+  if (phrase && sourceText && (wordCount < 5 || isDanglingHighlight(phrase))) {
+    phrase = sourceContextPhrase(sourceText, phrase, 18) || phrase;
+  }
+  return phrase;
+}
+
+function sourceContextPhrase(sourceText = "", phrase = "", maxWords = 18) {
+  const source = cleanExplanation(sourceText).replace(/\s+/g, " ").trim();
+  if (!source || !phrase) return "";
   const pattern = new RegExp(phrase.split(/\s+/).map(escapeRegex).join("\\s+"), "i");
   const match = pattern.exec(source);
-  if (!match) return phrase;
-  const words = source.slice(match.index).split(/\s+/).filter(Boolean).slice(0, 18).join(" ");
-  const sentence = words.match(/^(.+?[.!?;:])(?:\s|$)/)?.[1] || words;
-  return shortHighlightPhrase(sentence.replace(/[.!?;:]+$/g, ""), 18);
+  if (!match) return "";
+  const left = source.slice(0, match.index);
+  const leftBoundary = Math.max(left.lastIndexOf("."), left.lastIndexOf("!"), left.lastIndexOf("?"), left.lastIndexOf(";"));
+  const right = source.slice(match.index + match[0].length);
+  const rightStops = [right.indexOf("."), right.indexOf("!"), right.indexOf("?"), right.indexOf(";")]
+    .filter((index) => index >= 0);
+  const rightBoundary = rightStops.length ? match.index + match[0].length + Math.min(...rightStops) : source.length;
+  const raw = source.slice(leftBoundary + 1, rightBoundary).trim();
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return shortHighlightPhrase(raw.replace(/[.!?;:]+$/g, ""), maxWords);
+  const before = source.slice(leftBoundary + 1, match.index).trim().split(/\s+/).filter(Boolean);
+  const start = Math.max(0, Math.min(before.length - 5, words.length - maxWords));
+  return shortHighlightPhrase(words.slice(start, start + maxWords).join(" "), maxWords);
 }
 
 function bestCompleteHighlightSegment(value, maxWords = 18) {
