@@ -430,7 +430,7 @@ function adhdPhraseSignal(text) {
   const patterns = [
     /\bpay attention\b/,
     /\bfocus|concentrat|distract|attention\b/,
-    /\btask|start|finish|step|organize|priority|plan|time|deadline|remember|forget|memory\b/,
+    /\btask|start|finish|step|organize|priority|plan|time|deadline|remember|forget|memory|warm[- ]?up|ramp|getting into|stuck\b/,
     /\bfrustrat|overwhelm|annoy|stress|restless|fidget|impuls|hyperfocus|switch\b/,
     /\bcan'?t keep|keep track|too many|all at once\b/,
   ];
@@ -440,8 +440,8 @@ function adhdPhraseSignal(text) {
 function autismPhraseSignal(text) {
   const value = cleanExplanation(text).toLowerCase();
   const patterns = [
-    /\bpredict|certainty|uncertain|know exactly|make sure|assume|rule\b/,
-    /\bsame|consistent|routine|stable|switch|change|transition\b/,
+    /\bpredict|certainty|uncertain|know exactly|make sure|assume|rule|standard|goal|confus|not know|don'?t know\b/,
+    /\bsame|consistent|routine|stable|switch|change|transition|warm[- ]?up|ramp|never-ending|infinite\b/,
     /\bsensory|sound|texture|comfortable|comfort|safe|safety|body|spatial|blind spot|every inch\b/,
     /\bsocial|conversation|relationship|mask|normal|tone|misread\b/,
     /\bexact|precise|pattern|category|fixed|interest|all the details\b/,

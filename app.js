@@ -1497,8 +1497,8 @@ function completeHighlightSegmentScore(value, maxWords) {
   const text = textPdfSource(value || "").toLowerCase();
   const words = text.split(/\s+/).filter(Boolean).length;
   let score = phraseFitScore(text, maxWords);
-  if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus)\b/.test(text)) score += 18;
-  if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body)\b/.test(text)) score += 12;
+  if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus|warm[- ]?up|ramp|getting into|stuck)\b/.test(text)) score += 18;
+  if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body|standard|goal|confus|not know|don't know|never-ending|infinite)\b/.test(text)) score += 12;
   if (isWeakHighlight(text)) score -= 45;
   if (words > maxWords) score -= 20;
   return score;
