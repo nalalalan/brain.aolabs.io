@@ -94,7 +94,7 @@ async function analyzeWithAi(payload) {
         model: openAiModel,
         store: false,
         reasoning: { effort: "medium" },
-        max_output_tokens: 1300,
+        max_output_tokens: 2200,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
           "Return two nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal and ADHD-trait signal. These are not clinical diagnoses and not severity labels.",
@@ -244,6 +244,12 @@ function parseAiJson(body) {
   try {
     return JSON.parse(text);
   } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {}
+    }
     throw Object.assign(new Error("AI analysis returned invalid JSON"), { status: 502 });
   }
 }
