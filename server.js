@@ -395,8 +395,12 @@ function bestSourceHighlight(sourceText = "", anchors = [], trait = "autism", av
     .filter((item) => item.phrase)
     .filter((item) => sourceContainsPhrase(sourceText, item.phrase))
     .sort((a, b) => b.score - a.score || a.index - b.index);
-  const best = ranked.find((item) => !isWeakHighlight(item.phrase, trait))
-    || ranked.find((item) => !isBadHighlightFragment(item.phrase))
+  const usable = avoided
+    ? ranked.filter((item) => comparableAnalysisText(item.phrase) !== comparableAnalysisText(avoided))
+    : ranked;
+  const best = usable.find((item) => !isWeakHighlight(item.phrase, trait))
+    || usable.find((item) => !isBadHighlightFragment(item.phrase))
+    || usable[0]
     || ranked[0];
   return best?.phrase || shortHighlightPhrase(sourceHighlightCandidates(sourceText)[0] || sourceText, 18);
 }
@@ -428,7 +432,7 @@ function sourceHighlightScore(value, trait, avoided = "") {
   if (/\bi\b|\bmy\b|\bme\b/.test(text)) score += 6;
   if (words >= 6 && words <= 16) score += 10;
   if (isWeakHighlight(text, trait)) score -= 60;
-  if (avoided && comparableAnalysisText(text) === comparableAnalysisText(avoided)) score -= 18;
+  if (avoided && comparableAnalysisText(text) === comparableAnalysisText(avoided)) score -= 300;
   return score;
 }
 
