@@ -316,12 +316,24 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
   }
   const phrase = completeHighlightPhrase(text, sourceText);
   if (isWeakHighlight(phrase, trait)) {
+    const recovered = shortSourceRecoveryHighlight(sourceText, anchors, trait, phrase);
+    if (recovered) return recovered;
     throw Object.assign(new Error(`AI ${trait} highlight failed quality gate`), { status: 502 });
   }
   if (!sourceContainsPhrase(sourceText, phrase)) {
+    const recovered = shortSourceRecoveryHighlight(sourceText, anchors, trait, phrase);
+    if (recovered) return recovered;
     throw Object.assign(new Error(`AI ${trait} highlight was not source-backed`), { status: 502 });
   }
   return phrase;
+}
+
+function shortSourceRecoveryHighlight(sourceText = "", anchors = [], trait = "autism", avoided = "") {
+  const source = compactAnalysisText(sourceText);
+  if (!source || source.length > 260) return "";
+  const recovered = bestSourceHighlight(source, anchors, trait, avoided);
+  if (!recovered || isWeakHighlight(recovered, trait) || !sourceContainsPhrase(source, recovered)) return "";
+  return recovered;
 }
 
 function completeHighlightPhrase(value, sourceText = "") {
