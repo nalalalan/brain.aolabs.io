@@ -1707,7 +1707,7 @@ function isDanglingHighlight(value) {
   const text = textPdfSource(value || "").toLowerCase();
   return /\b(?:kind of|sort of|a lot of|one of|because of)$/.test(text)
     || /[,;:]$/.test(text)
-    || /\b(?:that|that's|to|i|i'm|im|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as|be|is|are|was|were|more|less)$/.test(text)
+    || /\b(?:that|that's|to|i|i'm|im|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as|be|more|less)$/.test(text)
     || /\b(?:that's|that is)\s+kind$/.test(text);
 }
 

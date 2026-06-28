@@ -347,7 +347,23 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   const lifeLeverageScore = clampScore(value?.lifeLeverageScore || fallbackLifeLeverageScore || 1);
-  const lifeLeverageHighlightText = normalizedHighlightText(value?.lifeLeverageHighlightText, sourceAnchors, sourceText, "life");
+  let lifeLeverageHighlightText = normalizedHighlightText(value?.lifeLeverageHighlightText, sourceAnchors, sourceText, "life");
+  const overlappingLifeHighlights = () => [highlightText, adhdHighlightText]
+    .filter(Boolean)
+    .some((other) => highlightsAreTooSimilar(lifeLeverageHighlightText, other));
+  if (lifeLeverageHighlightText && overlappingLifeHighlights()) {
+    for (const avoided of [highlightText, adhdHighlightText].filter(Boolean)) {
+      if (!highlightsAreTooSimilar(lifeLeverageHighlightText, avoided)) continue;
+      const recoveredLife = differentSourceHighlight(sourceText, sourceAnchors, "life", avoided);
+      if (recoveredLife && ![highlightText, adhdHighlightText].filter(Boolean).some((other) => highlightsAreTooSimilar(recoveredLife, other))) {
+        lifeLeverageHighlightText = recoveredLife;
+        break;
+      }
+    }
+  }
+  if (lifeLeverageHighlightText && overlappingLifeHighlights() && sourceHighlightCandidates(sourceText).length > 1) {
+    throw Object.assign(new Error("AI analysis repeated the Disney highlight for another score"), { status: 502 });
+  }
   const lifeLeverageHighlightExplanation = cleanExplanation(value?.lifeLeverageHighlightExplanation).slice(0, 320);
   let lifeLeverageAnalysis = cleanExplanation(value?.lifeLeverageAnalysis);
   if (!lifeLeverageAnalysis || lifeLeverageAnalysis.length < 40) {
@@ -631,7 +647,7 @@ function isDanglingHighlight(value) {
   const text = cleanExplanation(value).toLowerCase();
   return /\b(?:kind of|sort of|a lot of|one of|because of)$/.test(text)
     || /[,;:]$/.test(text)
-    || /\b(?:that|that's|to|i|im|i'm|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as|be|is|are|was|were|more|less)$/.test(text)
+    || /\b(?:that|that's|to|i|im|i'm|cant|can't|cannot|because|like|of|for|with|while|when|if|the|a|an|and|or|but|so|as|be|more|less)$/.test(text)
     || /\b(?:that's|that is)\s+kind$/.test(text);
 }
 
