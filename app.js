@@ -936,17 +936,7 @@ async function rebuildOutdatedGeneratedNotes() {
           ...analysisRecordFields(analysis, sourceText.length, { ...item, sourceText }),
         };
       } catch {
-        updated = {
-          ...item,
-          lifeLeverageScore: lifeLeverageScoreForRecord({ ...item, sourceText }),
-          lifeLeverageExplanation: lifeLeverageExplanationForRecord({ ...item, sourceText }),
-          lifeLeverageScoreSource: "heuristic",
-          lifeLeverageScoreModel: "browser heuristic",
-          lifeLeverageScoreConfidence: "low",
-          lifeLeverageScoreWarning: "AI analysis unavailable during rebuild",
-          lifeLeverageTextChars: sourceText.length,
-          analysisQualityVersion,
-        };
+        continue;
       }
     }
     const rebuilt = rebuildGeneratedPdf({ ...updated, generatedNoteLayoutVersion }, sourceText);
