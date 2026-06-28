@@ -65,6 +65,7 @@ async function analyzeWithAi(payload) {
   const sourceText = compactAnalysisText(payload.text || "");
   const fallbackScore = clampScore(payload.fallbackScore);
   const fallbackAdhdScore = clampScore(payload.fallbackAdhdScore);
+  const fallbackLifeLeverageScore = clampScore(payload.fallbackLifeLeverageScore);
   const sourceAnchors = extractAnalysisAnchors(sourceText);
   const input = [
     `Name: ${String(payload.name || "untitled").slice(0, 160)}`,
@@ -72,6 +73,7 @@ async function analyzeWithAi(payload) {
     `MIME: ${String(payload.mime || "").slice(0, 80)}`,
     `Heuristic autism fallback score: ${fallbackScore}/100`,
     `Heuristic ADHD fallback score: ${fallbackAdhdScore}/100`,
+    `Heuristic life leverage fallback score: ${fallbackLifeLeverageScore}/100`,
     "",
     "Distinctive details from this saved input:",
     ...(sourceAnchors.length ? sourceAnchors.map((anchor) => `- ${anchor}`) : ["- no short readable details extracted"]),
@@ -97,10 +99,14 @@ async function analyzeWithAi(payload) {
         max_output_tokens: 2200,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
-          "Return two nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal and ADHD-trait signal. These are not clinical diagnoses and not severity labels.",
-          "Never output 0 for either score. A low score means this entry has weak trait-specific signal, not that the person has no traits.",
+          "Return three nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal, ADHD-trait signal, and life leverage. The autism and ADHD scores are not clinical diagnoses and not severity labels.",
+          "Never output 0 for any score. A low autism or ADHD score means this entry has weak trait-specific signal, not that the person has no traits. A low life leverage score means the thought has low direct usefulness right now, not that it is worthless.",
           "For autism, do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
           "For ADHD, do not rely only on keywords. Read attention regulation, executive-function load, starting/finishing tasks, time and organization friction, forgetfulness, impulsivity, restlessness, emotional regulation under task friction, hyperfocus, and functional impact.",
+          "For life leverage, score how directly this thought can help Alan's long-term goals: making money, career and research progress, happiness, health, relationships, a nice car or A3 path, PhD/AO Labs execution, reduced cognitive load, and durable systems that make future work easier.",
+          "High life leverage means the note contains a concrete path, decision, action, system fix, source insight, money/career/research move, car/finance move, relationship/happiness move, or cognitive-load reduction that can change Alan's real life. Low life leverage means the note is mostly a side-topic, food/object tangent, vent, or detail loop that should be saved but should not dominate attention.",
+          "A cheese, recipe, food, movie, or object note should usually be low life leverage unless it captures a reusable system rule or fixes an app/workflow problem. If it does capture a reusable rule, score it low-to-middle or middle, not high, unless it clearly affects money, career, research, happiness, or daily execution.",
+          "For the life leverage analysis, write two compact human sentences. Name what makes the thought useful or low-return, and say why the score is not higher or lower. Do not moralize, do not call the thought stupid, and do not imply low-score thoughts should be deleted.",
           "Choose exactly one short phrase from the saved input that is the strongest autism-trait signal and exactly one short phrase that is the strongest ADHD-trait signal. These phrases will be bolded in the generated PDF.",
           "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
           "The selected phrase must make sense by itself. It needs enough concrete context that a card reader can understand what it refers to without rereading the full note.",
@@ -207,8 +213,31 @@ async function analyzeWithAi(payload) {
                   maxLength: 280,
                   description: "One short human sentence explaining why the highlighted phrase is ADHD-shaped.",
                 },
+                lifeLeverageScore: {
+                  type: "integer",
+                  minimum: 1,
+                  maximum: 100,
+                  description: "Life leverage score for how directly this entry can help Alan's long-term goals and real-life execution.",
+                },
+                lifeLeverageAnalysis: {
+                  type: "string",
+                  minLength: 80,
+                  maxLength: 420,
+                  description: "One unique two-sentence human paragraph explaining the life leverage score. It should distinguish direct money/career/happiness/car/research usefulness from lower-return tangents without moralizing.",
+                },
+                lifeLeverageSpecificDetails: {
+                  type: "array",
+                  minItems: 2,
+                  maxItems: 5,
+                  description: "Short paraphrases of concrete details from this input that shaped the life leverage score.",
+                  items: {
+                    type: "string",
+                    minLength: 4,
+                    maxLength: 90,
+                  },
+                },
               },
-              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation", "adhdScore", "adhdAnalysis", "adhdSpecificDetails", "adhdHighlightText", "adhdHighlightExplanation"],
+              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation", "adhdScore", "adhdAnalysis", "adhdSpecificDetails", "adhdHighlightText", "adhdHighlightExplanation", "lifeLeverageScore", "lifeLeverageAnalysis", "lifeLeverageSpecificDetails"],
             },
           },
         },
@@ -219,7 +248,7 @@ async function analyzeWithAi(payload) {
       const message = body?.error?.message || `OpenAI analysis failed (${response.status})`;
       throw Object.assign(new Error(message), { status: response.status >= 500 ? 502 : 400 });
     }
-    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, fallbackAdhdScore, sourceText.length, sourceAnchors, sourceText);
+    return normalizeAiAnalysis(parseAiJson(body), fallbackScore, fallbackAdhdScore, fallbackLifeLeverageScore, sourceText.length, sourceAnchors, sourceText);
   } catch (error) {
     if (error?.name === "AbortError") throw Object.assign(new Error("AI analysis timed out"), { status: 504 });
     throw error;
@@ -265,7 +294,7 @@ function extractResponseText(body) {
   return parts.join("").trim();
 }
 
-function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars = 0, sourceAnchors = [], sourceText = "") {
+function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLifeLeverageScore, textChars = 0, sourceAnchors = [], sourceText = "") {
   const score = clampScore(value?.score || fallbackScore || 1);
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
@@ -292,6 +321,12 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
   }
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
+  const lifeLeverageScore = clampScore(value?.lifeLeverageScore || fallbackLifeLeverageScore || 1);
+  let lifeLeverageAnalysis = cleanExplanation(value?.lifeLeverageAnalysis);
+  if (!lifeLeverageAnalysis || lifeLeverageAnalysis.length < 40) {
+    lifeLeverageAnalysis = "This entry has limited goal-relevance detail, so I keep the life leverage score close to the fallback. Low leverage means low direct usefulness right now, not that the thought should be deleted.";
+  }
+  lifeLeverageAnalysis = trimIncompleteSentence(lifeLeverageAnalysis);
   return {
     score: Math.max(1, score),
     explanation: cleanAnalysisParagraph(analysis).slice(0, 1100),
@@ -301,6 +336,8 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, textChars 
     adhdExplanation: cleanAnalysisParagraph(adhdAnalysis).slice(0, 1100),
     adhdHighlightText,
     adhdHighlightExplanation,
+    lifeLeverageScore: Math.max(1, lifeLeverageScore),
+    lifeLeverageExplanation: cleanAnalysisParagraph(lifeLeverageAnalysis).slice(0, 1100),
     model: openAiModel,
     textChars: Math.max(0, Number(textChars || 0)),
   };
@@ -747,6 +784,13 @@ async function saveUploadedFile(payload) {
     adhdScoreConfidence: scoreConfidence(payload.adhdScoreConfidence),
     adhdScoreWarning: cleanExplanation(payload.adhdScoreWarning).slice(0, 180),
     adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
+    lifeLeverageScore: clampScore(payload.lifeLeverageScore),
+    lifeLeverageExplanation: cleanExplanation(payload.lifeLeverageExplanation),
+    lifeLeverageScoreSource: scoreSource(payload.lifeLeverageScoreSource),
+    lifeLeverageScoreModel: cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80),
+    lifeLeverageScoreConfidence: scoreConfidence(payload.lifeLeverageScoreConfidence),
+    lifeLeverageScoreWarning: cleanExplanation(payload.lifeLeverageScoreWarning).slice(0, 180),
+    lifeLeverageTextChars: Math.max(0, Number(payload.lifeLeverageTextChars || 0)),
     sourceText: cleanSourceText(payload.sourceText),
     generatedNoteLayoutVersion: cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80),
     analysisQualityVersion: cleanExplanation(payload.analysisQualityVersion).slice(0, 80),
@@ -808,6 +852,13 @@ async function rebuildGeneratedEntry(id, payload) {
   if (payload.adhdScoreConfidence !== undefined) entry.adhdScoreConfidence = scoreConfidence(payload.adhdScoreConfidence);
   if (payload.adhdScoreWarning !== undefined) entry.adhdScoreWarning = cleanExplanation(payload.adhdScoreWarning).slice(0, 180);
   if (payload.adhdTextChars !== undefined) entry.adhdTextChars = Math.max(0, Number(payload.adhdTextChars || 0));
+  if (payload.lifeLeverageScore !== undefined) entry.lifeLeverageScore = clampScore(payload.lifeLeverageScore);
+  if (payload.lifeLeverageExplanation !== undefined) entry.lifeLeverageExplanation = cleanExplanation(payload.lifeLeverageExplanation);
+  if (payload.lifeLeverageScoreSource !== undefined) entry.lifeLeverageScoreSource = scoreSource(payload.lifeLeverageScoreSource);
+  if (payload.lifeLeverageScoreModel !== undefined) entry.lifeLeverageScoreModel = cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80);
+  if (payload.lifeLeverageScoreConfidence !== undefined) entry.lifeLeverageScoreConfidence = scoreConfidence(payload.lifeLeverageScoreConfidence);
+  if (payload.lifeLeverageScoreWarning !== undefined) entry.lifeLeverageScoreWarning = cleanExplanation(payload.lifeLeverageScoreWarning).slice(0, 180);
+  if (payload.lifeLeverageTextChars !== undefined) entry.lifeLeverageTextChars = Math.max(0, Number(payload.lifeLeverageTextChars || 0));
   await writeIndex(files);
   return entry;
 }

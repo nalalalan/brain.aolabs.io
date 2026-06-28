@@ -44,11 +44,13 @@ input {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 18px;
 }
 
 .document-intro p {
+  flex: 1 1 420px;
   max-width: 760px;
   margin: 0;
   color: var(--muted);
@@ -59,17 +61,25 @@ input {
 }
 
 .overall-score {
+  flex: 1 1 245px;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px 10px;
-  min-width: min(100%, 420px);
+  min-width: min(100%, 245px);
+  max-width: 360px;
   padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
   border-radius: 7px;
   background: #e9f0ec;
   color: #274943;
+}
+
+.life-overall {
+  border-color: color-mix(in srgb, #9b7040 40%, var(--line));
+  background: #f3eadb;
+  color: #60441f;
 }
 
 .overall-score span {
@@ -318,6 +328,7 @@ input {
   overflow-wrap: anywhere;
 }
 
+.life-score,
 .autism-score,
 .adhd-score {
   width: max-content;
@@ -334,12 +345,19 @@ input {
   text-transform: lowercase;
 }
 
+.life-score {
+  border-color: color-mix(in srgb, #9b7040 40%, var(--line));
+  background: #f3eadb;
+  color: #60441f;
+}
+
 .adhd-score {
   border-color: color-mix(in srgb, #214f8f 38%, var(--line));
   background: #e8eef8;
   color: #214f8f;
 }
 
+.life-score-why,
 .autism-score-why,
 .adhd-score-why {
   margin: 0;

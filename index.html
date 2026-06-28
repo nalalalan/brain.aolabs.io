@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>brain.aolabs.io</title>
-  <meta name="description" content="Brain PDF bank for autism, ADHD, and relationship-context notes." />
+  <meta name="description" content="Brain PDF bank for autism, ADHD, and life-leverage notes." />
   <link rel="canonical" href="https://aolabs.io/brain/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="AO Labs">
   <meta property="og:title" content="brain">
-  <meta property="og:description" content="PDF bank for autism, ADHD, and relationship-context notes.">
+  <meta property="og:description" content="PDF bank for autism, ADHD, and life-leverage notes.">
   <meta property="og:url" content="https://aolabs.io/brain/">
   <meta property="og:image" content="https://aolabs.io/previews/brain-20260612.png">
   <meta property="og:image:secure_url" content="https://aolabs.io/previews/brain-20260612.png">
@@ -19,14 +19,14 @@
   <meta property="og:image:alt" content="brain preview card.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="brain">
-  <meta name="twitter:description" content="PDF bank for autism, ADHD, and relationship-context notes.">
+  <meta name="twitter:description" content="PDF bank for autism, ADHD, and life-leverage notes.">
   <meta name="twitter:image" content="https://aolabs.io/previews/brain-20260612.png">
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260624-note-rebuild">
+  <link rel="stylesheet" href="./styles.css?v=20260628-life-leverage">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260624-strict-match-v5" defer></script>
+  <script src="./app.js?v=20260628-life-leverage-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -43,7 +43,11 @@
 
   <main class="shell document-shell">
     <section class="document-intro" aria-label="document summary">
-      <p>Brain PDF bank for documents, text, files, and images.</p>
+      <p>Brain PDF bank for documents, text, files, images, and goal-relevant thoughts.</p>
+      <div id="overall-life-score" class="overall-score life-overall" aria-live="polite">
+        <span>overall life leverage</span>
+        <strong>calculating</strong>
+      </div>
       <div id="overall-autism-score" class="overall-score" aria-live="polite">
         <span>overall autism score</span>
         <strong>calculating</strong>
@@ -56,7 +60,7 @@
     <section class="local-intake" aria-label="upload bank">
       <div class="intake-copy">
         <h2>add to bank</h2>
-        <p>Text becomes a PDF immediately as one flowing paragraph. Saved entries get a score and short note when sync is connected.</p>
+        <p>Text becomes a PDF immediately as one flowing paragraph. Saved entries get life leverage, autism, and ADHD reads when sync is connected.</p>
       </div>
       <div class="dropzone" data-role="dropzone">
         <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
@@ -81,6 +85,8 @@
           </a>
           <span class="vault-main">
             <span class="vault-title">autism evaluation</span>
+            <span class="life-score">life leverage 88/100</span>
+            <span class="life-score-why">This is high leverage because it gives formal context for accommodations, communication, and self-understanding. It does not directly make money, but it changes how the rest of the system should support work and life.</span>
             <span class="autism-score">autism score 96/100</span>
             <span class="autism-score-why">This is the formal diagnostic source, so it carries the bank. I am not making it 100 because it confirms autism without saying the highest support category.</span>
             <span class="adhd-score">adhd score 26/100</span>
@@ -98,6 +104,8 @@
           </a>
           <span class="vault-main">
             <span class="vault-title">adhd letter</span>
+            <span class="life-score">life leverage 86/100</span>
+            <span class="life-score-why">This is high leverage because it helps explain executive-function friction and the support structure needed to move work, career, money, and daily life. It is a foundation document, not a standalone action.</span>
             <span class="autism-score">autism score 34/100</span>
             <span class="autism-score-why">This mostly documents ADHD and executive function. It belongs here as neurodivergent context, but it is weaker autism evidence by itself.</span>
             <span class="adhd-score">adhd score 96/100</span>

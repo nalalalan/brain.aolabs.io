@@ -2,7 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
-const analysisQualityVersion = "20260624-strict-match-v5";
+const analysisQualityVersion = "20260628-life-leverage-v1";
 
 let state = loadState();
 let pendingFiles = [];
@@ -25,6 +25,7 @@ const pendingList = document.getElementById("brain-pending");
 const vaultList = document.getElementById("brain-vault");
 const syncStatus = document.getElementById("brain-sync-status");
 const dropzone = document.querySelector("[data-role='dropzone']");
+const overallLifeScore = document.getElementById("overall-life-score");
 const overallScore = document.getElementById("overall-autism-score");
 const overallAdhdScore = document.getElementById("overall-adhd-score");
 const autismReferenceScores = [
@@ -82,6 +83,7 @@ dropzone?.addEventListener("paste", (event) => {
 
 renderSyncStatus();
 renderPending();
+renderOverallLifeScore();
 renderOverallScore();
 renderOverallAdhdScore();
 renderVault();
@@ -163,6 +165,7 @@ function convertTextToPendingPdf() {
   const name = `brain-text-${stampForName(createdAt)}.pdf`;
   const autism = analyzeAutismText(sourceText);
   const adhd = analyzeAdhdText(sourceText);
+  const lifeLeverage = analyzeLifeLeverageText(sourceText);
   const highlights = { autism: autism.highlightText, adhd: adhd.highlightText };
   const result = createTextPdf(sourceText, createdAt, highlights);
   const previewDataUrl = createTextPreviewDataUrl(sourceText, createdAt, highlights);
@@ -194,6 +197,13 @@ function convertTextToPendingPdf() {
     adhdScoreConfidence: adhd.scoreConfidence || "low",
     adhdScoreWarning: adhd.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
     adhdTextChars: adhd.textChars || sourceText.length,
+    lifeLeverageScore: lifeLeverage.score,
+    lifeLeverageExplanation: lifeLeverage.explanation,
+    lifeLeverageScoreSource: lifeLeverage.scoreSource || "heuristic",
+    lifeLeverageScoreModel: lifeLeverage.scoreModel || "browser heuristic",
+    lifeLeverageScoreConfidence: lifeLeverage.scoreConfidence || "low",
+    lifeLeverageScoreWarning: lifeLeverage.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
+    lifeLeverageTextChars: lifeLeverage.textChars || sourceText.length,
     generatedNoteLayoutVersion,
     analysisQualityVersion,
     sourceText,
@@ -331,6 +341,13 @@ async function uploadToSync(file) {
     adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
     adhdScoreWarning: adhdScoreWarningForRecord(file),
     adhdTextChars: adhdTextCharsForRecord(file),
+    lifeLeverageScore: lifeLeverageScoreForRecord(file),
+    lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
+    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
+    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
+    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
+    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(file),
+    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(file),
     sourceText: textPdfSource(file.sourceText || ""),
     generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
     analysisQualityVersion: file.analysisQualityVersion || "",
@@ -366,6 +383,13 @@ async function rebuildSyncGeneratedNote(file, rebuilt) {
     adhdScoreConfidence: adhdScoreConfidenceForRecord(rebuilt),
     adhdScoreWarning: adhdScoreWarningForRecord(rebuilt),
     adhdTextChars: adhdTextCharsForRecord(rebuilt),
+    lifeLeverageScore: lifeLeverageScoreForRecord(rebuilt),
+    lifeLeverageExplanation: lifeLeverageExplanationForRecord(rebuilt),
+    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(rebuilt),
+    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(rebuilt),
+    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(rebuilt),
+    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(rebuilt),
+    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(rebuilt),
   });
   return normalizeSyncFile(response.file);
 }
@@ -401,6 +425,13 @@ function fileRecordFromPending(file, kind, source) {
     adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
     adhdScoreWarning: adhdScoreWarningForRecord(file),
     adhdTextChars: adhdTextCharsForRecord(file),
+    lifeLeverageScore: lifeLeverageScoreForRecord(file),
+    lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
+    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
+    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
+    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
+    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(file),
+    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(file),
     sourceText: textPdfSource(file.sourceText || ""),
     generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
     analysisQualityVersion: file.analysisQualityVersion || "",
@@ -438,7 +469,9 @@ function pendingAction(text, action) {
 
 async function renderVault() {
   if (!vaultList) return;
+  renderOverallLifeScore();
   renderOverallScore();
+  renderOverallAdhdScore();
   revokeOpenUrls();
   vaultList.replaceChildren();
   if (!state.length) {
@@ -451,6 +484,19 @@ async function renderVault() {
   for (const item of sortRecords(state)) {
     vaultList.append(await createVaultItem(item));
   }
+}
+
+function renderOverallLifeScore() {
+  if (!overallLifeScore) return;
+  const result = bankLifeLeverageScore();
+  overallLifeScore.replaceChildren();
+  const label = document.createElement("span");
+  label.textContent = "overall life leverage";
+  const value = document.createElement("strong");
+  value.textContent = `${result.score}/100`;
+  const detail = document.createElement("em");
+  detail.textContent = result.detail;
+  overallLifeScore.append(label, value, detail);
 }
 
 function renderOverallScore() {
@@ -477,6 +523,36 @@ function renderOverallAdhdScore() {
   const detail = document.createElement("em");
   detail.textContent = result.detail;
   overallAdhdScore.append(label, value, detail);
+}
+
+function bankLifeLeverageScore() {
+  const generated = state
+    .filter((item) => (item.kind || "").toLowerCase() === "generated pdf")
+    .map((item) => ({
+      score: lifeLeverageScoreForRecord(item),
+      weight: generatedScoreWeight(item),
+      createdAt: Date.parse(item.createdAt || 0) || 0,
+    }))
+    .filter((item) => Number.isFinite(item.score));
+  if (!generated.length) return { score: 1, detail: "no saved thoughts yet" };
+  const recent = [...generated].sort((a, b) => b.createdAt - a.createdAt).slice(0, Math.min(8, generated.length));
+  const weighted = recent.reduce(
+    (acc, item) => {
+      acc.total += item.score * item.weight;
+      acc.weight += item.weight;
+      return acc;
+    },
+    { total: 0, weight: 0 }
+  );
+  const score = clampAutismScore(weighted.total / Math.max(1, weighted.weight));
+  const highNotes = generated.filter((item) => item.score >= 70).length;
+  const lowNotes = generated.filter((item) => item.score <= 35).length;
+  const detail = highNotes
+    ? `${highNotes} high-leverage note${highNotes === 1 ? "" : "s"}; ${lowNotes} lower-return tangent${lowNotes === 1 ? "" : "s"}`
+    : lowNotes
+      ? `${lowNotes} lower-return tangent${lowNotes === 1 ? "" : "s"} visible`
+      : "recent notes are mostly middle leverage";
+  return { score, detail };
 }
 
 function bankAutismScore() {
@@ -591,6 +667,14 @@ async function createVaultItem(item) {
   const itemSeed = item.id || item.name || item.createdAt || "";
   const cardSourceText = await cardSourceTextForRecord(item);
   const adhd = await adhdAnalysisForRecord(item);
+  const leverage = lifeLeverageAnalysisForRecord(item);
+  const lifeScore = document.createElement("p");
+  lifeScore.className = "life-score";
+  lifeScore.textContent = `life leverage ${leverage.score}/100`;
+  const lifeWhy = document.createElement("p");
+  lifeWhy.className = "life-score-why";
+  lifeWhy.textContent = cardSentenceClip(leverage.explanation, 250);
+  lifeWhy.title = leverage.explanation;
   const signal = autismHighlightForRecord(item);
   const score = document.createElement("p");
   score.className = "autism-score";
@@ -656,10 +740,11 @@ async function createVaultItem(item) {
     item.pages ? `${item.pages} pages` : "",
     formatBytes(item.size || 0),
     displayDate(item.createdAt),
+    leverage.scoreSource === "heuristic" ? "leverage fallback" : "",
     autismScoreSourceForRecord(item) === "heuristic" ? "fallback score" : "",
     adhd.scoreSource === "heuristic" ? "adhd fallback" : "",
   ].filter(Boolean).join(" - ");
-  main.append(title, score);
+  main.append(title, lifeScore, lifeWhy, score);
   if (signal.text) main.append(signalWhy);
   main.append(scoreWhy, adhdScore);
   if (adhd.highlightText) main.append(adhdSignalWhy);
@@ -674,6 +759,7 @@ async function createVaultItem(item) {
   );
 
   row.append(thumb, main, actions);
+  renderOverallLifeScore();
   renderOverallAdhdScore();
   return row;
 }
@@ -807,6 +893,15 @@ function normalizeSyncFile(file) {
       adhdTextChars: adhdTextCharsForRecord(file),
     });
   }
+  Object.assign(normalized, {
+    lifeLeverageScore: lifeLeverageScoreForRecord(file),
+    lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
+    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
+    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
+    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
+    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(file),
+    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(file),
+  });
   return normalized;
 }
 
@@ -815,13 +910,46 @@ async function rebuildOutdatedGeneratedNotes() {
   const outdated = state.filter((item) => item.source === "sync"
     && isGeneratedPdf(item)
     && item.mime === "application/pdf"
-    && item.generatedNoteLayoutVersion !== generatedNoteLayoutVersion);
+    && (
+      item.generatedNoteLayoutVersion !== generatedNoteLayoutVersion
+      || item.analysisQualityVersion !== analysisQualityVersion
+      || item.lifeLeverageScore === undefined
+      || item.lifeLeverageScore === null
+      || item.lifeLeverageScore === ""
+    ));
   if (!outdated.length) return;
   for (const item of outdated) {
     if (sync.status !== "connected") break;
     const sourceText = textPdfSource(item.sourceText || await pdfTextForRecord(item));
     if (!sourceText) continue;
-    const rebuilt = rebuildGeneratedPdf({ ...item, generatedNoteLayoutVersion }, sourceText);
+    let updated = item;
+    if (item.analysisQualityVersion !== analysisQualityVersion || item.lifeLeverageScore === undefined || item.lifeLeverageScore === null || item.lifeLeverageScore === "") {
+      try {
+        const analysis = await analyzeRecordText({
+          name: item.name,
+          mime: item.mime,
+          kind: item.kind,
+          text: sourceText,
+        });
+        updated = {
+          ...item,
+          ...analysisRecordFields(analysis, sourceText.length, { ...item, sourceText }),
+        };
+      } catch {
+        updated = {
+          ...item,
+          lifeLeverageScore: lifeLeverageScoreForRecord({ ...item, sourceText }),
+          lifeLeverageExplanation: lifeLeverageExplanationForRecord({ ...item, sourceText }),
+          lifeLeverageScoreSource: "heuristic",
+          lifeLeverageScoreModel: "browser heuristic",
+          lifeLeverageScoreConfidence: "low",
+          lifeLeverageScoreWarning: "AI analysis unavailable during rebuild",
+          lifeLeverageTextChars: sourceText.length,
+          analysisQualityVersion,
+        };
+      }
+    }
+    const rebuilt = rebuildGeneratedPdf({ ...updated, generatedNoteLayoutVersion }, sourceText);
     try {
       const synced = await rebuildSyncGeneratedNote(item, rebuilt);
       state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
@@ -1644,6 +1772,7 @@ async function analyzeRecordText({ name, mime, kind, text }) {
   const fallback = {
     autism: analyzeAutismText(fallbackBasis),
     adhd: analyzeAdhdText(fallbackBasis),
+    lifeLeverage: analyzeLifeLeverageText(fallbackBasis),
   };
   if (sync.status !== "connected" || !sync.base) {
     return fallbackAnalysis(fallback, "sync not connected");
@@ -1658,6 +1787,7 @@ async function analyzeRecordText({ name, mime, kind, text }) {
         text: readable,
         fallbackScore: fallback.autism.score,
         fallbackAdhdScore: fallback.adhd.score,
+        fallbackLifeLeverageScore: fallback.lifeLeverage.score,
       });
       return normalizeRemoteAnalysis(response.analysis, fallback);
     } catch (error) {
@@ -1688,7 +1818,16 @@ function normalizeRemoteAnalysis(analysis, fallback) {
       textChars: analysis?.textChars,
     }, fallback.adhd, "AI ADHD analysis returned no explanation")
     : fallbackTraitAnalysis(fallback.adhd, "AI ADHD analysis unavailable");
-  return { autism, adhd };
+  const hasLifeLeverageAnalysis = analysis?.lifeLeverageScore || analysis?.lifeLeverageExplanation || analysis?.lifeLeverageAnalysis;
+  const lifeLeverage = hasLifeLeverageAnalysis
+    ? normalizeRemoteScoreAnalysis({
+      score: analysis?.lifeLeverageScore,
+      explanation: analysis?.lifeLeverageExplanation || analysis?.lifeLeverageAnalysis,
+      model: analysis?.model,
+      textChars: analysis?.textChars,
+    }, fallback.lifeLeverage, "AI life leverage analysis returned no explanation")
+    : fallbackTraitAnalysis(fallback.lifeLeverage, "AI life leverage analysis unavailable");
+  return { autism, adhd, lifeLeverage };
 }
 
 function normalizeRemoteTraitAnalysis(analysis, fallback, warning) {
@@ -1708,11 +1847,27 @@ function normalizeRemoteTraitAnalysis(analysis, fallback, warning) {
   };
 }
 
+function normalizeRemoteScoreAnalysis(analysis, fallback, warning) {
+  const score = clampAutismScore(analysis?.score ?? fallback?.score);
+  const explanation = String(analysis?.explanation || "").replace(/\s+/g, " ").trim();
+  if (!explanation) return fallbackTraitAnalysis(fallback, warning);
+  return {
+    score,
+    explanation: explanation.slice(0, 900),
+    scoreSource: "ai",
+    scoreModel: String(analysis?.model || "OpenAI").slice(0, 80),
+    scoreConfidence: "medium",
+    scoreWarning: "",
+    textChars: Math.max(0, Number(analysis?.textChars || 0)),
+  };
+}
+
 function fallbackAnalysis(fallback, warning) {
   if (fallback?.autism || fallback?.adhd) {
     return {
       autism: fallbackTraitAnalysis(fallback.autism, warning),
       adhd: fallbackTraitAnalysis(fallback.adhd, warning),
+      lifeLeverage: fallbackTraitAnalysis(fallback.lifeLeverage, warning),
     };
   }
   return fallbackTraitAnalysis(fallback, warning);
@@ -1733,6 +1888,7 @@ function analysisRecordFields(analysis, textChars = 0, file = {}) {
   const basis = `${file?.name || ""} ${file?.kind || ""} ${file?.mime || ""} ${file?.sourceText || ""}`;
   const autism = analysis?.autism || analysis || analyzeAutismText(basis);
   const adhd = analysis?.adhd || analyzeAdhdText(basis);
+  const lifeLeverage = analysis?.lifeLeverage || analyzeLifeLeverageText(basis);
   return {
     autismScore: clampAutismScore(autism?.score),
     autismScoreExplanation: normalizeAnalysisExplanation(autism?.explanation),
@@ -1752,6 +1908,13 @@ function analysisRecordFields(analysis, textChars = 0, file = {}) {
     adhdScoreConfidence: adhd?.scoreConfidence || "low",
     adhdScoreWarning: adhd?.scoreWarning || "",
     adhdTextChars: Math.max(0, Number(adhd?.textChars || textChars || 0)),
+    lifeLeverageScore: clampAutismScore(lifeLeverage?.score),
+    lifeLeverageExplanation: normalizeAnalysisExplanation(lifeLeverage?.explanation),
+    lifeLeverageScoreSource: lifeLeverage?.scoreSource || "heuristic",
+    lifeLeverageScoreModel: lifeLeverage?.scoreModel || "browser heuristic",
+    lifeLeverageScoreConfidence: lifeLeverage?.scoreConfidence || "low",
+    lifeLeverageScoreWarning: lifeLeverage?.scoreWarning || "",
+    lifeLeverageTextChars: Math.max(0, Number(lifeLeverage?.textChars || textChars || 0)),
     analysisQualityVersion,
   };
 }
@@ -1845,6 +2008,53 @@ function adhdScoreWarningForRecord(item) {
 
 function adhdTextCharsForRecord(item) {
   return Math.max(0, Number(item?.adhdTextChars || 0));
+}
+
+function lifeLeverageAnalysisForRecord(item) {
+  return {
+    score: lifeLeverageScoreForRecord(item),
+    explanation: lifeLeverageExplanationForRecord(item),
+    scoreSource: lifeLeverageScoreSourceForRecord(item) || "heuristic",
+    scoreModel: lifeLeverageScoreModelForRecord(item) || "browser heuristic",
+    scoreConfidence: lifeLeverageScoreConfidenceForRecord(item) || "low",
+    scoreWarning: lifeLeverageScoreWarningForRecord(item),
+    textChars: lifeLeverageTextCharsForRecord(item),
+  };
+}
+
+function lifeLeverageScoreForRecord(item) {
+  if (item && item.lifeLeverageScore !== undefined && item.lifeLeverageScore !== null && item.lifeLeverageScore !== "") {
+    return clampAutismScore(item.lifeLeverageScore);
+  }
+  return analyzeLifeLeverageText(recordAnalysisBasis(item)).score;
+}
+
+function lifeLeverageExplanationForRecord(item) {
+  if (item?.lifeLeverageExplanation) return normalizeAnalysisExplanation(item.lifeLeverageExplanation);
+  return analyzeLifeLeverageText(recordAnalysisBasis(item)).explanation;
+}
+
+function lifeLeverageScoreSourceForRecord(item) {
+  const source = String(item?.lifeLeverageScoreSource || "").toLowerCase().trim();
+  if (source === "ai" || source === "heuristic") return source;
+  return "";
+}
+
+function lifeLeverageScoreModelForRecord(item) {
+  return String(item?.lifeLeverageScoreModel || "").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+function lifeLeverageScoreConfidenceForRecord(item) {
+  const confidence = String(item?.lifeLeverageScoreConfidence || "").toLowerCase().trim();
+  return ["low", "medium", "high"].includes(confidence) ? confidence : "";
+}
+
+function lifeLeverageScoreWarningForRecord(item) {
+  return String(item?.lifeLeverageScoreWarning || "").replace(/\s+/g, " ").trim().slice(0, 180);
+}
+
+function lifeLeverageTextCharsForRecord(item) {
+  return Math.max(0, Number(item?.lifeLeverageTextChars || 0));
 }
 
 function adhdHighlightTextForRecord(item) {
@@ -1994,6 +2204,7 @@ function recordAnalysisBasis(item) {
   if (item?.sourceText) return stripGeneratedAnalysisLeak(item.sourceText);
   return stripGeneratedAnalysisLeak([
     item?.name,
+    item?.lifeLeverageExplanation,
     item?.autismScoreExplanation,
     item?.autismHighlightText,
     item?.autismHighlightExplanation,
@@ -2584,6 +2795,91 @@ function analyzeAdhdText(value) {
     scoreWarning: "AI analysis not used",
     textChars: readableText.length,
   };
+}
+
+function analyzeLifeLeverageText(value) {
+  const readableSource = normalizeForPdf(value);
+  const text = readableSource.toLowerCase();
+  const readableText = text.replace(/\s+/g, " ").trim();
+  const anchors = extractAnalysisAnchors(readableSource);
+  if (readableText.length < 20) {
+    return {
+      score: 1,
+      explanation: "There is not enough readable thought here to tell whether it moves money, career, happiness, car, health, or long-term execution. I keep it low because the bank should not pretend empty text is useful.",
+      scoreSource: "heuristic",
+      scoreModel: "browser heuristic",
+      scoreConfidence: "low",
+      scoreWarning: "AI analysis not used",
+      textChars: readableText.length,
+    };
+  }
+
+  const money = matchStats(text, /\bmoney\b|\brich\b|\brevenue\b|\bincome\b|\bprofit\b|\bsalary\b|\bpaid\b|\bclient\b|\bcustomer\b|\bsell(?:ing)?\b|\bbusiness\b|\bstartup\b|\bmarket\b|\bjob offer\b|\bbonus\b|\bcash\b|\bfinance\b|\bloan\b|\bcredit\b|\bspend(?:ing)?\b|\bprice\b|\bcost\b|\bbudget\b|\bmerchant\b/g);
+  const career = matchStats(text, /\bcareer\b|\bjob\b|\bwork\b|\binterview\b|\bresume\b|\bcv\b|\bportfolio\b|\bapplication\b|\brecruit(?:er|ing)?\b|\bcompany\b|\bdisney\b|\bimagineer(?:ing)?\b|\btri\b|\btoyota research\b|\bintuitive\b|\bpostdoc\b|\bresearcher\b|\bscientist\b|\bmechanical\b|\brobotics\b|\bhardware\b|\bprototype\b|\bpatent\b/g);
+  const research = matchStats(text, /\bphd\b|\bresearch\b|\bpaper\b|\bpublication\b|\bexperiment\b|\bmechanism\b|\blinkage\b|\bwavevis\b|\bfluxcell\b|\bsoft robotics\b|\bpneumatic\b|\bactuator\b|\bmorph(?:ing)?\b|\bsimulation\b|\bfabricat(?:e|ion)\b|\btest rig\b|\bdataset\b|\bfigure\b/g);
+  const car = matchStats(text, /\bnice car\b|\bcar\b|\ba3\b|\baudi\b|\bmini\b|\bquattro\b|\bbuild\b|\bsteering\b|\binterior\b|\bdown payment\b|\bmonthly payment\b|\bpayment\b|\binsurance\b|\bdealer\b|\btrim\b/g);
+  const happiness = matchStats(text, /\bhappy\b|\bhappiness\b|\brelationship\b|\blove\b|\bfriends?\b|\bfamily\b|\bhealth\b|\bsleep\b|\bexercise\b|\bfood\b|\bcooking\b|\bcomfort\b|\bcalm\b|\blife\b|\bquality of life\b|\bhome\b|\bfun\b|\bviolin\b|\bdisney\b|\bvacation\b/g);
+  const execution = matchStats(text, /\bgoal\b|\bplan\b|\bnext step\b|\baction\b|\bpriority\b|\bfocus\b|\bschedule\b|\broutine\b|\bsystem\b|\bautomation\b|\bautomate\b|\bworkflow\b|\bprogress\b|\bspec\b|\baolabs\b|\bcodex\b|\bapp\b|\bsite\b|\bbug\b|\bfix\b|\bverify\b|\bdeploy\b|\bsync\b|\brebuild\b|\breduce friction\b|\bless cognitive load\b/g);
+  const lowReturn = matchStats(text, /\bcheese\b|\brecipe\b|\bbanh xeo\b|\bramen\b|\bfood(?:s)?\b|\beating\b|\bcooking\b|\bmilk\b|\benzyme(?:s)?\b|\bbacteria\b|\bmovie\b|\bmoana\b|\bwater\b|\bsparkling\b|\brandom\b|\bdumb\b|\bshit\b|\bargument\b|\btangent\b/g);
+
+  const targetDomains = [money, career, research, car, happiness, execution].filter((stats) => stats.count > 0).length;
+  const goalPoints = scoreDimension(money, 22)
+    + scoreDimension(career, 22)
+    + scoreDimension(research, 20)
+    + scoreDimension(car, 16)
+    + scoreDimension(happiness, 14)
+    + scoreDimension(execution, 20);
+  const tangentPenalty = Math.min(26, lowReturn.count * 5 + lowReturn.terms.length * 3);
+  const detailBonus = Math.min(10, anchors.length * 2);
+  let cap = 38;
+  if (targetDomains >= 5) cap = 96;
+  else if (targetDomains >= 4) cap = 90;
+  else if (targetDomains >= 3) cap = 82;
+  else if (targetDomains >= 2) cap = 70;
+  else if (targetDomains === 1) cap = 58;
+  if ((money.count || career.count || research.count) && (execution.count || car.count || happiness.count)) cap = Math.max(cap, 86);
+  if (money.count && career.count && research.count) cap = 94;
+  if (lowReturn.count && !money.count && !career.count && !research.count && !car.count) cap = Math.min(cap, execution.count ? 54 : 34);
+  if (lowReturn.count && execution.count && /(?:codex|app|site|spec|progress|aolabs|workflow|recipe)/i.test(text)) cap = Math.max(cap, 52);
+  const baseline = targetDomains ? 18 : 8;
+  const raw = baseline + goalPoints + detailBonus - tangentPenalty;
+  const score = clampAutismScore(Math.max(1, Math.min(raw, cap)));
+  return {
+    score,
+    explanation: lifeLeverageAnalysisText(score, { money, career, research, car, happiness, execution, lowReturn, anchors, targetDomains }),
+    scoreSource: "heuristic",
+    scoreModel: "browser heuristic",
+    scoreConfidence: "low",
+    scoreWarning: "AI analysis not used",
+    textChars: readableText.length,
+  };
+}
+
+function lifeLeverageAnalysisText(score, evidence) {
+  const strongest = [
+    evidence.money.count ? "money" : "",
+    evidence.career.count ? "career" : "",
+    evidence.research.count ? "research" : "",
+    evidence.car.count ? "car" : "",
+    evidence.happiness.count ? "happiness" : "",
+    evidence.execution.count ? "execution" : "",
+  ].filter(Boolean);
+  const concrete = evidence.anchors?.slice(0, 3) || [];
+  if (score >= 80) {
+    const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "long-term goals";
+    return `This looks high-leverage because it connects directly to ${lane} instead of staying as a side thought. The concrete parts are ${humanJoin(concrete) || "specific enough to turn into an action or system change"}.`;
+  }
+  if (score >= 55) {
+    const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "execution";
+    return `This has useful leverage because it can improve ${lane}, but it is not a direct money/career/car move by itself. I score it in the middle because it still reduces friction if acted on.`;
+  }
+  if (evidence.lowReturn.count && evidence.execution.count) {
+    return "This is lower-to-middle leverage: it is about a food or recipe tangent, but it also captures a system/friction rule that can prevent the same annoying app mistake later. Useful, not core-life-path.";
+  }
+  if (evidence.lowReturn.count) {
+    return "This is low leverage because it is mostly a food, object, or side-topic thought rather than a money, career, car, happiness, or long-term execution move. It can stay saved, but it should not dominate attention.";
+  }
+  return "This is lower leverage because it does not clearly point toward money, career, happiness, the car path, research, or a concrete system improvement. I keep it above zero because saved thoughts can still reveal patterns later.";
 }
 
 function heuristicAdhdHighlightForText(value) {
