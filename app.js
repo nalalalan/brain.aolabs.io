@@ -900,6 +900,7 @@ function normalizeSyncFile(file) {
     sourceText: textPdfSource(file.sourceText || ""),
     generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
     analysisQualityVersion: file.analysisQualityVersion || "",
+    lifeLeverageHighlightStored: Boolean(file.lifeLeverageHighlightText && file.lifeLeverageHighlightExplanation),
     source: "sync",
   };
   const needsPdfAdhdAnalysis = isGeneratedPdf(normalized)
@@ -947,6 +948,7 @@ async function rebuildOutdatedGeneratedNotes() {
       || item.lifeLeverageScore === undefined
       || item.lifeLeverageScore === null
       || item.lifeLeverageScore === ""
+      || item.lifeLeverageHighlightStored === false
       || !item.lifeLeverageHighlightText
       || !item.lifeLeverageHighlightExplanation
     ));
@@ -961,6 +963,7 @@ async function rebuildOutdatedGeneratedNotes() {
       || item.lifeLeverageScore === undefined
       || item.lifeLeverageScore === null
       || item.lifeLeverageScore === ""
+      || item.lifeLeverageHighlightStored === false
       || !item.lifeLeverageHighlightText
       || !item.lifeLeverageHighlightExplanation
     ) {
