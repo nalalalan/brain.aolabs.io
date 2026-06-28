@@ -2,7 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
-const analysisQualityVersion = "20260628-life-leverage-v2";
+const analysisQualityVersion = "20260628-life-leverage-v3";
 
 let state = loadState();
 let pendingFiles = [];
@@ -913,6 +913,9 @@ async function rebuildOutdatedGeneratedNotes() {
     && (
       item.generatedNoteLayoutVersion !== generatedNoteLayoutVersion
       || item.analysisQualityVersion !== analysisQualityVersion
+      || item.autismScoreSource !== "ai"
+      || item.adhdScoreSource !== "ai"
+      || item.lifeLeverageScoreSource !== "ai"
       || item.lifeLeverageScore === undefined
       || item.lifeLeverageScore === null
       || item.lifeLeverageScore === ""
@@ -931,6 +934,13 @@ async function rebuildOutdatedGeneratedNotes() {
           kind: item.kind,
           text: sourceText,
         });
+        if (
+          analysis?.autism?.scoreSource !== "ai"
+          || analysis?.adhd?.scoreSource !== "ai"
+          || analysis?.lifeLeverage?.scoreSource !== "ai"
+        ) {
+          continue;
+        }
         updated = {
           ...item,
           ...analysisRecordFields(analysis, sourceText.length, { ...item, sourceText }),
