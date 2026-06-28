@@ -376,7 +376,7 @@ function normalizedHighlightText(value, anchors = [], sourceText = "", trait = "
 
 function shortSourceRecoveryHighlight(sourceText = "", anchors = [], trait = "autism", avoided = "") {
   const source = compactAnalysisText(sourceText);
-  if (!source || source.length > 260) return "";
+  if (!source) return "";
   const recovered = bestSourceHighlight(source, anchors, trait, avoided);
   if (!recovered || isWeakHighlight(recovered, trait) || !sourceContainsPhrase(source, recovered)) return "";
   return recovered;
