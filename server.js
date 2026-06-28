@@ -299,7 +299,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   const details = Array.isArray(value?.specificDetails)
     ? value.specificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  const highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors, sourceText, "autism");
+  let highlightText = normalizedHighlightText(value?.highlightText, sourceAnchors, sourceText, "autism");
   const highlightExplanation = cleanExplanation(value?.highlightExplanation).slice(0, 320);
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
@@ -310,8 +310,17 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   const adhdDetails = Array.isArray(value?.adhdSpecificDetails)
     ? value.adhdSpecificDetails.map((item) => cleanExplanation(item)).filter(Boolean).slice(0, 5)
     : [];
-  const adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
-  if (highlightText && (comparableAnalysisText(adhdHighlightText) === comparableAnalysisText(highlightText) || anchorSimilarity(highlightText, adhdHighlightText) > 0.72)) {
+  let adhdHighlightText = normalizedHighlightText(value?.adhdHighlightText, sourceAnchors, sourceText, "adhd");
+  if (highlightText && highlightsAreTooSimilar(adhdHighlightText, highlightText)) {
+    const recoveredAdhd = differentSourceHighlight(sourceText, sourceAnchors, "adhd", highlightText);
+    if (recoveredAdhd) {
+      adhdHighlightText = recoveredAdhd;
+    } else {
+      const recoveredAutism = differentSourceHighlight(sourceText, sourceAnchors, "autism", adhdHighlightText);
+      if (recoveredAutism) highlightText = recoveredAutism;
+    }
+  }
+  if (highlightText && highlightsAreTooSimilar(adhdHighlightText, highlightText) && sourceHighlightCandidates(sourceText).length > 1) {
     throw Object.assign(new Error("AI analysis repeated the same highlight for both traits"), { status: 502 });
   }
   const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
@@ -457,6 +466,35 @@ function bestSourceHighlight(sourceText = "", anchors = [], trait = "autism", av
     || usable[0]
     || ranked[0];
   return best?.phrase || shortHighlightPhrase(sourceHighlightCandidates(sourceText)[0] || sourceText, 18);
+}
+
+function differentSourceHighlight(sourceText = "", anchors = [], trait = "adhd", avoided = "") {
+  const candidates = [
+    ...sourceHighlightCandidates(sourceText),
+    ...anchors.map((anchor) => cleanExplanation(anchor)).filter(Boolean),
+  ];
+  const ranked = candidates
+    .map((candidate, index) => {
+      const phrase = completeHighlightPhrase(candidate, sourceText);
+      return {
+        phrase,
+        index,
+        score: sourceHighlightScore(phrase, trait, avoided),
+      };
+    })
+    .filter((item) => item.phrase)
+    .filter((item) => sourceContainsPhrase(sourceText, item.phrase))
+    .filter((item) => !highlightsAreTooSimilar(item.phrase, avoided))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+  const best = ranked.find((item) => !isWeakHighlight(item.phrase, trait))
+    || ranked.find((item) => !isBadHighlightFragment(item.phrase))
+    || ranked[0];
+  return best?.phrase || "";
+}
+
+function highlightsAreTooSimilar(a = "", b = "") {
+  if (!a || !b) return false;
+  return comparableAnalysisText(a) === comparableAnalysisText(b) || anchorSimilarity(a, b) > 0.72;
 }
 
 function sourceHighlightCandidates(sourceText = "") {
