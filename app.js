@@ -2,7 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
-const analysisQualityVersion = "20260628-life-leverage-v3";
+const analysisQualityVersion = "20260628-disney-score-v1";
 
 let state = loadState();
 let pendingFiles = [];
@@ -199,6 +199,8 @@ function convertTextToPendingPdf() {
     adhdTextChars: adhd.textChars || sourceText.length,
     lifeLeverageScore: lifeLeverage.score,
     lifeLeverageExplanation: lifeLeverage.explanation,
+    lifeLeverageHighlightText: lifeLeverage.highlightText,
+    lifeLeverageHighlightExplanation: lifeLeverage.highlightExplanation,
     lifeLeverageScoreSource: lifeLeverage.scoreSource || "heuristic",
     lifeLeverageScoreModel: lifeLeverage.scoreModel || "browser heuristic",
     lifeLeverageScoreConfidence: lifeLeverage.scoreConfidence || "low",
@@ -343,6 +345,8 @@ async function uploadToSync(file) {
     adhdTextChars: adhdTextCharsForRecord(file),
     lifeLeverageScore: lifeLeverageScoreForRecord(file),
     lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
+    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(file),
+    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(file),
     lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
     lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
     lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
@@ -385,6 +389,8 @@ async function rebuildSyncGeneratedNote(file, rebuilt) {
     adhdTextChars: adhdTextCharsForRecord(rebuilt),
     lifeLeverageScore: lifeLeverageScoreForRecord(rebuilt),
     lifeLeverageExplanation: lifeLeverageExplanationForRecord(rebuilt),
+    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(rebuilt),
+    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(rebuilt),
     lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(rebuilt),
     lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(rebuilt),
     lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(rebuilt),
@@ -427,6 +433,8 @@ function fileRecordFromPending(file, kind, source) {
     adhdTextChars: adhdTextCharsForRecord(file),
     lifeLeverageScore: lifeLeverageScoreForRecord(file),
     lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
+    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(file),
+    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(file),
     lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
     lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
     lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
@@ -491,7 +499,7 @@ function renderOverallLifeScore() {
   const result = bankLifeLeverageScore();
   overallLifeScore.replaceChildren();
   const label = document.createElement("span");
-  label.textContent = "overall life leverage";
+  label.textContent = "overall disney score";
   const value = document.createElement("strong");
   value.textContent = `${result.score}/100`;
   const detail = document.createElement("em");
@@ -548,10 +556,10 @@ function bankLifeLeverageScore() {
   const highNotes = generated.filter((item) => item.score >= 70).length;
   const lowNotes = generated.filter((item) => item.score <= 35).length;
   const detail = highNotes
-    ? `${highNotes} high-leverage note${highNotes === 1 ? "" : "s"}; ${lowNotes} lower-return tangent${lowNotes === 1 ? "" : "s"}`
+    ? `${highNotes} Disney-goal note${highNotes === 1 ? "" : "s"}; ${lowNotes} lower-return thought${lowNotes === 1 ? "" : "s"}`
     : lowNotes
-      ? `${lowNotes} lower-return tangent${lowNotes === 1 ? "" : "s"} visible`
-      : "recent notes are mostly middle leverage";
+      ? `${lowNotes} lower-return thought${lowNotes === 1 ? "" : "s"} visible`
+      : "recent notes are mostly middle Disney/career signal";
   return { score, detail };
 }
 
@@ -668,13 +676,6 @@ async function createVaultItem(item) {
   const cardSourceText = await cardSourceTextForRecord(item);
   const adhd = await adhdAnalysisForRecord(item);
   const leverage = lifeLeverageAnalysisForRecord(item);
-  const lifeScore = document.createElement("p");
-  lifeScore.className = "life-score";
-  lifeScore.textContent = `life leverage ${leverage.score}/100`;
-  const lifeWhy = document.createElement("p");
-  lifeWhy.className = "life-score-why";
-  lifeWhy.textContent = cardSentenceClip(leverage.explanation, 250);
-  lifeWhy.title = leverage.explanation;
   const signal = autismHighlightForRecord(item);
   const score = document.createElement("p");
   score.className = "autism-score";
@@ -732,6 +733,29 @@ async function createVaultItem(item) {
     if (adhd.highlightExplanation) adhdSignalWhy.append(document.createTextNode(` ${cardSignalExplanation(adhd.highlightExplanation)}`));
     adhdSignalWhy.title = [adhd.highlightText, adhd.highlightExplanation].filter(Boolean).join(" ");
   }
+  const lifeScore = document.createElement("p");
+  lifeScore.className = "life-score";
+  lifeScore.textContent = `disney score ${leverage.score}/100`;
+  const lifeSignalWhy = document.createElement("p");
+  lifeSignalWhy.className = "autism-signal life-signal";
+  if (leverage.highlightText) {
+    const strong = document.createElement("strong");
+    strong.textContent = `"${leverage.highlightText}"`;
+    lifeSignalWhy.append(strong);
+    if (leverage.highlightExplanation) lifeSignalWhy.append(document.createTextNode(` ${cardSignalExplanation(leverage.highlightExplanation)}`));
+    lifeSignalWhy.title = [leverage.highlightText, leverage.highlightExplanation].filter(Boolean).join(" ");
+  }
+  const lifeWhy = document.createElement("p");
+  lifeWhy.className = "life-score-why";
+  const lifeExplanation = lifeLeverageCardAnalysis(leverage.explanation, {
+    score: leverage.score,
+    highlightText: leverage.highlightText,
+    highlightExplanation: leverage.highlightExplanation,
+    sourceText: cardSourceText,
+    seedText: itemSeed,
+  });
+  lifeWhy.textContent = lifeExplanation;
+  lifeWhy.title = leverage.explanation;
   const meta = document.createElement("p");
   meta.className = "vault-meta";
   meta.textContent = [
@@ -740,15 +764,17 @@ async function createVaultItem(item) {
     item.pages ? `${item.pages} pages` : "",
     formatBytes(item.size || 0),
     displayDate(item.createdAt),
-    leverage.scoreSource === "heuristic" ? "leverage fallback" : "",
+    leverage.scoreSource === "heuristic" ? "disney fallback" : "",
     autismScoreSourceForRecord(item) === "heuristic" ? "fallback score" : "",
     adhd.scoreSource === "heuristic" ? "adhd fallback" : "",
   ].filter(Boolean).join(" - ");
-  main.append(title, lifeScore, lifeWhy, score);
+  main.append(title, score);
   if (signal.text) main.append(signalWhy);
   main.append(scoreWhy, adhdScore);
   if (adhd.highlightText) main.append(adhdSignalWhy);
-  main.append(adhdWhy, meta);
+  main.append(adhdWhy, lifeScore);
+  if (leverage.highlightText) main.append(lifeSignalWhy);
+  main.append(lifeWhy, meta);
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
@@ -896,6 +922,8 @@ function normalizeSyncFile(file) {
   Object.assign(normalized, {
     lifeLeverageScore: lifeLeverageScoreForRecord(file),
     lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
+    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(file),
+    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(file),
     lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
     lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
     lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
@@ -919,6 +947,8 @@ async function rebuildOutdatedGeneratedNotes() {
       || item.lifeLeverageScore === undefined
       || item.lifeLeverageScore === null
       || item.lifeLeverageScore === ""
+      || !item.lifeLeverageHighlightText
+      || !item.lifeLeverageHighlightExplanation
     ));
   if (!outdated.length) return;
   for (const item of outdated) {
@@ -926,7 +956,14 @@ async function rebuildOutdatedGeneratedNotes() {
     const sourceText = textPdfSource(item.sourceText || await pdfTextForRecord(item));
     if (!sourceText) continue;
     let updated = item;
-    if (item.analysisQualityVersion !== analysisQualityVersion || item.lifeLeverageScore === undefined || item.lifeLeverageScore === null || item.lifeLeverageScore === "") {
+    if (
+      item.analysisQualityVersion !== analysisQualityVersion
+      || item.lifeLeverageScore === undefined
+      || item.lifeLeverageScore === null
+      || item.lifeLeverageScore === ""
+      || !item.lifeLeverageHighlightText
+      || !item.lifeLeverageHighlightExplanation
+    ) {
       try {
         const analysis = await analyzeRecordText({
           name: item.name,
@@ -1627,6 +1664,7 @@ function completeHighlightSegmentScore(value, maxWords) {
   let score = phraseFitScore(text, maxWords);
   if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus|warm[- ]?up|ramp|getting into|stuck)\b/.test(text)) score += 18;
   if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body|standard|goal|confus|not know|don't know|never-ending|infinite)\b/.test(text)) score += 12;
+  if (/\b(?:disney|imagineer|r&d|research|career|money|rich|car|a3|soft robotics|robotics|prototype|mechanism|paper|phd|portfolio|goal|system|workflow)\b/.test(text)) score += 16;
   if (isWeakHighlight(text)) score -= 45;
   if (words > maxWords) score -= 20;
   return score;
@@ -1818,15 +1856,17 @@ function normalizeRemoteAnalysis(analysis, fallback) {
       textChars: analysis?.textChars,
     }, fallback.adhd, "AI ADHD analysis returned no explanation")
     : fallbackTraitAnalysis(fallback.adhd, "AI ADHD analysis unavailable");
-  const hasLifeLeverageAnalysis = analysis?.lifeLeverageScore || analysis?.lifeLeverageExplanation || analysis?.lifeLeverageAnalysis;
+  const hasLifeLeverageAnalysis = analysis?.lifeLeverageScore || analysis?.lifeLeverageExplanation || analysis?.lifeLeverageAnalysis || analysis?.lifeLeverageHighlightText;
   const lifeLeverage = hasLifeLeverageAnalysis
     ? normalizeRemoteScoreAnalysis({
       score: analysis?.lifeLeverageScore,
       explanation: analysis?.lifeLeverageExplanation || analysis?.lifeLeverageAnalysis,
+      highlightText: analysis?.lifeLeverageHighlightText,
+      highlightExplanation: analysis?.lifeLeverageHighlightExplanation,
       model: analysis?.model,
       textChars: analysis?.textChars,
-    }, fallback.lifeLeverage, "AI life leverage analysis returned no explanation")
-    : fallbackTraitAnalysis(fallback.lifeLeverage, "AI life leverage analysis unavailable");
+    }, fallback.lifeLeverage, "AI Disney score analysis returned no explanation")
+    : fallbackTraitAnalysis(fallback.lifeLeverage, "AI Disney score analysis unavailable");
   return { autism, adhd, lifeLeverage };
 }
 
@@ -1854,6 +1894,8 @@ function normalizeRemoteScoreAnalysis(analysis, fallback, warning) {
   return {
     score,
     explanation: explanation.slice(0, 900),
+    highlightText: normalizeHighlightText(analysis?.highlightText || fallback?.highlightText || ""),
+    highlightExplanation: normalizeHighlightExplanation(analysis?.highlightExplanation || fallback?.highlightExplanation || ""),
     scoreSource: "ai",
     scoreModel: String(analysis?.model || "OpenAI").slice(0, 80),
     scoreConfidence: "medium",
@@ -1910,6 +1952,8 @@ function analysisRecordFields(analysis, textChars = 0, file = {}) {
     adhdTextChars: Math.max(0, Number(adhd?.textChars || textChars || 0)),
     lifeLeverageScore: clampAutismScore(lifeLeverage?.score),
     lifeLeverageExplanation: normalizeAnalysisExplanation(lifeLeverage?.explanation),
+    lifeLeverageHighlightText: normalizeHighlightText(lifeLeverage?.highlightText || ""),
+    lifeLeverageHighlightExplanation: normalizeHighlightExplanation(lifeLeverage?.highlightExplanation || ""),
     lifeLeverageScoreSource: lifeLeverage?.scoreSource || "heuristic",
     lifeLeverageScoreModel: lifeLeverage?.scoreModel || "browser heuristic",
     lifeLeverageScoreConfidence: lifeLeverage?.scoreConfidence || "low",
@@ -2014,6 +2058,8 @@ function lifeLeverageAnalysisForRecord(item) {
   return {
     score: lifeLeverageScoreForRecord(item),
     explanation: lifeLeverageExplanationForRecord(item),
+    highlightText: lifeLeverageHighlightTextForRecord(item),
+    highlightExplanation: lifeLeverageHighlightExplanationForRecord(item),
     scoreSource: lifeLeverageScoreSourceForRecord(item) || "heuristic",
     scoreModel: lifeLeverageScoreModelForRecord(item) || "browser heuristic",
     scoreConfidence: lifeLeverageScoreConfidenceForRecord(item) || "low",
@@ -2032,6 +2078,20 @@ function lifeLeverageScoreForRecord(item) {
 function lifeLeverageExplanationForRecord(item) {
   if (item?.lifeLeverageExplanation) return normalizeAnalysisExplanation(item.lifeLeverageExplanation);
   return analyzeLifeLeverageText(recordAnalysisBasis(item)).explanation;
+}
+
+function lifeLeverageHighlightTextForRecord(item) {
+  if (item?.lifeLeverageHighlightText) return normalizeHighlightText(item.lifeLeverageHighlightText);
+  if (!isGeneratedPdf(item) && !item?.sourceText) return "";
+  const fallback = analyzeLifeLeverageText(recordAnalysisBasis(item));
+  return normalizeHighlightText(fallback.highlightText || "");
+}
+
+function lifeLeverageHighlightExplanationForRecord(item) {
+  if (item?.lifeLeverageHighlightExplanation) return normalizeHighlightExplanation(item.lifeLeverageHighlightExplanation);
+  if (!isGeneratedPdf(item) && !item?.sourceText) return "";
+  const fallback = analyzeLifeLeverageText(recordAnalysisBasis(item));
+  return normalizeHighlightExplanation(fallback.highlightExplanation || "");
 }
 
 function lifeLeverageScoreSourceForRecord(item) {
@@ -2243,6 +2303,53 @@ function pairedCardAnalysisText(autismText, adhdText, autismOptions = {}, adhdOp
     if (adhdLength > autismLength) adhd = compactCardAnalysis(adhd, adhdOptions, cap);
   }
   return { autism, adhd };
+}
+
+function lifeLeverageCardAnalysis(value, options = {}) {
+  let text = normalizeAnalysisExplanation(value);
+  text = text
+    .replace(/^This is highly useful because\s+/i, "The Disney score is high because ")
+    .replace(/^This is useful because\s+/i, "The Disney score is built around ")
+    .replace(/^This could help if\s+/i, "The Disney read starts with whether ")
+    .replace(/^This note is useful as\s+/i, "The Disney score is built around ")
+    .replace(/^The note is useful because\s+/i, "The Disney score is built around ")
+    .replace(/^The life-leverage signal is\s+/i, "The Disney score is built around ")
+    .replace(/^The life leverage signal is\s+/i, "The Disney score is built around ")
+    .replace(/^The life-leverage read is\s+/i, "The Disney read is ")
+    .replace(/^The leverage stays limited because\s+/i, "It stays limited because ")
+    .replace(/^It is not higher because\s+/i, "It is not higher because ")
+    .replace(/^It is not quite perfect because\s+/i, "It is not higher because ")
+    .replace(/^It is not even higher because\s+/i, "It is not higher because ")
+    .replace(/^It stays low because\s+/i, "It stays lower because ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) text = lifeLeverageFallbackSummary(options);
+  text = firstSentences(text, 2);
+  text = cardSentenceClip(text, 250);
+  if (visibleAnalysisLength(text) < 145) {
+    text = cardSentenceClip(`${text} ${lifeLeverageBoundarySentence(options.score)}`, 250);
+  }
+  return trimIncompleteSentence(text) || text;
+}
+
+function lifeLeverageFallbackSummary(options = {}) {
+  const details = cardConcreteDetails(options.sourceText, options.highlightText || "", "").slice(0, 2);
+  const detailText = details.length ? ` The note points to ${humanJoin(details)}.` : "";
+  const leadPhrase = analysisLeadPhrase(options.highlightExplanation)
+    .replace(/^(?:it|this)\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const lead = options.highlightExplanation
+    ? `The Disney score starts from ${leadPhrase || "the clearest goal-moving line in the note"}.`
+    : "The Disney score is about whether this thought can move the Imagineering, R&D, money, and execution path.";
+  return `${lead}${detailText} ${lifeLeverageBoundarySentence(options.score)}`;
+}
+
+function lifeLeverageBoundarySentence(score = 0) {
+  const value = Number(score || 0);
+  if (value >= 80) return "It scores high because it can move research, career, money, or a durable system forward.";
+  if (value >= 55) return "It sits in the middle because it helps motivation or execution, but is not the full Disney/R&D path by itself.";
+  return "It stays lower because the direct career, research, money, or execution payoff is still limited.";
 }
 
 function compactCardAnalysis(value, options = {}, maxChars = 300) {
@@ -2805,7 +2912,9 @@ function analyzeLifeLeverageText(value) {
   if (readableText.length < 20) {
     return {
       score: 1,
-      explanation: "There is not enough readable thought here to tell whether it moves money, career, happiness, car, health, or long-term execution. I keep it low because the bank should not pretend empty text is useful.",
+      explanation: "There is not enough readable thought here to tell whether it moves the Disney, R&D, career, money, or execution path. I keep it low because the bank should not pretend empty text is useful.",
+      highlightText: "",
+      highlightExplanation: "",
       scoreSource: "heuristic",
       scoreModel: "browser heuristic",
       scoreConfidence: "low",
@@ -2814,19 +2923,21 @@ function analyzeLifeLeverageText(value) {
     };
   }
 
-  const money = matchStats(text, /\bmoney\b|\brich\b|\brevenue\b|\bincome\b|\bprofit\b|\bsalary\b|\bpaid\b|\bclient\b|\bcustomer\b|\bsell(?:ing)?\b|\bbusiness\b|\bstartup\b|\bmarket\b|\bjob offer\b|\bbonus\b|\bcash\b|\bfinance\b|\bloan\b|\bcredit\b|\bspend(?:ing)?\b|\bprice\b|\bcost\b|\bbudget\b|\bmerchant\b/g);
-  const career = matchStats(text, /\bcareer\b|\bjob\b|\bwork\b|\binterview\b|\bresume\b|\bcv\b|\bportfolio\b|\bapplication\b|\brecruit(?:er|ing)?\b|\bcompany\b|\bdisney\b|\bimagineer(?:ing)?\b|\btri\b|\btoyota research\b|\bintuitive\b|\bpostdoc\b|\bresearcher\b|\bscientist\b|\bmechanical\b|\brobotics\b|\bhardware\b|\bprototype\b|\bpatent\b/g);
-  const research = matchStats(text, /\bphd\b|\bresearch\b|\bpaper\b|\bpublication\b|\bexperiment\b|\bmechanism\b|\blinkage\b|\bwavevis\b|\bfluxcell\b|\bsoft robotics\b|\bpneumatic\b|\bactuator\b|\bmorph(?:ing)?\b|\bsimulation\b|\bfabricat(?:e|ion)\b|\btest rig\b|\bdataset\b|\bfigure\b/g);
+  const disneyCareer = matchStats(text, /\bdisney\b|\bimagineer(?:ing)?\b|\bwdi\b|\bresearch scientist\b|\br&d\b|\br and d\b|\bsoft robotics\b|\brobotics\b|\bmechanical\b|\bhardware\b|\bprototype\b|\bpneumatic\b|\bactuator\b|\bmechanism\b|\blinkage\b|\bmorph(?:ing)?\b|\bpublication\b|\bpaper\b|\bpatent\b|\bportfolio\b|\bphd\b|\bresearch engineer\b|\bscientist engineer\b/g);
+  const money = matchStats(text, /\bmoney\b|\brich\b|\brevenue\b|\bincome\b|\bprofit\b|\bsalary\b|\bpaid\b|\bclient\b|\bcustomer\b|\bsell(?:ing)?\b|\bbusiness\b|\bstartup\b|\bmarket\b|\bjob offer\b|\bbonus\b|\bcash\b|\bfinance\b|\bloan\b|\bcredit\b|\bspend(?:ing)?\b|\bprice\b|\bcost\b|\bbudget\b|\bmerchant\b|\bmake money\b|\bsuccessful\b/g);
+  const career = matchStats(text, /\bcareer\b|\bjob\b|\bwork\b|\binterview\b|\bresume\b|\bcv\b|\bportfolio\b|\bapplication\b|\brecruit(?:er|ing)?\b|\bcompany\b|\bdisney\b|\bimagineer(?:ing)?\b|\btri\b|\btoyota research\b|\bintuitive\b|\bpostdoc\b|\bresearcher\b|\bscientist\b|\bengineer\b|\bmechanical\b|\brobotics\b|\bhardware\b|\bprototype\b|\bpatent\b/g);
+  const research = matchStats(text, /\bphd\b|\bresearch\b|\bpaper\b|\bpublication\b|\bexperiment\b|\bmechanism\b|\blinkage\b|\bwavevis\b|\bfluxcell\b|\bsoft robotics\b|\bpneumatic\b|\bactuator\b|\bmorph(?:ing)?\b|\bsimulation\b|\bfabricat(?:e|ion)\b|\btest rig\b|\bdataset\b|\bfigure\b|\br&d\b|\br and d\b/g);
   const car = matchStats(text, /\bnice car\b|\bcar\b|\ba3\b|\baudi\b|\bmini\b|\bquattro\b|\bbuild\b|\bsteering\b|\binterior\b|\bdown payment\b|\bmonthly payment\b|\bpayment\b|\binsurance\b|\bdealer\b|\btrim\b/g);
   const happiness = matchStats(text, /\bhappy\b|\bhappiness\b|\brelationship\b|\blove\b|\bfriends?\b|\bfamily\b|\bhealth\b|\bsleep\b|\bexercise\b|\bfood\b|\bcooking\b|\bcomfort\b|\bcalm\b|\blife\b|\bquality of life\b|\bhome\b|\bfun\b|\bviolin\b|\bdisney\b|\bvacation\b/g);
   const execution = matchStats(text, /\bgoal\b|\bplan\b|\bnext step\b|\baction\b|\bpriority\b|\bfocus\b|\bschedule\b|\broutine\b|\bsystem\b|\bautomation\b|\bautomate\b|\bworkflow\b|\bprogress\b|\bspec\b|\baolabs\b|\bcodex\b|\bapp\b|\bsite\b|\bbug\b|\bfix\b|\bverify\b|\bdeploy\b|\bsync\b|\brebuild\b|\breduce friction\b|\bless cognitive load\b/g);
   const lowReturn = matchStats(text, /\brandom\b|\btangent\b|\bside topic\b|\bside-topic\b|\bvent\b|\bargument\b|\bscroll(?:ing)?\b|\bdistraction\b|\bwaste of time\b/g);
 
-  const targetDomains = [money, career, research, car, happiness, execution].filter((stats) => stats.count > 0).length;
-  const goalPoints = scoreDimension(money, 22)
-    + scoreDimension(career, 22)
-    + scoreDimension(research, 20)
-    + scoreDimension(car, 16)
+  const targetDomains = [disneyCareer, money, career, research, car, happiness, execution].filter((stats) => stats.count > 0).length;
+  const goalPoints = scoreDimension(disneyCareer, 28)
+    + scoreDimension(money, 18)
+    + scoreDimension(career, 18)
+    + scoreDimension(research, 22)
+    + scoreDimension(car, 10)
     + scoreDimension(happiness, 14)
     + scoreDimension(execution, 20);
   const tangentPenalty = targetDomains ? Math.min(14, lowReturn.count * 3 + lowReturn.terms.length * 2) : 0;
@@ -2837,16 +2948,22 @@ function analyzeLifeLeverageText(value) {
   else if (targetDomains >= 3) cap = 82;
   else if (targetDomains >= 2) cap = 70;
   else if (targetDomains === 1) cap = 58;
+  if (disneyCareer.count && (career.count || research.count || execution.count)) cap = Math.max(cap, 94);
   if ((money.count || career.count || research.count) && (execution.count || car.count || happiness.count)) cap = Math.max(cap, 86);
-  if (money.count && career.count && research.count) cap = 94;
+  if (money.count && career.count && research.count) cap = Math.max(cap, 94);
+  if (car.count && !disneyCareer.count && !career.count && !research.count && !execution.count) cap = Math.min(cap, 48);
+  if (car.count && (money.count || happiness.count) && !disneyCareer.count && !research.count && !execution.count) cap = Math.min(cap, 64);
   if (!targetDomains && lowReturn.count) cap = Math.min(cap, 34);
   if (execution.count && /(?:codex|app|site|spec|progress|aolabs|workflow|system|rule|fix|pattern|friction)/i.test(text)) cap = Math.max(cap, 58);
   const baseline = targetDomains ? 18 : 8;
   const raw = baseline + goalPoints + detailBonus - tangentPenalty;
   const score = clampAutismScore(Math.max(1, Math.min(raw, cap)));
+  const highlight = heuristicDisneyHighlightForText(readableSource, { anchors, disneyCareer, money, career, research, car, happiness, execution });
   return {
     score,
-    explanation: lifeLeverageAnalysisText(score, { money, career, research, car, happiness, execution, lowReturn, anchors, targetDomains }),
+    explanation: lifeLeverageAnalysisText(score, { disneyCareer, money, career, research, car, happiness, execution, lowReturn, anchors, targetDomains, highlight }),
+    highlightText: highlight.text,
+    highlightExplanation: highlight.explanation,
     scoreSource: "heuristic",
     scoreModel: "browser heuristic",
     scoreConfidence: "low",
@@ -2857,6 +2974,7 @@ function analyzeLifeLeverageText(value) {
 
 function lifeLeverageAnalysisText(score, evidence) {
   const strongest = [
+    evidence.disneyCareer.count ? "Disney/R&D" : "",
     evidence.money.count ? "money" : "",
     evidence.career.count ? "career" : "",
     evidence.research.count ? "research" : "",
@@ -2866,20 +2984,79 @@ function lifeLeverageAnalysisText(score, evidence) {
   ].filter(Boolean);
   const concrete = evidence.anchors?.slice(0, 3) || [];
   if (score >= 80) {
-    const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "long-term goals";
-    return `This looks high-leverage because it connects directly to ${lane} instead of staying as a side thought. The concrete parts are ${humanJoin(concrete) || "specific enough to turn into an action or system change"}.`;
+    const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "the Disney/R&D path";
+    return `The Disney score is high because this connects directly to ${lane} instead of staying as a side thought. The concrete parts are ${humanJoin(concrete) || "specific enough to turn into an action or system change"}.`;
   }
   if (score >= 55) {
     const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "execution";
-    return `This has useful leverage because it can improve ${lane}, but it is not a direct money/career/car move by itself. I score it in the middle because it still reduces friction if acted on.`;
+    return `The Disney score is real because this can improve ${lane}, but it is not a direct Imagineering or research move by itself. It lands in the middle because it still helps motivation, systems, or execution if acted on.`;
   }
   if (evidence.lowReturn.count && evidence.execution.count) {
-    return "This is lower-to-middle leverage: it starts as a tangent or vent, but it also captures a system/friction rule that can prevent the same annoying mistake later. Useful, not core-life-path.";
+    return "The Disney score is lower-to-middle: it starts as a side thought, but it also captures a system or friction rule that can prevent the same annoying mistake later. Useful, not the core career lane.";
   }
   if (evidence.lowReturn.count) {
-    return "This is low leverage because the entry reads mostly like a tangent or vent rather than a money, career, car, happiness, research, or execution move. It can stay saved, but it should not dominate attention.";
+    return "The Disney score stays low because the entry reads mostly like a side thought rather than a career, research, money, car-motivation, or execution move. It can stay saved without dominating attention.";
   }
-  return "This is lower leverage because it does not clearly point toward money, career, happiness, the car path, research, or a concrete system improvement. I keep it above zero because saved thoughts can still reveal patterns later.";
+  return "The Disney score stays lower because it does not clearly point toward Imagineering, R&D, money, career, the car path, or a concrete system improvement. I keep it above zero because saved thoughts can still reveal patterns later.";
+}
+
+function heuristicDisneyHighlightForText(value, evidence = {}) {
+  const source = normalizeForPdf(value || "");
+  const anchors = evidence.anchors || extractAnalysisAnchors(source);
+  const candidates = [
+    ...completePhraseCandidates(source).map((candidate) => candidate.text),
+    ...anchors,
+  ]
+    .map((candidate, index) => {
+      const phrase = normalizeHighlightText(candidate);
+      return { phrase, index, score: disneyPhraseScore(phrase) };
+    })
+    .filter((item) => item.phrase && !isWeakHighlight(item.phrase))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+  const best = candidates[0]?.phrase || normalizeHighlightText(anchors[0] || source);
+  return {
+    text: best,
+    explanation: highlightExplanationForDisneyPhrase(best),
+  };
+}
+
+function disneyPhraseScore(value) {
+  const text = textPdfSource(value || "").toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  let score = phraseFitScore(text, 18);
+  if (/\b(?:disney|imagineer|imagineering|wdi|r&d|r and d|research scientist|research engineer|scientist engineer)\b/.test(text)) score += 70;
+  if (/\b(?:soft robotics|robotics|mechanical|hardware|prototype|pneumatic|actuator|mechanism|linkage|morph|simulation|fabricat|experiment|paper|publication|patent|portfolio|phd)\b/.test(text)) score += 52;
+  if (/\b(?:career|job|work|resume|cv|application|recruit|company|engineer|scientist|researcher)\b/.test(text)) score += 38;
+  if (/\b(?:money|rich|income|salary|paid|cash|finance|business|revenue|profit|successful|make money)\b/.test(text)) score += 30;
+  if (/\b(?:goal|plan|next step|action|priority|system|workflow|aolabs|codex|progress|spec|fix|verify|deploy|sync|reduce friction)\b/.test(text)) score += 28;
+  if (/\b(?:car|a3|audi|mini|quattro|steering|interior|payment|dealer)\b/.test(text)) score += 18;
+  if (/\b(?:happy|happiness|health|sleep|relationship|comfort|calm|life)\b/.test(text)) score += 12;
+  if (/\bi\b|\bmy\b|\bme\b/.test(text)) score += 6;
+  if (words < 5 || words > 20) score -= 18;
+  return score;
+}
+
+function highlightExplanationForDisneyPhrase(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\b(?:disney|imagineer|imagineering|wdi)\b/.test(text)) {
+    return "It directly points at the Disney Imagineering direction instead of only describing a side interest.";
+  }
+  if (/\b(?:r&d|r and d|research|soft robotics|robotics|mechanical|hardware|prototype|pneumatic|actuator|mechanism|linkage|experiment|paper|publication|patent|portfolio|phd)\b/.test(text)) {
+    return "It points at the R&D body of work that can make the Disney career path more real.";
+  }
+  if (/\b(?:career|job|work|resume|cv|application|recruit|company|engineer|scientist|researcher)\b/.test(text)) {
+    return "It connects the thought to career movement instead of leaving it as a private observation.";
+  }
+  if (/\b(?:money|rich|income|salary|paid|cash|finance|business|revenue|profit|successful|make money)\b/.test(text)) {
+    return "It ties the thought to money and success, which can support the career path if it becomes action.";
+  }
+  if (/\b(?:car|a3|audi|mini|quattro|steering|interior|payment|dealer)\b/.test(text)) {
+    return "It captures car motivation, which can push work and money, but is more indirect than research or career action.";
+  }
+  if (/\b(?:goal|plan|next step|action|priority|system|workflow|aolabs|codex|progress|spec|fix|verify|deploy|sync|reduce friction)\b/.test(text)) {
+    return "It turns the thought into a system or action path instead of leaving it loose in the bank.";
+  }
+  return "It is the clearest phrase for whether this thought can become career, money, research, or execution momentum.";
 }
 
 function heuristicAdhdHighlightForText(value) {
@@ -3092,7 +3269,7 @@ function cleanAnchor(value) {
       .replace(/^(?:and|but|because|so|then|while|when)\b[\s,]*/i, "")
       .trim();
   }
-  if (/\b(?:application\/pdf|pdf generated|generated pdf|autism score|adhd score|score \d|synced -|browser heuristic)\b/i.test(text)) return "";
+  if (/\b(?:application\/pdf|pdf generated|generated pdf|autism score|adhd score|disney score|score \d|synced -|browser heuristic)\b/i.test(text)) return "";
   if (/^(?:this entry|this note|the note|the score|i read|the selected|the phrase|the concrete pieces|other details carry|the autism-relevant|the adhd-relevant)\b/i.test(text)) return "";
   if (/\b(?:autism-shaped|adhd-shaped|autism-trait signal|adhd-trait signal|diagnostic-letter range|low-signal|high-signal saved note)\b/i.test(text)) return "";
   if (!text || text.length < 12) return "";

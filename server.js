@@ -73,7 +73,7 @@ async function analyzeWithAi(payload) {
     `MIME: ${String(payload.mime || "").slice(0, 80)}`,
     `Heuristic autism fallback score: ${fallbackScore}/100`,
     `Heuristic ADHD fallback score: ${fallbackAdhdScore}/100`,
-    `Heuristic life leverage fallback score: ${fallbackLifeLeverageScore}/100`,
+    `Heuristic Disney/career fallback score: ${fallbackLifeLeverageScore}/100`,
     "",
     "Distinctive details from this saved input:",
     ...(sourceAnchors.length ? sourceAnchors.map((anchor) => `- ${anchor}`) : ["- no short readable details extracted"]),
@@ -99,17 +99,18 @@ async function analyzeWithAi(payload) {
         max_output_tokens: 2200,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
-          "Return three nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal, ADHD-trait signal, and life leverage. The autism and ADHD scores are not clinical diagnoses and not severity labels.",
-          "Never output 0 for any score. A low autism or ADHD score means this entry has weak trait-specific signal, not that the person has no traits. A low life leverage score means the thought has low direct usefulness right now, not that it is worthless.",
+          "Return three nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal, ADHD-trait signal, and Disney/career-goal usefulness. The autism and ADHD scores are not clinical diagnoses and not severity labels.",
+          "Never output 0 for any score. A low autism or ADHD score means this entry has weak trait-specific signal, not that the person has no traits. A low Disney score means the thought has low direct usefulness toward Alan's goal path right now, not that it is worthless.",
           "For autism, do not rely only on keywords. Read the actual situation, communication style, uncertainty, sensory detail, routine/change needs, masking, predictability needs, focused interests, overwhelm, support impact, and ADHD/executive-function context.",
           "For ADHD, do not rely only on keywords. Read attention regulation, executive-function load, starting/finishing tasks, time and organization friction, forgetfulness, impulsivity, restlessness, emotional regulation under task friction, hyperfocus, and functional impact.",
-          "For life leverage, score how directly this thought can help Alan's long-term goals: making money, career and research progress, happiness, health, relationships, a nice car or A3 path, PhD/AO Labs execution, reduced cognitive load, and durable systems that make future work easier.",
-          "High life leverage means the note contains a concrete path, decision, action, system fix, source insight, money/career/research move, car/finance move, relationship/happiness move, or cognitive-load reduction that can change Alan's real life. Low life leverage means the note lacks a concrete action path, durable decision, useful source insight, or reusable system change right now, even if the topic itself could matter later.",
-          "No topic is automatically low or high. Judge the exact thought by whether it creates an actionable path, reusable system fix, durable decision, source insight, or relief toward money, career, research, happiness, car/finance, health, relationships, or daily execution. A side-topic note can score high if it clearly moves one of those goals; a goal-themed note can score low if it is vague or unactionable.",
+          "For the Disney score, score how directly this thought can help Alan become the kind of person who could reach Disney Imagineering or an equivalent huge R&D research-scientist-engineer career: soft robotics, strange physical systems, mechanical invention, PhD/research execution, AO Labs/public proof, portfolio, patents/publications, career applications, money, and durable systems that make future work easier.",
+          "Car, money, comfort, happiness, and nice-life motivation count when they can push work, productivity, confidence, finances, or execution. They should not score as high as direct Disney/Imagineering/R&D/career/research actions unless the entry clearly ties them to that path.",
+          "High Disney score means the note contains a concrete path, decision, action, research idea, system fix, source insight, portfolio/career move, money move, or cognitive-load reduction that can make Alan more successful. Low Disney score means the note lacks a concrete action path, durable decision, useful source insight, or reusable system change right now, even if the topic itself could matter later.",
+          "No topic is automatically low or high. Judge the exact thought by whether it creates an actionable path, reusable system fix, durable decision, source insight, or relief toward Disney/Imagineering/R&D, money, career, research, happiness, car/finance motivation, health, relationships, or daily execution. A side-topic note can score high if it clearly moves one of those goals; a goal-themed note can score low if it is vague or unactionable.",
           "If Alan names a topic as an example of lower-return thinking, do not turn that topic into a scoring category. Use topic-neutral language such as side thought, unclear action path, wording loop, or low direct usefulness unless the exact content depends on naming the topic.",
           "Never write topic-category phrases such as cheese detours, food detours, recipe tangent, object tangent, movie tangent, or similar wording. If the source uses an example topic, call it an example side thought or specific formatting issue instead of making that topic the reason for a low score.",
-          "For the life leverage analysis, write two compact human sentences. Name what makes the thought useful or low-return, and say why the score is not higher or lower. Do not moralize, do not call the thought stupid, and do not imply low-score thoughts should be deleted.",
-          "Choose exactly one short phrase from the saved input that is the strongest autism-trait signal and exactly one short phrase that is the strongest ADHD-trait signal. These phrases will be bolded in the generated PDF.",
+          "For the Disney score analysis, match the autism and ADHD card vibe: two compact complete human sentences, about 150-260 characters, starting from the strongest useful pattern in this exact note, then explaining why the score is not higher or lower. Do not moralize, do not call the thought stupid, and do not imply low-score thoughts should be deleted.",
+          "Choose exactly one short phrase from the saved input that is the strongest autism-trait signal, exactly one short phrase that is the strongest ADHD-trait signal, and exactly one short phrase that best explains the Disney/career-goal score. The autism and ADHD phrases will be bolded in the generated PDF; the Disney phrase appears on the card.",
           "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
           "The selected phrase must make sense by itself. It needs enough concrete context that a card reader can understand what it refers to without rereading the full note.",
           "Never select vague fragments such as 'about that every day', 'that every day', 'the thing', 'this is hard', 'about it', 'that part', 'while driving', 'ok so in the movie', 'this uncertainty is making me kind', or any phrase built mostly from pronouns. Expand to the surrounding concrete sentence or choose a better sentence.",
@@ -117,6 +118,7 @@ async function analyzeWithAi(payload) {
           "Never include ellipses, truncated quotes, trailing punctuation fragments, or preview-style clipped text in highlightText or adhdHighlightText. The selected phrase must be copied as a continuous exact phrase from the source.",
           "For ADHD, a good phrase must itself show attention load, task friction, time/memory/organization strain, impulsivity, restlessness, hyperfocus, or emotional regulation under executive load. Do not use a general anxiety phrase as ADHD evidence unless you explain the attention/executive part concretely.",
           "For autism, a good phrase must itself show predictability, sensory/body mapping, exactness, sameness, social meaning, masking, transition cost, or fixed-focus evidence. Do not use a general worry phrase as autism evidence unless the concrete autism-shaped mechanism is present.",
+          "For the Disney phrase, choose the line that best shows career/research/money/execution usefulness. Prefer Disney, Imagineering, R&D, soft robotics, research, experiment, mechanism, portfolio, career, money, AO Labs, system, action, or productivity wording. Car wording can be the best phrase when it is the real motivation signal, but explain that it is indirect unless it ties to work, money, or career action.",
           "The autism phrase and ADHD phrase should be different unless the note only contains one concrete trait-shaped sentence. If they are the same, explain different mechanisms in each paragraph and keep one score lower when the second trait is weaker.",
           "If the note has weak signal for a trait, choose the least-bad concrete phrase and score it low. Do not make the quote or explanation sound stronger than the text actually supports.",
           "A strong autism phrase usually shows need for certainty or predictability, sensory/body safety, distress/overwhelm, difficulty with switching or change, masking, social-meaning confusion, literal rule dependence, or intense fixed focus.",
@@ -126,8 +128,8 @@ async function analyzeWithAi(payload) {
           "Every analysis must be unique because every saved input is unique. Do not reuse a template sentence from another input, and do not write a generic category summary that could fit another note.",
           "Do not start most paragraphs with the same phrase such as 'I read'. Vary the first sentence naturally across notes so neighboring cards do not look copied and pasted.",
           "Each paragraph must be anchored in this exact input. Name at least three concrete input-specific details, situations, or tensions from the distinctive-detail list or saved text when the note provides them. Include one sentence explaining why the chosen phrase is trait-shaped. Use short paraphrases, not long quotes. The explanation must describe the same chosen phrase, not a different line from the note.",
-          "Make the autism and ADHD paragraphs parallel in shape and length. Each should be two compact complete sentences, about 150-260 characters, talk directly about its chosen phrase, then explain the score in normal human language.",
-          "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText or adhdHighlightText, so refer to it naturally as that line, that wording, or that phrase, then use other concrete details from the input. Do not say 'selected line'.",
+          "Make the autism, ADHD, and Disney-score paragraphs parallel in shape and length. Each should be two compact complete sentences, about 150-260 characters, talk directly about its chosen phrase, then explain the score in normal human language.",
+          "Do not repeat the chosen phrase verbatim inside the analysis paragraph. The phrase is already stored separately as highlightText, adhdHighlightText, or lifeLeverageHighlightText, so refer to it naturally as that line, that wording, or that phrase, then use other concrete details from the input. Do not say 'selected line'.",
           "Do not make the details scarce. Each analysis paragraph needs enough input-specific substance that it would not fit another note: include at least three concrete details besides the selected phrase whenever the input provides them.",
           "The ADHD paragraph must not sound like a separate clinical rubric or abstract executive-function lecture. Start from the chosen ADHD phrase when possible and explain how that exact phrase shows attention, task-starting, time, memory, restlessness, quick switching, frustration, or hyperfocus.",
           "Write like a careful human analyst, not a scoring formula. Do not list point math, hit counts, DSM fractions, or raw/cap language.",
@@ -219,27 +221,39 @@ async function analyzeWithAi(payload) {
                   type: "integer",
                   minimum: 1,
                   maximum: 100,
-                  description: "Life leverage score for how directly this entry can help Alan's long-term goals and real-life execution.",
+                  description: "Disney/career-goal score for how directly this entry can help Alan's Disney Imagineering, R&D, career, money, and execution path.",
                 },
                 lifeLeverageAnalysis: {
                   type: "string",
                   minLength: 80,
                   maxLength: 420,
-                  description: "One unique two-sentence human paragraph explaining the life leverage score. It should distinguish direct money/career/happiness/car/research usefulness from lower-return tangents without moralizing.",
+                  description: "One unique two-sentence human paragraph explaining the Disney/career-goal score in the same compact card style as the autism and ADHD paragraphs. It should start from the strongest useful pattern in this exact note, then say why the score is not higher or lower without moralizing.",
                 },
                 lifeLeverageSpecificDetails: {
                   type: "array",
                   minItems: 2,
                   maxItems: 5,
-                  description: "Short paraphrases of concrete details from this input that shaped the life leverage score.",
+                  description: "Short paraphrases of concrete details from this input that shaped the Disney/career-goal score.",
                   items: {
                     type: "string",
                     minLength: 4,
                     maxLength: 90,
                   },
                 },
+                lifeLeverageHighlightText: {
+                  type: "string",
+                  minLength: 4,
+                  maxLength: 120,
+                  description: "One exact 6-20 word self-contained phrase from the saved input that best explains the Disney/career-goal score. It must include concrete context, not just a vague fragment.",
+                },
+                lifeLeverageHighlightExplanation: {
+                  type: "string",
+                  minLength: 30,
+                  maxLength: 280,
+                  description: "One short human sentence explaining why the highlighted phrase matters for Disney, R&D, career, money, car motivation, or execution momentum.",
+                },
               },
-              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation", "adhdScore", "adhdAnalysis", "adhdSpecificDetails", "adhdHighlightText", "adhdHighlightExplanation", "lifeLeverageScore", "lifeLeverageAnalysis", "lifeLeverageSpecificDetails"],
+              required: ["score", "analysis", "specificDetails", "highlightText", "highlightExplanation", "adhdScore", "adhdAnalysis", "adhdSpecificDetails", "adhdHighlightText", "adhdHighlightExplanation", "lifeLeverageScore", "lifeLeverageAnalysis", "lifeLeverageSpecificDetails", "lifeLeverageHighlightText", "lifeLeverageHighlightExplanation"],
             },
           },
         },
@@ -333,10 +347,13 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   const lifeLeverageScore = clampScore(value?.lifeLeverageScore || fallbackLifeLeverageScore || 1);
+  const lifeLeverageHighlightText = normalizedHighlightText(value?.lifeLeverageHighlightText, sourceAnchors, sourceText, "life");
+  const lifeLeverageHighlightExplanation = cleanExplanation(value?.lifeLeverageHighlightExplanation).slice(0, 320);
   let lifeLeverageAnalysis = cleanExplanation(value?.lifeLeverageAnalysis);
   if (!lifeLeverageAnalysis || lifeLeverageAnalysis.length < 40) {
-    lifeLeverageAnalysis = "This entry has limited goal-relevance detail, so I keep the life leverage score close to the fallback. Low leverage means low direct usefulness right now, not that the thought should be deleted.";
+    lifeLeverageAnalysis = "This entry has limited Disney-goal detail, so I keep the score close to the fallback. Low score means low direct usefulness right now, not that the thought should be deleted.";
   }
+  lifeLeverageAnalysis = removeRepeatedHighlightSentences(lifeLeverageAnalysis, lifeLeverageHighlightText);
   lifeLeverageAnalysis = trimIncompleteSentence(lifeLeverageAnalysis);
   return {
     score: Math.max(1, score),
@@ -349,6 +366,8 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
     adhdHighlightExplanation,
     lifeLeverageScore: Math.max(1, lifeLeverageScore),
     lifeLeverageExplanation: cleanAnalysisParagraph(lifeLeverageAnalysis).slice(0, 1100),
+    lifeLeverageHighlightText,
+    lifeLeverageHighlightExplanation,
     model: openAiModel,
     textChars: Math.max(0, Number(textChars || 0)),
   };
@@ -438,6 +457,7 @@ function highlightSegmentScore(value, maxWords) {
   if (!isDanglingHighlight(text)) score += 12;
   if (/\b(?:focus|attention|concentrat|interesting|boring|task|start|finish|time|forget|organize|priority|frustrat|overwhelm|restless|fidget|impuls|hyperfocus)\b/.test(text)) score += 18;
   if (/\b(?:predict|certainty|uncertain|know|safe|comfort|sensory|same|switch|routine|social|mask|exact|rule|pattern|body)\b/.test(text)) score += 12;
+  if (/\b(?:disney|imagineer|r&d|research|career|money|rich|car|a3|soft robotics|robotics|prototype|mechanism|paper|phd|portfolio|goal|system|workflow)\b/.test(text)) score += 16;
   if (isWeakHighlight(text, "adhd") && isWeakHighlight(text, "autism")) score -= 45;
   if (words > maxWords) score -= 20;
   return score - Math.abs(words - Math.min(maxWords, 10));
@@ -521,13 +541,27 @@ function sourceHighlightScore(value, trait, avoided = "") {
   const text = cleanExplanation(value).toLowerCase();
   const words = text.split(/\s+/).filter(Boolean).length;
   let score = highlightSegmentScore(text, 18);
-  if (trait === "adhd") score += adhdPhraseSignal(text) * 16 + autismPhraseSignal(text) * 2;
+  if (trait === "life") score += disneyPhraseSignal(text) * 18 + adhdPhraseSignal(text) * 2 + autismPhraseSignal(text);
+  else if (trait === "adhd") score += adhdPhraseSignal(text) * 16 + autismPhraseSignal(text) * 2;
   else score += autismPhraseSignal(text) * 16 + adhdPhraseSignal(text) * 2;
   if (/\bi\b|\bmy\b|\bme\b/.test(text)) score += 6;
   if (words >= 6 && words <= 16) score += 10;
   if (isWeakHighlight(text, trait)) score -= 60;
   if (avoided && comparableAnalysisText(text) === comparableAnalysisText(avoided)) score -= 300;
   return score;
+}
+
+function disneyPhraseSignal(text) {
+  const value = cleanExplanation(text).toLowerCase();
+  const patterns = [
+    /\bdisney|imagineer|imagineering|wdi|r&d|r and d|research scientist|research engineer|scientist engineer\b/,
+    /\bsoft robotics|robotics|mechanical|hardware|prototype|pneumatic|actuator|mechanism|linkage|morph|simulation|experiment|fabricat|paper|publication|patent|portfolio|phd\b/,
+    /\bcareer|job|work|resume|cv|application|recruit|company|engineer|scientist|researcher\b/,
+    /\bmoney|rich|income|salary|paid|cash|finance|business|revenue|profit|successful|make money\b/,
+    /\bgoal|plan|next step|action|priority|system|workflow|aolabs|codex|progress|spec|fix|verify|deploy|sync|reduce friction\b/,
+    /\bcar|a3|audi|mini|quattro|steering|interior|payment|dealer\b/,
+  ];
+  return patterns.reduce((count, pattern) => count + (pattern.test(value) ? 1 : 0), 0);
 }
 
 function adhdPhraseSignal(text) {
@@ -694,7 +728,7 @@ function cleanAnchor(value) {
       .replace(/^(?:and|but|because|so|then|while|when)\b[\s,]*/i, "")
       .trim();
   }
-  if (/\b(?:application\/pdf|pdf generated|generated pdf|autism score|adhd score|score \d|synced -|browser heuristic)\b/i.test(text)) return "";
+  if (/\b(?:application\/pdf|pdf generated|generated pdf|autism score|adhd score|disney score|score \d|synced -|browser heuristic)\b/i.test(text)) return "";
   if (/^(?:this entry|this note|the note|i read|the selected|the phrase|the concrete pieces|other concrete details|the autism-relevant|the adhd-relevant)\b/i.test(text)) return "";
   if (/\b(?:autism-shaped|adhd-shaped|autism-trait signal|adhd-trait signal|diagnostic-letter range|low-signal|high-signal saved note)\b/i.test(text)) return "";
   if (!text || text.length < 12) return "";
@@ -826,6 +860,8 @@ async function saveUploadedFile(payload) {
     adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
     lifeLeverageScore: clampScore(payload.lifeLeverageScore),
     lifeLeverageExplanation: cleanExplanation(payload.lifeLeverageExplanation),
+    lifeLeverageHighlightText: cleanExplanation(payload.lifeLeverageHighlightText).slice(0, 160),
+    lifeLeverageHighlightExplanation: cleanExplanation(payload.lifeLeverageHighlightExplanation).slice(0, 360),
     lifeLeverageScoreSource: scoreSource(payload.lifeLeverageScoreSource),
     lifeLeverageScoreModel: cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80),
     lifeLeverageScoreConfidence: scoreConfidence(payload.lifeLeverageScoreConfidence),
@@ -894,6 +930,8 @@ async function rebuildGeneratedEntry(id, payload) {
   if (payload.adhdTextChars !== undefined) entry.adhdTextChars = Math.max(0, Number(payload.adhdTextChars || 0));
   if (payload.lifeLeverageScore !== undefined) entry.lifeLeverageScore = clampScore(payload.lifeLeverageScore);
   if (payload.lifeLeverageExplanation !== undefined) entry.lifeLeverageExplanation = cleanExplanation(payload.lifeLeverageExplanation);
+  if (payload.lifeLeverageHighlightText !== undefined) entry.lifeLeverageHighlightText = cleanExplanation(payload.lifeLeverageHighlightText).slice(0, 160);
+  if (payload.lifeLeverageHighlightExplanation !== undefined) entry.lifeLeverageHighlightExplanation = cleanExplanation(payload.lifeLeverageHighlightExplanation).slice(0, 360);
   if (payload.lifeLeverageScoreSource !== undefined) entry.lifeLeverageScoreSource = scoreSource(payload.lifeLeverageScoreSource);
   if (payload.lifeLeverageScoreModel !== undefined) entry.lifeLeverageScoreModel = cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80);
   if (payload.lifeLeverageScoreConfidence !== undefined) entry.lifeLeverageScoreConfidence = scoreConfidence(payload.lifeLeverageScoreConfidence);

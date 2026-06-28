@@ -395,6 +395,14 @@ input {
   color: #214f8f;
 }
 
+.life-signal {
+  color: #5f4424;
+}
+
+.life-signal strong {
+  color: #7a4a16;
+}
+
 .vault-meta,
 .vault-text {
   margin: 0;
