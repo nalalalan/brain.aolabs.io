@@ -2,7 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
-const analysisQualityVersion = "20260628-life-leverage-v1";
+const analysisQualityVersion = "20260628-life-leverage-v2";
 
 let state = loadState();
 let pendingFiles = [];
@@ -2810,7 +2810,7 @@ function analyzeLifeLeverageText(value) {
   const car = matchStats(text, /\bnice car\b|\bcar\b|\ba3\b|\baudi\b|\bmini\b|\bquattro\b|\bbuild\b|\bsteering\b|\binterior\b|\bdown payment\b|\bmonthly payment\b|\bpayment\b|\binsurance\b|\bdealer\b|\btrim\b/g);
   const happiness = matchStats(text, /\bhappy\b|\bhappiness\b|\brelationship\b|\blove\b|\bfriends?\b|\bfamily\b|\bhealth\b|\bsleep\b|\bexercise\b|\bfood\b|\bcooking\b|\bcomfort\b|\bcalm\b|\blife\b|\bquality of life\b|\bhome\b|\bfun\b|\bviolin\b|\bdisney\b|\bvacation\b/g);
   const execution = matchStats(text, /\bgoal\b|\bplan\b|\bnext step\b|\baction\b|\bpriority\b|\bfocus\b|\bschedule\b|\broutine\b|\bsystem\b|\bautomation\b|\bautomate\b|\bworkflow\b|\bprogress\b|\bspec\b|\baolabs\b|\bcodex\b|\bapp\b|\bsite\b|\bbug\b|\bfix\b|\bverify\b|\bdeploy\b|\bsync\b|\brebuild\b|\breduce friction\b|\bless cognitive load\b/g);
-  const lowReturn = matchStats(text, /\bcheese\b|\brecipe\b|\bbanh xeo\b|\bramen\b|\bfood(?:s)?\b|\beating\b|\bcooking\b|\bmilk\b|\benzyme(?:s)?\b|\bbacteria\b|\bmovie\b|\bmoana\b|\bwater\b|\bsparkling\b|\brandom\b|\bdumb\b|\bshit\b|\bargument\b|\btangent\b/g);
+  const lowReturn = matchStats(text, /\brandom\b|\btangent\b|\bside topic\b|\bside-topic\b|\bvent\b|\bargument\b|\bscroll(?:ing)?\b|\bdistraction\b|\bwaste of time\b/g);
 
   const targetDomains = [money, career, research, car, happiness, execution].filter((stats) => stats.count > 0).length;
   const goalPoints = scoreDimension(money, 22)
@@ -2819,7 +2819,7 @@ function analyzeLifeLeverageText(value) {
     + scoreDimension(car, 16)
     + scoreDimension(happiness, 14)
     + scoreDimension(execution, 20);
-  const tangentPenalty = Math.min(26, lowReturn.count * 5 + lowReturn.terms.length * 3);
+  const tangentPenalty = targetDomains ? Math.min(14, lowReturn.count * 3 + lowReturn.terms.length * 2) : 0;
   const detailBonus = Math.min(10, anchors.length * 2);
   let cap = 38;
   if (targetDomains >= 5) cap = 96;
@@ -2829,8 +2829,8 @@ function analyzeLifeLeverageText(value) {
   else if (targetDomains === 1) cap = 58;
   if ((money.count || career.count || research.count) && (execution.count || car.count || happiness.count)) cap = Math.max(cap, 86);
   if (money.count && career.count && research.count) cap = 94;
-  if (lowReturn.count && !money.count && !career.count && !research.count && !car.count) cap = Math.min(cap, execution.count ? 54 : 34);
-  if (lowReturn.count && execution.count && /(?:codex|app|site|spec|progress|aolabs|workflow|recipe)/i.test(text)) cap = Math.max(cap, 52);
+  if (!targetDomains && lowReturn.count) cap = Math.min(cap, 34);
+  if (execution.count && /(?:codex|app|site|spec|progress|aolabs|workflow|system|rule|fix|pattern|friction)/i.test(text)) cap = Math.max(cap, 58);
   const baseline = targetDomains ? 18 : 8;
   const raw = baseline + goalPoints + detailBonus - tangentPenalty;
   const score = clampAutismScore(Math.max(1, Math.min(raw, cap)));
@@ -2864,10 +2864,10 @@ function lifeLeverageAnalysisText(score, evidence) {
     return `This has useful leverage because it can improve ${lane}, but it is not a direct money/career/car move by itself. I score it in the middle because it still reduces friction if acted on.`;
   }
   if (evidence.lowReturn.count && evidence.execution.count) {
-    return "This is lower-to-middle leverage: it is about a food or recipe tangent, but it also captures a system/friction rule that can prevent the same annoying app mistake later. Useful, not core-life-path.";
+    return "This is lower-to-middle leverage: it starts as a tangent or vent, but it also captures a system/friction rule that can prevent the same annoying mistake later. Useful, not core-life-path.";
   }
   if (evidence.lowReturn.count) {
-    return "This is low leverage because it is mostly a food, object, or side-topic thought rather than a money, career, car, happiness, or long-term execution move. It can stay saved, but it should not dominate attention.";
+    return "This is low leverage because the entry reads mostly like a tangent or vent rather than a money, career, car, happiness, research, or execution move. It can stay saved, but it should not dominate attention.";
   }
   return "This is lower leverage because it does not clearly point toward money, career, happiness, the car path, research, or a concrete system improvement. I keep it above zero because saved thoughts can still reveal patterns later.";
 }
