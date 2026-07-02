@@ -770,11 +770,14 @@ async function createVaultItem(item) {
   ].filter(Boolean).join(" - ");
   main.append(title, score);
   if (signal.text) main.append(signalWhy);
-  main.append(scoreWhy, adhdScore);
+  if (scoreWhy.textContent) main.append(scoreWhy);
+  main.append(adhdScore);
   if (adhd.highlightText) main.append(adhdSignalWhy);
-  main.append(adhdWhy, lifeScore);
+  if (adhdWhy.textContent) main.append(adhdWhy);
+  main.append(lifeScore);
   if (leverage.highlightText) main.append(lifeSignalWhy);
-  main.append(lifeWhy, meta);
+  if (lifeWhy.textContent) main.append(lifeWhy);
+  main.append(meta);
 
   const actions = document.createElement("div");
   actions.className = "vault-actions";
@@ -2279,16 +2282,16 @@ function normalizeAnalysisExplanation(value) {
 }
 
 function cardAnalysisExplanation(value, options = {}) {
-  const cardSummary = traitCardSummary(options);
-  if (cardSummary) return compactCardAnalysis(cardSummary, options, 260);
   let text = removeRepeatedHighlightSentences(normalizeAnalysisExplanation(value), options.highlightText);
+  text = removeRepeatedSignalSentences(text, options);
   text = normalizeCardAnalysisTone(text, options.trait, options.seedText);
   if (isThinAnalysisText(text)) {
-    text = traitCardSummary(options) || text;
+    text = distinctCardContext(options);
   } else {
     text = addMissingCardDetails(text, options);
   }
-  return compactCardAnalysis(cleanCardAnalysisArtifacts(text, options), options, 260);
+  text = compactCardAnalysis(cleanCardAnalysisArtifacts(text, options), options, 260);
+  return removeRepeatedSignalSentences(text, options);
 }
 
 function pairedCardAnalysisText(autismText, adhdText, autismOptions = {}, adhdOptions = {}) {
@@ -2326,13 +2329,15 @@ function lifeLeverageCardAnalysis(value, options = {}) {
     .replace(/^It stays low because\s+/i, "It stays lower because ")
     .replace(/\s+/g, " ")
     .trim();
-  if (!text) text = lifeLeverageFallbackSummary(options);
+  text = removeRepeatedSignalSentences(text, options);
+  if (!text) text = distinctCardContext(options, "disney");
   text = firstSentences(text, 2);
   text = cardSentenceClip(text, 250);
   if (visibleAnalysisLength(text) < 145) {
     text = cardSentenceClip(`${text} ${lifeLeverageBoundarySentence(options.score)}`, 250);
   }
-  return trimIncompleteSentence(text) || text;
+  text = trimIncompleteSentence(text) || text;
+  return removeRepeatedSignalSentences(text, options);
 }
 
 function lifeLeverageFallbackSummary(options = {}) {
@@ -2357,7 +2362,7 @@ function lifeLeverageBoundarySentence(score = 0) {
 
 function compactCardAnalysis(value, options = {}, maxChars = 300) {
   let text = cleanCardAnalysisArtifacts(value, options);
-  if (!text) text = traitCardSummary(options);
+  if (!text) text = distinctCardContext(options);
   text = firstSentences(text, 2);
   text = cardSentenceClip(text, maxChars);
   return trimIncompleteSentence(text) || text;
@@ -2365,6 +2370,7 @@ function compactCardAnalysis(value, options = {}, maxChars = 300) {
 
 function fillShortCardAnalysis(value, options = {}, minChars = 150) {
   let text = normalizeAnalysisExplanation(value);
+  if (!text) return "";
   if (visibleAnalysisLength(text) >= minChars) return text;
   const boundary = scoreBoundarySentence(options.score, options.trait);
   return cardSentenceClip(`${text} ${boundary}`, 250);
@@ -2426,6 +2432,39 @@ function removeRepeatedHighlightSentences(value, highlightText) {
     return !(index === 0 && comparable.indexOf(phrase) <= 4);
   });
   return (kept.length ? kept.join(" ") : text).replace(/\s+/g, " ").trim();
+}
+
+function removeRepeatedSignalSentences(value, options = {}) {
+  const text = normalizeAnalysisExplanation(value);
+  if (!text) return "";
+  const signal = comparableAnalysisText(options.highlightExplanation);
+  const highlight = comparableAnalysisText(options.highlightText);
+  if (!signal && !highlight) return text;
+  const signalTokens = signal.split(/\s+/).filter((token) => token.length >= 5);
+  const kept = analysisSentences(text).filter((sentence) => {
+    const comparable = comparableAnalysisText(sentence);
+    if (!comparable) return false;
+    if (highlight && (comparable.includes(highlight) || anchorSimilarity(comparable, highlight) > 0.68)) return false;
+    if (!signal) return true;
+    const overlap = signalTokens.length
+      ? signalTokens.filter((token) => comparable.includes(token)).length / signalTokens.length
+      : 0;
+    if (overlap >= 0.55 && comparable.length <= signal.length * 1.9) return false;
+    if (anchorSimilarity(comparable, signal) > 0.58) return false;
+    return true;
+  });
+  return kept.join(" ").replace(/\s+/g, " ").trim();
+}
+
+function distinctCardContext(options = {}, mode = "") {
+  const details = cardConcreteDetails(
+    options.sourceText,
+    options.highlightText || "",
+    [options.highlightExplanation, options.highlightText].filter(Boolean).join(" ")
+  ).slice(0, 2);
+  if (details.length) return supportDetailsSentence(details);
+  if (mode === "disney" && !options.highlightExplanation) return lifeLeverageFallbackSummary(options);
+  return "";
 }
 
 function analysisSentences(value) {

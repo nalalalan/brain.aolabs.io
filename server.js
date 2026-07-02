@@ -320,6 +320,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   let analysis = cleanExplanation(value?.analysis);
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
   analysis = removeRepeatedHighlightSentences(analysis, highlightText);
+  analysis = removeRepeatedSignalSentences(analysis, highlightExplanation, highlightText);
   analysis = trimIncompleteSentence(analysis);
 
   const adhdScore = clampScore(value?.adhdScore || fallbackAdhdScore || 1);
@@ -345,6 +346,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
     adhdAnalysis = "This entry has limited ADHD-specific readable detail, so I keep the ADHD score close to the fallback and treat the result as a low-confidence signal rather than a diagnosis.";
   }
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
+  adhdAnalysis = removeRepeatedSignalSentences(adhdAnalysis, adhdHighlightExplanation, adhdHighlightText);
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   const lifeLeverageScore = clampScore(value?.lifeLeverageScore || fallbackLifeLeverageScore || 1);
   let lifeLeverageHighlightText = normalizedHighlightText(value?.lifeLeverageHighlightText, sourceAnchors, sourceText, "life");
@@ -370,6 +372,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
     lifeLeverageAnalysis = "This entry has limited Disney-goal detail, so I keep the score close to the fallback. Low score means low direct usefulness right now, not that the thought should be deleted.";
   }
   lifeLeverageAnalysis = removeRepeatedHighlightSentences(lifeLeverageAnalysis, lifeLeverageHighlightText);
+  lifeLeverageAnalysis = removeRepeatedSignalSentences(lifeLeverageAnalysis, lifeLeverageHighlightExplanation, lifeLeverageHighlightText);
   lifeLeverageAnalysis = trimIncompleteSentence(lifeLeverageAnalysis);
   return {
     score: Math.max(1, score),
@@ -697,6 +700,30 @@ function removeRepeatedHighlightSentences(value, highlightText) {
       return !(index === 0 && comparable.indexOf(phrase) <= 4);
     });
   return (kept.length ? kept.join(" ") : text).replace(/\s+/g, " ").trim();
+}
+
+function removeRepeatedSignalSentences(value, highlightExplanation, highlightText = "") {
+  const text = cleanExplanation(value);
+  const signal = comparableAnalysisText(highlightExplanation);
+  const highlight = comparableAnalysisText(highlightText);
+  if (!text || (!signal && !highlight)) return text;
+  const signalTokens = signal.split(/\s+/).filter((token) => token.length >= 5);
+  const sentences = text.match(/[^.!?]+[.!?]+(?=\s|$)/g) || [text];
+  const kept = sentences
+    .map((sentence) => cleanExplanation(sentence))
+    .filter((sentence) => {
+      const comparable = comparableAnalysisText(sentence);
+      if (!comparable) return false;
+      if (highlight && (comparable.includes(highlight) || anchorSimilarity(comparable, highlight) > 0.68)) return false;
+      if (!signal) return true;
+      const overlap = signalTokens.length
+        ? signalTokens.filter((token) => comparable.includes(token)).length / signalTokens.length
+        : 0;
+      if (overlap >= 0.55 && comparable.length <= signal.length * 1.9) return false;
+      if (anchorSimilarity(comparable, signal) > 0.58) return false;
+      return true;
+    });
+  return kept.join(" ").replace(/\s+/g, " ").trim();
 }
 
 function comparableAnalysisText(value) {
