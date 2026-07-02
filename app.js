@@ -954,7 +954,7 @@ async function downloadSelectedNotes() {
       blocks.push(`${formatExportDate(item.sourceCreatedAt || item.createdAt)}: ${note}`);
     }
     if (!blocks.length) return;
-    const text = `${blocks.join("\n\n")}\n`;
+    const text = `${blocks.join("\n")}\n`;
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     downloadBlob(blob, `brain-notes-${exportFileStamp(new Date())}.txt`);
     setExportMode(false);
