@@ -742,7 +742,14 @@ function distinctStoredAnalysis(sourceText = "", highlightText = "", highlightEx
     })
     .slice(0, 3);
   if (!details.length) return "";
-  return `The rest of the note adds: ${details.join("; ")}.`;
+  return `The note also mentions ${naturalJoin(details)}.`;
+}
+
+function naturalJoin(items = []) {
+  const cleaned = items.map((item) => cleanAnchor(item)).filter(Boolean);
+  if (cleaned.length <= 1) return cleaned[0] || "";
+  if (cleaned.length === 2) return `${cleaned[0]} and ${cleaned[1]}`;
+  return `${cleaned.slice(0, -1).join(", ")}, and ${cleaned[cleaned.length - 1]}`;
 }
 
 function comparableAnalysisText(value) {

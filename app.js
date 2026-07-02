@@ -777,13 +777,21 @@ async function createVaultItem(item) {
     appendedWhy.add(key);
     main.append(element);
   };
-  appendScoreWhy(scoreWhy);
+  if (!signal.text) {
+    appendScoreWhy(scoreWhy);
+  }
   main.append(adhdScore);
-  if (adhd.highlightText) main.append(adhdSignalWhy);
-  appendScoreWhy(adhdWhy);
+  if (adhd.highlightText) {
+    main.append(adhdSignalWhy);
+  } else {
+    appendScoreWhy(adhdWhy);
+  }
   main.append(lifeScore);
-  if (leverage.highlightText) main.append(lifeSignalWhy);
-  appendScoreWhy(lifeWhy);
+  if (leverage.highlightText) {
+    main.append(lifeSignalWhy);
+  } else {
+    appendScoreWhy(lifeWhy);
+  }
   main.append(meta);
 
   const actions = document.createElement("div");
@@ -2522,19 +2530,25 @@ function traitCardSummary(options = {}) {
 
 function normalizeCardAnalysisTone(value, trait = "autism", seedText = "") {
   return normalizeAnalysisExplanation(value)
+    .replace(/\bThe rest of the note adds:\s*/gi, "The note also mentions ")
+    .replace(/\bThe note also adds:\s*/gi, "The note also mentions ")
+    .replace(/\bThe note also mentions:\s*/gi, "The note also mentions ")
     .replace(/^That line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
       return `${traitSignalLead(trait, explanation, seedText)} `;
     })
     .replace(/^The selected (?:autism|ADHD) line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
       return `${traitSignalLead(trait, explanation, seedText)} `;
     })
-    .replace(/\.\s*;\s*/g, ". The rest of the note adds: ")
+    .replace(/\.\s*;\s*/g, ". The note also mentions ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function cleanCardAnalysisArtifacts(value, options = {}) {
   return normalizeAnalysisExplanation(value)
+    .replace(/\bThe rest of the note adds:\s*/gi, "The note also mentions ")
+    .replace(/\bThe note also adds:\s*/gi, "The note also mentions ")
+    .replace(/\bThe note also mentions:\s*/gi, "The note also mentions ")
     .replace(/^["'“”]\s*/, "")
     .replace(/\bI read the (ADHD|autism) signal as ([^.]+)\./gi, (_match, label, phrase) => {
       return traitSignalLead(label.toLowerCase() === "adhd" ? "adhd" : "autism", phrase, options.seedText);
@@ -2543,7 +2557,7 @@ function cleanCardAnalysisArtifacts(value, options = {}) {
     .replace(/\bThe (?:ADHD|autism)-relevant weight is\b/gi, "The signal is")
     .replace(/\bThat puts it in the middle rather than the diagnostic-letter range\./g, "That keeps it in the middle instead of treating it like a diagnosis letter.")
     .replace(/\s+([,.;:])/g, "$1")
-    .replace(/\.\s*;\s*/g, ". The rest of the note adds: ")
+    .replace(/\.\s*;\s*/g, ". The note also mentions ")
     .replace(/\s*;\s*(?:The score is not even higher|The note is not higher|The score is not higher|The entry is not higher)[^.]*\.?/gi, "")
     .replace(/\bpdf\s+(?=(?:This entry|This note|The note)\b)/gi, "")
     .replace(/\bThe phrase is (autism|ADHD)-shaped because\s+/gi, "I read that phrase as $1-shaped because ")
@@ -2630,7 +2644,7 @@ function supportDetailsSentence(details) {
     .filter(Boolean)
     .slice(0, 3);
   if (!cleaned.length) return "";
-  return `The rest of the note adds: ${cleaned.join("; ")}.`;
+  return `The note also mentions ${humanJoin(cleaned)}.`;
 }
 
 function cardConcreteDetails(sourceText, highlightText, analysisText = "") {
