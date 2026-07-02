@@ -779,15 +779,26 @@ async function createVaultItem(item) {
   };
   if (!signal.text) {
     appendScoreWhy(scoreWhy);
+  } else {
+    appendScoreBasis(signalWhy, autismCardOptions);
   }
   main.append(adhdScore);
   if (adhd.highlightText) {
+    appendScoreBasis(adhdSignalWhy, adhdCardOptions);
     main.append(adhdSignalWhy);
   } else {
     appendScoreWhy(adhdWhy);
   }
   main.append(lifeScore);
   if (leverage.highlightText) {
+    appendScoreBasis(lifeSignalWhy, {
+      score: leverage.score,
+      trait: "disney",
+      sourceText: cardSourceText,
+      highlightText: leverage.highlightText,
+      highlightExplanation: leverage.highlightExplanation,
+      seedText: itemSeed,
+    });
     main.append(lifeSignalWhy);
   } else {
     appendScoreWhy(lifeWhy);
@@ -815,6 +826,15 @@ function actionButton(text, action, extraClass = "") {
   button.textContent = text;
   button.addEventListener("click", action);
   return button;
+}
+
+function appendScoreBasis(target, options = {}) {
+  const basis = scoreBasisSentence(options);
+  if (!basis) return;
+  const existing = comparableAnalysisText(target.textContent);
+  const key = comparableAnalysisText(basis);
+  if (!key || existing.includes(key) || anchorSimilarity(existing, key) > 0.6) return;
+  target.append(document.createTextNode(` ${basis}`));
 }
 
 async function openRecord(item) {
@@ -2441,6 +2461,53 @@ function scoreBoundarySentence(score, trait = "autism") {
   if (value >= 80) return `The ${label} score is high because the note gives more than one real signal.`;
   if (value >= 50) return `The ${label} score stays in the middle because the signal is real but mixed.`;
   return `The ${label} score stays lower because the clue is present but not the main point of the note.`;
+}
+
+function scoreBasisSentence(options = {}) {
+  const trait = options.trait === "adhd" ? "adhd" : options.trait === "disney" ? "disney" : "autism";
+  const value = clampAutismScore(options.score);
+  const level = value >= 80 ? "high" : value >= 55 ? "in the middle" : "lower";
+  const themes = scoreBasisThemes(options, trait);
+  const themeText = themes.length ? humanJoin(themes.slice(0, 2)) : "";
+  if (trait === "adhd") {
+    if (themeText) return `The score is ${level} because the note also has ${themeText}, so the attention and task-friction read is broader than one line.`;
+    return `The score is ${level} because the clearest clue is about attention, task-starting, urgency, or execution friction rather than a diagnosis label.`;
+  }
+  if (trait === "disney") {
+    if (themeText) return `The score is ${level} because the line connects with ${themeText}, so the Disney/R&D goal is carrying the note instead of appearing once.`;
+    return `The score is ${level} because the note is being judged by how directly it moves the Disney, R&D, money, and career path.`;
+  }
+  if (themeText) return `The score is ${level} because the note also has ${themeText}, so the autism read is broader than one isolated reaction.`;
+  return `The score is ${level} because the clearest clue is about social fit, certainty, sensory load, routine, or exactness rather than a diagnosis label.`;
+}
+
+function scoreBasisThemes(options = {}, trait = "autism") {
+  const source = String(options.sourceText || "").replace(/\s+/g, " ").trim();
+  if (!source) return [];
+  const text = comparableAnalysisText(source);
+  const themes = [];
+  const add = (theme, pattern) => {
+    if (themes.includes(theme)) return;
+    if (pattern.test(text)) themes.push(theme);
+  };
+  if (trait === "adhd") {
+    add("paper-starting pressure", /\b(lock in|write my paper|paper|start|starting|task)\b/);
+    add("money and time pressure", /\b(work at the same time|broke|money|need money|too much time|devote too much time)\b/);
+    add("urgency to turn intention into action", /\b(need to|have to|urgent|momentum|finish|execute)\b/);
+    add("task-priority friction", /\b(side thing|priority|focus|attention|switch|planning)\b/);
+  } else if (trait === "disney") {
+    add("the Disney/Imagineering goal", /\b(disney|imagineer|imagineering)\b/);
+    add("PhD and research work", /\b(phd|research|paper|soft robotics|mechanical|prototype)\b/);
+    add("career and money pressure", /\b(career|work|job|money|broke|network|successful)\b/);
+    add("long-term R&D identity", /\b(scientist|engineer|r d|r&d|goal)\b/);
+  } else {
+    add("social nonresponse", /\b(group chat|nobody responded|unheard|invalidated)\b/);
+    add("withdrawal from mismatch", /\b(leave environments|environment|mismatch|reciprocity|lack of reciprocity)\b/);
+    add("feeling socially minimized", /\b(small and unimpressive|minimized|judged|unheard)\b/);
+    add("certainty or exact-fit pressure", /\b(certainty|exact|predictable|routine|same|stable|rule)\b/);
+    add("sensory or overwhelm load", /\b(sensory|overwhelm|comfortable|safe)\b/);
+  }
+  return themes.slice(0, 3);
 }
 
 function removeRepeatedHighlightSentences(value, highlightText) {
