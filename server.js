@@ -321,6 +321,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   if (!analysis || analysis.length < 40) throw Object.assign(new Error("AI analysis was too short"), { status: 502 });
   analysis = removeRepeatedHighlightSentences(analysis, highlightText);
   analysis = removeRepeatedSignalSentences(analysis, highlightExplanation, highlightText);
+  analysis = distinctStoredAnalysis(sourceText, highlightText, highlightExplanation, analysis);
   analysis = trimIncompleteSentence(analysis);
 
   const adhdScore = clampScore(value?.adhdScore || fallbackAdhdScore || 1);
@@ -347,6 +348,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   }
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   adhdAnalysis = removeRepeatedSignalSentences(adhdAnalysis, adhdHighlightExplanation, adhdHighlightText);
+  adhdAnalysis = distinctStoredAnalysis(sourceText, adhdHighlightText, adhdHighlightExplanation, adhdAnalysis);
   adhdAnalysis = trimIncompleteSentence(adhdAnalysis);
   const lifeLeverageScore = clampScore(value?.lifeLeverageScore || fallbackLifeLeverageScore || 1);
   let lifeLeverageHighlightText = normalizedHighlightText(value?.lifeLeverageHighlightText, sourceAnchors, sourceText, "life");
@@ -373,6 +375,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   }
   lifeLeverageAnalysis = removeRepeatedHighlightSentences(lifeLeverageAnalysis, lifeLeverageHighlightText);
   lifeLeverageAnalysis = removeRepeatedSignalSentences(lifeLeverageAnalysis, lifeLeverageHighlightExplanation, lifeLeverageHighlightText);
+  lifeLeverageAnalysis = distinctStoredAnalysis(sourceText, lifeLeverageHighlightText, lifeLeverageHighlightExplanation, lifeLeverageAnalysis);
   lifeLeverageAnalysis = trimIncompleteSentence(lifeLeverageAnalysis);
   return {
     score: Math.max(1, score),
@@ -724,6 +727,22 @@ function removeRepeatedSignalSentences(value, highlightExplanation, highlightTex
       return true;
     });
   return kept.join(" ").replace(/\s+/g, " ").trim();
+}
+
+function distinctStoredAnalysis(sourceText = "", highlightText = "", highlightExplanation = "", analysisText = "") {
+  if (!highlightText && !highlightExplanation) return cleanExplanation(analysisText);
+  const avoidText = [highlightText, highlightExplanation].filter(Boolean).join(" ");
+  const details = extractAnalysisAnchors(sourceText)
+    .filter((anchor) => {
+      const comparable = comparableAnalysisText(anchor);
+      const avoid = comparableAnalysisText(avoidText);
+      if (!comparable || comparable.length < 12) return false;
+      if (avoid && (avoid.includes(comparable) || comparable.includes(avoid) || anchorSimilarity(comparable, avoid) > 0.58)) return false;
+      return true;
+    })
+    .slice(0, 3);
+  if (!details.length) return "";
+  return `The rest of the note adds: ${details.join("; ")}.`;
 }
 
 function comparableAnalysisText(value) {
