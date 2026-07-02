@@ -770,13 +770,20 @@ async function createVaultItem(item) {
   ].filter(Boolean).join(" - ");
   main.append(title, score);
   if (signal.text) main.append(signalWhy);
-  if (scoreWhy.textContent) main.append(scoreWhy);
+  const appendedWhy = new Set();
+  const appendScoreWhy = (element) => {
+    const key = comparableAnalysisText(element.textContent);
+    if (!key || appendedWhy.has(key)) return;
+    appendedWhy.add(key);
+    main.append(element);
+  };
+  appendScoreWhy(scoreWhy);
   main.append(adhdScore);
   if (adhd.highlightText) main.append(adhdSignalWhy);
-  if (adhdWhy.textContent) main.append(adhdWhy);
+  appendScoreWhy(adhdWhy);
   main.append(lifeScore);
   if (leverage.highlightText) main.append(lifeSignalWhy);
-  if (lifeWhy.textContent) main.append(lifeWhy);
+  appendScoreWhy(lifeWhy);
   main.append(meta);
 
   const actions = document.createElement("div");
