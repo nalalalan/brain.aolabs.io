@@ -10,6 +10,9 @@ let pendingTextPdf = null;
 let textTimer = 0;
 let openUrls = [];
 let autoSyncRunning = false;
+let exportMode = false;
+let exportBusy = false;
+const selectedExportIds = new Set();
 const adhdAnalysisCache = new Map();
 const pdfTextCache = new Map();
 
@@ -25,6 +28,12 @@ const pendingList = document.getElementById("brain-pending");
 const vaultList = document.getElementById("brain-vault");
 const syncStatus = document.getElementById("brain-sync-status");
 const dropzone = document.querySelector("[data-role='dropzone']");
+const exportStartButton = document.getElementById("brain-export-start");
+const exportActions = document.getElementById("brain-export-actions");
+const exportAllButton = document.getElementById("brain-export-all");
+const exportDownloadButton = document.getElementById("brain-export-download");
+const exportCancelButton = document.getElementById("brain-export-cancel");
+const exportCount = document.getElementById("brain-export-count");
 const overallLifeScore = document.getElementById("overall-life-score");
 const overallScore = document.getElementById("overall-autism-score");
 const overallAdhdScore = document.getElementById("overall-adhd-score");
@@ -62,6 +71,10 @@ fileInput?.addEventListener("change", () => {
   fileInput.value = "";
 });
 saveButton?.addEventListener("click", () => savePending());
+exportStartButton?.addEventListener("click", () => setExportMode(true));
+exportAllButton?.addEventListener("click", () => toggleAllExportNotes());
+exportDownloadButton?.addEventListener("click", () => downloadSelectedNotes());
+exportCancelButton?.addEventListener("click", () => setExportMode(false));
 
 dropzone?.addEventListener("dragover", (event) => {
   event.preventDefault();
@@ -86,6 +99,7 @@ renderPending();
 renderOverallLifeScore();
 renderOverallScore();
 renderOverallAdhdScore();
+renderExportToolbar();
 renderVault();
 void initSync();
 
@@ -480,6 +494,8 @@ async function renderVault() {
   renderOverallLifeScore();
   renderOverallScore();
   renderOverallAdhdScore();
+  syncExportSelection();
+  renderExportToolbar();
   revokeOpenUrls();
   vaultList.replaceChildren();
   if (!state.length) {
@@ -633,6 +649,36 @@ function generatedScoreWeight(item) {
 async function createVaultItem(item) {
   const row = document.createElement("article");
   row.className = "vault-item";
+  const exportable = isExportableNote(item);
+  const exportKey = exportRecordKey(item);
+  if (exportMode && exportable) {
+    row.classList.add("export-selectable");
+    if (selectedExportIds.has(exportKey)) row.classList.add("is-selected");
+  } else if (exportMode) {
+    row.classList.add("export-unavailable");
+  }
+
+  if (exportMode && exportable) {
+    const pick = document.createElement("label");
+    pick.className = "export-pick";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = selectedExportIds.has(exportKey);
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        selectedExportIds.add(exportKey);
+        row.classList.add("is-selected");
+      } else {
+        selectedExportIds.delete(exportKey);
+        row.classList.remove("is-selected");
+      }
+      renderExportToolbar();
+    });
+    const pickText = document.createElement("span");
+    pickText.textContent = "select";
+    pick.append(checkbox, pickText);
+    row.append(pick);
+  }
 
   const thumb = document.createElement("div");
   thumb.className = "vault-thumb";
@@ -826,6 +872,128 @@ function actionButton(text, action, extraClass = "") {
   button.textContent = text;
   button.addEventListener("click", action);
   return button;
+}
+
+function isExportableNote(item) {
+  return isGeneratedPdf(item);
+}
+
+function exportRecordKey(item) {
+  return String(item?.id || `${item?.name || "note"}-${item?.createdAt || ""}`);
+}
+
+function exportableNotes() {
+  return state.filter(isExportableNote);
+}
+
+function syncExportSelection() {
+  const available = new Set(exportableNotes().map(exportRecordKey));
+  for (const key of [...selectedExportIds]) {
+    if (!available.has(key)) selectedExportIds.delete(key);
+  }
+  if (!available.size && exportMode) exportMode = false;
+}
+
+function setExportMode(enabled) {
+  exportMode = Boolean(enabled && exportableNotes().length);
+  if (!exportMode) selectedExportIds.clear();
+  renderExportToolbar();
+  void renderVault();
+}
+
+function renderExportToolbar() {
+  const notes = exportableNotes();
+  const total = notes.length;
+  const selected = notes.filter((item) => selectedExportIds.has(exportRecordKey(item))).length;
+  if (exportStartButton) {
+    exportStartButton.hidden = exportMode;
+    exportStartButton.disabled = !total || exportBusy;
+  }
+  if (exportActions) exportActions.hidden = !exportMode;
+  if (exportAllButton) {
+    exportAllButton.disabled = !total || exportBusy;
+    exportAllButton.textContent = selected && selected === total ? "clear" : "select all";
+  }
+  if (exportDownloadButton) {
+    exportDownloadButton.disabled = !selected || exportBusy;
+    exportDownloadButton.textContent = exportBusy ? "building file" : "download selected";
+  }
+  if (exportCancelButton) exportCancelButton.disabled = exportBusy;
+  if (exportCount) {
+    exportCount.textContent = total
+      ? `${selected} selected`
+      : "no notes";
+  }
+}
+
+function toggleAllExportNotes() {
+  const notes = exportableNotes();
+  const allSelected = notes.length && notes.every((item) => selectedExportIds.has(exportRecordKey(item)));
+  if (allSelected) {
+    selectedExportIds.clear();
+  } else {
+    notes.forEach((item) => selectedExportIds.add(exportRecordKey(item)));
+  }
+  renderExportToolbar();
+  void renderVault();
+}
+
+async function downloadSelectedNotes() {
+  if (exportBusy) return;
+  const selected = exportableNotes()
+    .filter((item) => selectedExportIds.has(exportRecordKey(item)))
+    .sort((a, b) => exportDateMs(a) - exportDateMs(b));
+  if (!selected.length) return;
+  exportBusy = true;
+  renderExportToolbar();
+  try {
+    const blocks = [];
+    for (const item of selected) {
+      const note = await exportNoteTextForRecord(item);
+      if (!note) continue;
+      blocks.push(`${formatExportDate(item.sourceCreatedAt || item.createdAt)}: ${note}`);
+    }
+    if (!blocks.length) return;
+    const text = `${blocks.join("\n\n")}\n`;
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    downloadBlob(blob, `brain-notes-${exportFileStamp(new Date())}.txt`);
+    setExportMode(false);
+  } finally {
+    exportBusy = false;
+    renderExportToolbar();
+  }
+}
+
+async function exportNoteTextForRecord(item) {
+  const source = item?.sourceText || await cardSourceTextForRecord(item);
+  return textPdfSource(stripGeneratedAnalysisLeak(source)).replace(/\s+/g, " ").trim();
+}
+
+function exportDateMs(item) {
+  const date = new Date(item?.sourceCreatedAt || item?.createdAt || 0);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function formatExportDate(value) {
+  const date = value ? new Date(value) : new Date();
+  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "2-digit",
+      month: "numeric",
+      day: "numeric",
+    }).format(safeDate);
+  } catch {
+    return safeDate.toLocaleDateString("en-US", { year: "2-digit", month: "numeric", day: "numeric" });
+  }
+}
+
+function exportFileStamp(value) {
+  const date = value ? new Date(value) : new Date();
+  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${safeDate.getFullYear()}${pad(safeDate.getMonth() + 1)}${pad(safeDate.getDate())}`;
 }
 
 function appendScoreBasis(target, options = {}) {

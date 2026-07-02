@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
   <link rel="stylesheet" href="./styles.css?v=20260628-disney-score-v1">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260702-score-basis-v1" defer></script>
+  <script src="./app.js?v=20260702-export-notes-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -77,6 +77,15 @@
     </section>
 
     <section class="document-bank" aria-label="document bank">
+      <div class="vault-toolbar" aria-live="polite">
+        <button id="brain-export-start" type="button">export notes</button>
+        <div id="brain-export-actions" class="export-actions" hidden>
+          <button id="brain-export-all" type="button">select all</button>
+          <button id="brain-export-download" type="button">download selected</button>
+          <button id="brain-export-cancel" type="button">cancel</button>
+          <span id="brain-export-count">0 selected</span>
+        </div>
+      </div>
       <div id="brain-vault" class="vault-list" aria-live="polite"></div>
       <div class="source-documents" aria-label="reference documents">
         <article class="source-document">

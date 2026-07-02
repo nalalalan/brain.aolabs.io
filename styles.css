@@ -246,6 +246,45 @@ input {
   margin-top: 18px;
 }
 
+.vault-toolbar,
+.export-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vault-toolbar button,
+.export-pick {
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdfa;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.vault-toolbar button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.export-actions[hidden] {
+  display: none;
+}
+
+.export-actions span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 .source-documents {
   display: grid;
   grid-template-columns: repeat(2, minmax(260px, 420px));
@@ -288,6 +327,29 @@ input {
 
 .source-document {
   color: var(--ink);
+}
+
+.vault-item.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+  background: #f6faf7;
+}
+
+.vault-item.export-unavailable {
+  opacity: .72;
+}
+
+.export-pick {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.export-pick input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 .vault-thumb {
