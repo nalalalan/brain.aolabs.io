@@ -662,64 +662,194 @@ function buildBankSummary() {
     };
   }
 
-  const text = notes.map(summaryTextForRecord).join(" ");
+  const ranked = rankedBankSummaryThreads(notes);
+  const primary = selectBankSummaryPrimary(ranked);
+  if (!primary) {
+    return {
+      main: "The saved bank is still too thin to read clearly. Add more notes and the summary will start from the strongest through-line, not a topic list.",
+    };
+  }
+  const details = primary.details.slice(0, 2);
+  const support = ranked.filter((item) => item.key !== primary.key && item.score >= Math.max(18, primary.score * 0.28));
   const sentences = [
-    directSummarySentence(text, "Research work covers", [
-      ["soft robotics", /\bsoft robotics\b|\bsoft\b.*\brobotics\b/gi],
-      ["overhang simulation", /\boverhang|simulat(?:e|or|ion)\b/gi],
-      ["Moana and ocean inspiration", /\bmoana|ocean|wave\b/gi],
-      ["octopus and tentacle mechanics", /\boctop(?:us|i)|tentacle\b/gi],
-      ["pneumatic mechanisms", /\bpneumatic|air|inflate|actuator\b/gi],
-      ["linkages", /\blinkage|sarrus|x[- ]?cell|mechanism\b/gi],
-      ["paper figures", /\bpaper|figure|manuscript|publication\b/gi],
-      ["prototypes", /\bprototype|build|fabricat(?:e|ion)|experiment\b/gi],
-      ["Disney Imagineering", /\bdisney|imagineer(?:ing)?|wdi\b/gi],
-    ]),
-    directSummarySentence(text, "System work covers", [
-      ["AO Labs apps", /\baolabs|app|site|website\b/gi],
-      ["sync", /\bsync|shared|upload|download\b/gi],
-      ["exports", /\bexport|download|txt|text file\b/gi],
-      ["PDF formatting", /\bpdf|format|formatted|line break|justif(?:y|ied)\b/gi],
-      ["tables", /\btable|column|row|sortable\b/gi],
-      ["recipes and food entries", /\brecipe|food|cheese|cook|meal|restaurant\b/gi],
-      ["source checks", /\bsource of truth|source|verify|verified|current\b/gi],
-      ["layout fixes", /\blayout|white space|grid|card|preview|collage\b/gi],
-    ]),
-    directSummarySentence(text, "Execution friction shows", [
-      ["task-starting pressure", /\btask|start|starting|getting started|activation energy\b/gi],
-      ["interest-driven focus", /\bfocus|attention|interesting|boring|hyperfocus\b/gi],
-      ["frustration with vague instructions", /\bfrustrat|vague|unclear|stupid|dumb|annoy\b/gi],
-      ["exact-rule needs", /\bexact|rule|standard|specific|same\b/gi],
-      ["stable-path needs", /\bstable|consistent|predictable|certainty|know for a fact\b/gi],
-      ["memory and time organization", /\bmemory|time|deadline|organize|plan|priority\b/gi],
-      ["overwhelm", /\boverwhelm|too much|stress|panic\b/gi],
-    ]),
-    directSummarySentence(text, "Personal direction connects", [
-      ["money", /\bmoney|rich|income|salary|cash|finance|spend\b/gi],
-      ["car motivation", /\bcar|a3|audi|mini|drive|driving\b/gi],
-      ["career pressure", /\bcareer|job|work|research scientist|scientist engineer\b/gi],
-      ["happiness and comfort", /\bhappiness|happy|comfort|comfortable|nice life\b/gi],
-      ["safety", /\bsafe|safety\b/gi],
-      ["body mapping", /\bbody|spatial|space|corner|mapping\b/gi],
-      ["social certainty", /\bsocial|relationship|conversation|reply|understood|unheard|invalidated\b/gi],
-    ]),
+    bankSummaryLead(primary, details),
+    bankSummarySupport(primary, support),
+    bankSummaryFriction(primary, support),
   ].filter(Boolean);
 
   return {
     main: (sentences.length
       ? sentences.join(" ")
-      : "Goal work, daily systems, research planning, and personal friction sit together in the saved bank."
+      : "The saved bank is strongest when it turns raw thoughts into a clearer next action instead of spreading attention across every possible topic."
     ).replace(/\s+/g, " ").trim(),
   };
 }
 
-function directSummarySentence(text, opener, details) {
-  const active = details
-    .filter(([, pattern]) => matchStats(text, pattern).count > 0)
-    .map(([label]) => label)
-    .slice(0, 7);
-  if (!active.length) return "";
-  return `${opener} ${humanJoin(active)}.`;
+function bankSummaryThreads() {
+  return [
+    {
+      key: "careerResearch",
+      details: [
+        ["Moana/ocean soft-robotics ideas", /\bmoana|ocean|wave|soft robotics|soft robotic\b/gi],
+        ["overhang and inverse-sheet simulation", /\boverhang|inverse sheet|sheet|simulat(?:e|or|ion)\b/gi],
+        ["Sarrus/X-cell/pneumatic/magnetic-valve mechanisms", /\bsarrus|x[- ]?cell|pneumatic|magnetic valve|actuator|linkage|mechanism\b/gi],
+        ["octopus and tentacle mechanics", /\boctop(?:us|i)|tentacle\b/gi],
+        ["paper math and advisor explanations", /\bpaper|figure|manuscript|math|citation|advisor|how it works\b/gi],
+        ["Disney/Imagineering R&D path", /\bdisney|imagineer(?:ing)?|wdi|r&d|research scientist|scientist engineer\b/gi],
+      ],
+      lead(details) {
+        const useful = details.filter((item) => item !== "Disney/Imagineering R&D path").slice(0, 3);
+        const specific = summaryFocusSentence(useful);
+        return `Your notes are centered on turning PhD soft-robotics work into a serious Disney/Imagineering R&D path.${specific}`;
+      },
+    },
+    {
+      key: "externalBrain",
+      details: [
+        ["PDF notes and exports", /\bpdf|export|download|text file|generated note\b/gi],
+        ["sync and saved files", /\bsync|shared|upload|vault|bank|saved\b/gi],
+        ["table, recipe, and formatting rules", /\btable|column|row|recipe|food|cheese|format|formatted|line break|justif(?:y|ied)\b/gi],
+        ["source checks and live verification", /\bsource of truth|source|verify|verified|current|live|deploy\b/gi],
+        ["AO Labs, Spec, Progress, and Codex workflows", /\baolabs|spec|progress|codex|app|site|website|workflow\b/gi],
+      ],
+      lead(details) {
+        const specific = summaryFocusSentence(details);
+        return `Your notes are centered on making saved material usable instead of vague.${specific}`;
+      },
+    },
+    {
+      key: "friction",
+      details: [
+        ["task-starting pressure", /\btask|start|starting|getting started|activation energy|stuck|lost momentum\b/gi],
+        ["interest-driven focus", /\bfocus|attention|interesting|boring|hyperfocus|one thing\b/gi],
+        ["exact rules and stable paths", /\bexact|rule|standard|specific|same|stable|consistent|predictable|certainty|know for a fact\b/gi],
+        ["vague instructions turning into frustration", /\bfrustrat|vague|unclear|stupid|dumb|annoy\b/gi],
+        ["memory, time, and overwhelm", /\bmemory|time|deadline|organize|plan|priority|overwhelm|too much|stress|panic\b/gi],
+      ],
+      lead(details) {
+        const specific = summaryFocusSentence(details);
+        return `Your notes are centered on reducing the ambiguity that makes starting and continuing work harder.${specific}`;
+      },
+    },
+    {
+      key: "lifeMotivation",
+      details: [
+        ["money and career pressure", /\bmoney|rich|income|salary|cash|finance|career|job|work\b/gi],
+        ["car motivation", /\bcar|a3|audi|mini|drive|driving\b/gi],
+        ["comfort, happiness, and safety", /\bhappiness|happy|comfort|comfortable|nice life|safe|safety\b/gi],
+        ["relationship and social certainty", /\bsocial|relationship|conversation|reply|understood|unheard|invalidated|lily|instagram\b/gi],
+        ["body and spatial mapping", /\bbody|spatial|space|corner|mapping\b/gi],
+      ],
+      lead(details) {
+        const specific = summaryFocusSentence(details);
+        return `Your notes are centered on using future-life motivation to keep the bigger research and career path emotionally real.${specific}`;
+      },
+    },
+  ];
+}
+
+function rankedBankSummaryThreads(notes) {
+  return bankSummaryThreads()
+    .map((thread) => {
+      const detailScores = thread.details.map(([label, pattern]) => {
+        const count = notes.reduce((total, item, index) => {
+          const text = summaryTextForRecord(item);
+          const matches = matchStats(text, new RegExp(pattern.source, "gi")).count;
+          if (!matches) return total;
+          const recency = index < 8 ? 1.2 : 1;
+          const leverage = Math.max(0.55, lifeLeverageScoreForRecord(item) / 100);
+          return total + Math.min(6, matches) * recency * (0.75 + leverage);
+        }, 0);
+        return { label, count };
+      }).filter((item) => item.count > 0);
+      const score = detailScores.reduce((total, item) => total + item.count, 0);
+      return {
+        ...thread,
+        score,
+        details: detailScores
+          .sort((a, b) => b.count - a.count)
+          .map((item) => item.label),
+      };
+    })
+    .filter((thread) => thread.score > 0)
+    .sort((a, b) => b.score - a.score);
+}
+
+function selectBankSummaryPrimary(ranked) {
+  const top = ranked[0];
+  const career = ranked.find((item) => item.key === "careerResearch");
+  if (career && top && (career.score >= top.score * 0.38 || career.score >= 34)) {
+    return career;
+  }
+  return top;
+}
+
+function bankSummaryLead(primary, details) {
+  return primary.lead(details);
+}
+
+function summaryDetailJoin(items) {
+  const clean = items.filter(Boolean);
+  if (clean.length <= 1) return clean[0] || "";
+  return clean.join("; ");
+}
+
+function summaryFocusSentence(items) {
+  const clean = items.filter(Boolean);
+  if (!clean.length) return "";
+  if (clean.length === 1) return ` Right now this mostly shows up as ${clean[0]}.`;
+  return ` Right now this mostly shows up as ${clean[0]}, with ${clean[1]} close behind.`;
+}
+
+function bankSummarySupport(primary, support) {
+  const hasCareer = support.some((item) => item.key === "careerResearch");
+  const hasExternalBrain = support.some((item) => item.key === "externalBrain");
+  const hasLife = support.some((item) => item.key === "lifeMotivation");
+  if (primary.key === "careerResearch") {
+    if (hasExternalBrain && hasLife) {
+      return "The PDF/app/table/formatting work mostly functions as external memory for that path. Money, car, comfort, and relationship safety show up as motivation and stability around it.";
+    }
+    if (hasExternalBrain) return "The PDF/app/table/formatting work mostly functions as external memory for that path.";
+    if (hasLife) return "Money, car, comfort, and relationship safety are motivation and stability around that path.";
+  }
+  if (primary.key === "externalBrain") {
+    return hasCareer
+      ? "The systems matter most when they point back to soft robotics, papers, mechanisms, and the Disney/Imagineering path."
+      : "The useful part is not collecting more categories; it is making the saved material easier to act on.";
+  }
+  if (primary.key === "friction") {
+    if (hasCareer) return "The friction matters because it blocks the research, paper, mechanism, and career work underneath it.";
+    return "The useful part is knowing which ambiguity to remove first instead of preserving every concern equally.";
+  }
+  if (primary.key === "lifeMotivation") {
+    return hasCareer
+      ? "The money, car, comfort, and safety material matters most when it feeds the research and Disney/Imagineering direction."
+      : "The useful part is separating real motivation from side thoughts that only add noise.";
+  }
+  return "";
+}
+
+function bankSummaryFriction(primary, support) {
+  const friction = primary.key === "friction" ? primary : support.find((item) => item.key === "friction");
+  if (!friction?.details?.length) return "";
+  const details = friction.details.slice(0, 2);
+  if (!details.length) return "";
+  if (primary.key === "friction") return "That pressure should set the next cleanup target instead of becoming another long list.";
+  return bankSummaryFrictionSentence(details);
+}
+
+function bankSummaryFrictionSentence(details) {
+  const text = details.join(" ");
+  const exact = /exact rules|stable paths/.test(text);
+  const memory = /memory|time|overwhelm/.test(text);
+  const vague = /vague instructions|frustration/.test(text);
+  const focus = /task-starting|interest-driven/.test(text);
+  if (exact && memory) return "The pressure underneath is that unclear rules plus memory and time load make the next path harder to trust.";
+  if (exact && vague) return "The pressure underneath is that vague instructions make exact rules and stable paths feel necessary.";
+  if (exact) return "The pressure underneath is needing exact rules before a path feels safe enough to follow.";
+  if (memory) return "The pressure underneath is memory, time, and overwhelm making the next step harder to hold.";
+  if (focus) return "The pressure underneath is task-starting and interest-driven focus shaping what becomes doable.";
+  return "The pressure underneath is ambiguity making the next path harder to trust.";
 }
 
 function summaryTextForRecord(item) {
