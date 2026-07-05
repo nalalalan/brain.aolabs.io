@@ -669,7 +669,7 @@ function buildBankSummary() {
       main: "The saved bank is still too thin to read clearly. Add more notes and the summary will start from the strongest through-line, not a topic list.",
     };
   }
-  const details = primary.details.slice(0, 2);
+  const details = primary.details.slice(0, 3);
   const support = ranked.filter((item) => item.key !== primary.key && item.score >= Math.max(18, primary.score * 0.28));
   const sentences = [
     bankSummaryLead(primary, details),
@@ -798,32 +798,36 @@ function summaryFocusSentence(items) {
   const clean = items.filter(Boolean);
   if (!clean.length) return "";
   if (clean.length === 1) return ` Right now this mostly shows up as ${clean[0]}.`;
-  return ` Right now this mostly shows up as ${clean[0]}, with ${clean[1]} close behind.`;
+  if (clean.length === 2) return ` Right now this mostly shows up through ${clean[0]} and ${clean[1]}.`;
+  return ` Right now this mostly shows up through ${clean[0]}, ${clean[1]}, and ${clean[2]}.`;
 }
 
 function bankSummarySupport(primary, support) {
-  const hasCareer = support.some((item) => item.key === "careerResearch");
-  const hasExternalBrain = support.some((item) => item.key === "externalBrain");
-  const hasLife = support.some((item) => item.key === "lifeMotivation");
+  const career = support.find((item) => item.key === "careerResearch");
+  const externalBrain = support.find((item) => item.key === "externalBrain");
+  const life = support.find((item) => item.key === "lifeMotivation");
+  const hasCareer = Boolean(career);
+  const hasExternalBrain = Boolean(externalBrain);
+  const hasLife = Boolean(life);
   if (primary.key === "careerResearch") {
     if (hasExternalBrain && hasLife) {
-      return "The PDF/app/table/formatting work mostly functions as external memory for that path. Money, car, comfort, and relationship safety show up as motivation and stability around it.";
+      return "The PDF/app/table/formatting work is there to preserve the notes, source checks, and formatting standards around that path, not to become its own equal branch. Money, car, comfort, and relationship safety show up as motivation and stability around it, not as the center.";
     }
-    if (hasExternalBrain) return "The PDF/app/table/formatting work mostly functions as external memory for that path.";
-    if (hasLife) return "Money, car, comfort, and relationship safety are motivation and stability around that path.";
+    if (hasExternalBrain) return "The PDF/app/table/formatting work is there to preserve the notes, source checks, and formatting standards around that path, not to become its own equal branch.";
+    if (hasLife) return "Money, car, comfort, and relationship safety are motivation and stability around that path, not the center.";
   }
   if (primary.key === "externalBrain") {
     return hasCareer
-      ? "The systems matter most when they point back to soft robotics, papers, mechanisms, and the Disney/Imagineering path."
+      ? `The systems matter most when they point back to ${summaryDetailJoin(career.details.slice(0, 2))} and the Disney/Imagineering path.`
       : "The useful part is not collecting more categories; it is making the saved material easier to act on.";
   }
   if (primary.key === "friction") {
-    if (hasCareer) return "The friction matters because it blocks the research, paper, mechanism, and career work underneath it.";
+    if (hasCareer) return `The friction matters because it blocks ${summaryDetailJoin(career.details.slice(0, 2))} and the career work underneath it.`;
     return "The useful part is knowing which ambiguity to remove first instead of preserving every concern equally.";
   }
   if (primary.key === "lifeMotivation") {
     return hasCareer
-      ? "The money, car, comfort, and safety material matters most when it feeds the research and Disney/Imagineering direction."
+      ? `The money, car, comfort, and safety material matters most when it feeds ${summaryDetailJoin(career.details.slice(0, 2))} and the Disney/Imagineering direction.`
       : "The useful part is separating real motivation from side thoughts that only add noise.";
   }
   return "";
@@ -844,7 +848,7 @@ function bankSummaryFrictionSentence(details) {
   const memory = /memory|time|overwhelm/.test(text);
   const vague = /vague instructions|frustration/.test(text);
   const focus = /task-starting|interest-driven/.test(text);
-  if (exact && memory) return "The pressure underneath is that unclear rules plus memory and time load make the next path harder to trust.";
+  if (exact && memory) return "The pressure underneath is that unclear rules plus memory and time load make the next path harder to trust before the work feels concrete.";
   if (exact && vague) return "The pressure underneath is that vague instructions make exact rules and stable paths feel necessary.";
   if (exact) return "The pressure underneath is needing exact rules before a path feels safe enough to follow.";
   if (memory) return "The pressure underneath is memory, time, and overwhelm making the next step harder to hold.";

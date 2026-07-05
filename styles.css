@@ -188,6 +188,9 @@ input {
   font-size: 13px;
   font-weight: 400;
   line-height: 1.36;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: none;
 }
 
 .intake-controls {
