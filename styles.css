@@ -166,7 +166,7 @@ input {
 .bank-summary {
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 0;
   min-width: 0;
   padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
@@ -174,28 +174,20 @@ input {
   background: #f8f5ee;
 }
 
-.bank-summary h2 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.1;
-  letter-spacing: 0;
-  text-transform: lowercase;
-}
-
 .bank-summary p {
   margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 680;
-  line-height: 1.38;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.36;
   overflow-wrap: break-word;
 }
 
 .bank-summary .summary-main {
   color: var(--ink);
   font-size: 13px;
-  font-weight: 760;
-  line-height: 1.38;
+  font-weight: 400;
+  line-height: 1.36;
 }
 
 .intake-controls {

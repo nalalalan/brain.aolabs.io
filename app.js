@@ -646,12 +646,10 @@ function renderBankSummary() {
   if (!bankSummary) return;
   const summary = buildBankSummary();
   bankSummary.replaceChildren();
-  const title = document.createElement("h2");
-  title.textContent = "all notes";
   const main = document.createElement("p");
   main.className = "summary-main";
   main.textContent = summary.main;
-  bankSummary.append(title, main);
+  bankSummary.append(main);
 }
 
 function buildBankSummary() {
@@ -659,56 +657,69 @@ function buildBankSummary() {
   if (!notes.length) {
     return {
       main: sync.status === "checking"
-        ? "Saved notes will summarize here after sync loads."
-        : "No saved notes yet. Paste a thought, save it, and this becomes the notes summary.",
+        ? "Saved notes will appear after sync loads."
+        : "Paste a thought, save it, and the bank will keep it here.",
     };
   }
 
-  const themes = summaryThemes(notes).map((theme) => theme.label);
-  const themeText = themes.slice(0, 3);
-  const themeSentence = themeText.length
-    ? `mostly about ${humanJoin(themeText)}`
-    : "a mix of goal work, friction, and daily thought patterns";
-  const recentThemes = summaryThemes(notes.slice(0, Math.min(8, notes.length))).slice(0, 2).map((theme) => theme.label);
-  const recentSentence = recentThemes.length
-    ? `The newest notes keep returning to ${humanJoin(recentThemes)}.`
-    : "The newest notes continue the same mixture of work, daily systems, and personal pattern-tracking.";
-  const otherThemes = themes.slice(3, 7);
-  const otherSentence = otherThemes.length
-    ? `Other recurring threads include ${humanJoin(otherThemes)}.`
-    : "";
-  const countText = `${notes.length} saved note${notes.length === 1 ? "" : "s"}`;
+  const text = notes.map(summaryTextForRecord).join(" ");
+  const sentences = [
+    directSummarySentence(text, "Research work covers", [
+      ["soft robotics", /\bsoft robotics\b|\bsoft\b.*\brobotics\b/gi],
+      ["overhang simulation", /\boverhang|simulat(?:e|or|ion)\b/gi],
+      ["Moana and ocean inspiration", /\bmoana|ocean|wave\b/gi],
+      ["octopus and tentacle mechanics", /\boctop(?:us|i)|tentacle\b/gi],
+      ["pneumatic mechanisms", /\bpneumatic|air|inflate|actuator\b/gi],
+      ["linkages", /\blinkage|sarrus|x[- ]?cell|mechanism\b/gi],
+      ["paper figures", /\bpaper|figure|manuscript|publication\b/gi],
+      ["prototypes", /\bprototype|build|fabricat(?:e|ion)|experiment\b/gi],
+      ["Disney Imagineering", /\bdisney|imagineer(?:ing)?|wdi\b/gi],
+    ]),
+    directSummarySentence(text, "System work covers", [
+      ["AO Labs apps", /\baolabs|app|site|website\b/gi],
+      ["sync", /\bsync|shared|upload|download\b/gi],
+      ["exports", /\bexport|download|txt|text file\b/gi],
+      ["PDF formatting", /\bpdf|format|formatted|line break|justif(?:y|ied)\b/gi],
+      ["tables", /\btable|column|row|sortable\b/gi],
+      ["recipes and food entries", /\brecipe|food|cheese|cook|meal|restaurant\b/gi],
+      ["source checks", /\bsource of truth|source|verify|verified|current\b/gi],
+      ["layout fixes", /\blayout|white space|grid|card|preview|collage\b/gi],
+    ]),
+    directSummarySentence(text, "Execution friction shows", [
+      ["task-starting pressure", /\btask|start|starting|getting started|activation energy\b/gi],
+      ["interest-driven focus", /\bfocus|attention|interesting|boring|hyperfocus\b/gi],
+      ["frustration with vague instructions", /\bfrustrat|vague|unclear|stupid|dumb|annoy\b/gi],
+      ["exact-rule needs", /\bexact|rule|standard|specific|same\b/gi],
+      ["stable-path needs", /\bstable|consistent|predictable|certainty|know for a fact\b/gi],
+      ["memory and time organization", /\bmemory|time|deadline|organize|plan|priority\b/gi],
+      ["overwhelm", /\boverwhelm|too much|stress|panic\b/gi],
+    ]),
+    directSummarySentence(text, "Personal direction connects", [
+      ["money", /\bmoney|rich|income|salary|cash|finance|spend\b/gi],
+      ["car motivation", /\bcar|a3|audi|mini|drive|driving\b/gi],
+      ["career pressure", /\bcareer|job|work|research scientist|scientist engineer\b/gi],
+      ["happiness and comfort", /\bhappiness|happy|comfort|comfortable|nice life\b/gi],
+      ["safety", /\bsafe|safety\b/gi],
+      ["body mapping", /\bbody|spatial|space|corner|mapping\b/gi],
+      ["social certainty", /\bsocial|relationship|conversation|reply|understood|unheard|invalidated\b/gi],
+    ]),
+  ].filter(Boolean);
+
   return {
-    main: `Across ${countText}, the notes are ${themeSentence}. ${recentSentence} ${otherSentence}`.replace(/\s+/g, " ").trim(),
+    main: (sentences.length
+      ? sentences.join(" ")
+      : "Goal work, daily systems, research planning, and personal friction sit together in the saved bank."
+    ).replace(/\s+/g, " ").trim(),
   };
 }
 
-function summaryThemes(notes) {
-  const themes = [
-    { label: "Disney/Imagineering and R&D ambition", pattern: /\b(?:disney|imagineer(?:ing)?|wdi|r&d|r and d|research scientist|scientist engineer)\b/gi },
-    { label: "research, papers, prototypes, and soft robotics", pattern: /\b(?:phd|research|paper|publication|experiment|prototype|soft robotics|robotics|mechanism|linkage|pneumatic|actuator|morph(?:ing)?|simulation|fabricat(?:e|ion)|portfolio|patent)\b/gi },
-    { label: "systems that reduce daily friction", pattern: /\b(?:codex|aolabs|app|site|workflow|system|automation|automate|fix|verify|deploy|sync|progress|spec|rule|source of truth|less cognitive load|reduce friction)\b/gi },
-    { label: "money, car, and future-life motivation", pattern: /\b(?:money|rich|career|job|income|finance|financial|car|a3|audi|mini|salary|cash|spend|buy|happiness|happy|nice life)\b/gi },
-    { label: "exact rules, consistency, and formatting standards", pattern: /\b(?:exact|consistent|same|rule|standard|format|formatted|make sure|should stay|only way|predictable|certainty|uncertain|know for a fact|no difference|specific)\b/gi },
-    { label: "task-starting pressure and interest-driven focus", pattern: /\b(?:focus|attention|interesting|boring|task|start|finish|stuck|frustrat(?:ed|ing|ion)|overwhelm(?:ed|ing)?|motivation|hyperfocus|one thing|priority|memory|time|organize)\b/gi },
-    { label: "social certainty and feeling understood", pattern: /\b(?:relationship|social|people|understood|unheard|invalidated|mask(?:ing)?|conversation|texted|reply|respond|group chat|friend|safe with)\b/gi },
-    { label: "sensory comfort, body mapping, and safety", pattern: /\b(?:sensory|comfort|comfortable|body|sound|ugly sound|safe|safety|driving|throat|bumpy|metal|soft|squishy|shape|space|spatial)\b/gi },
-    { label: "daily-life logistics becoming system work", pattern: /\b(?:recipe|food|cook|meal|restaurant|drink|water|milk|entry|list|table|column|price|quantity|manufacturing|target|step)\b/gi },
-  ];
-  return themes
-    .map((theme) => ({
-      label: theme.label,
-      score: notes.reduce((total, item, index) => {
-        const text = summaryTextForRecord(item);
-        const stats = matchStats(text, new RegExp(theme.pattern.source, "gi"));
-        if (!stats.count) return total;
-        const recency = index < 8 ? 1.35 : 1;
-        const careerWeight = Math.max(0.75, lifeLeverageScoreForRecord(item) / 72);
-        return total + Math.min(9, stats.count * 2.2 + stats.terms.length) * recency * careerWeight;
-      }, 0),
-    }))
-    .filter((theme) => theme.score > 0)
-    .sort((a, b) => b.score - a.score);
+function directSummarySentence(text, opener, details) {
+  const active = details
+    .filter(([, pattern]) => matchStats(text, pattern).count > 0)
+    .map(([label]) => label)
+    .slice(0, 7);
+  if (!active.length) return "";
+  return `${opener} ${humanJoin(active)}.`;
 }
 
 function summaryTextForRecord(item) {
@@ -3491,7 +3502,7 @@ function highlightExplanationForAdhdPhrase(value) {
 
 function adhdLowSignalLead(anchors = [], seedText = "") {
   const topic = anchors.length
-    ? `the readable parts are mostly about ${humanJoin(anchors.slice(0, 2))}`
+    ? `the readable parts cover ${humanJoin(anchors.slice(0, 2))}`
     : "there is not much ADHD-specific readable detail";
   const templates = [
     `The ADHD signal is light here because ${topic}.`,
@@ -3579,7 +3590,7 @@ function autismAnalysisText(score, evidence) {
     if (!evidence.hasReadableText) {
       return "This file has almost no readable text for me to judge. I am leaving it as a low baseline, not calling it 0 or saying there are no autistic traits.";
     }
-    const anchorText = anchors.length ? ` The actual readable parts are mostly about ${humanJoin(anchors.slice(0, 2))}.` : "";
+    const anchorText = anchors.length ? ` The readable parts cover ${humanJoin(anchors.slice(0, 2))}.` : "";
     return `This is low-signal for autism from the readable text, but I would not call it 0 or use it as neurotypical proof.${anchorText}`;
   }
 
