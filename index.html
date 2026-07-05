@@ -24,9 +24,9 @@
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260628-disney-score-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260705-bank-summary-v1">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260702-export-notes-single-enter-v1" defer></script>
+  <script src="./app.js?v=20260705-bank-summary-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -62,16 +62,22 @@
         <h2>add to bank</h2>
         <p>Text becomes a PDF immediately as one flowing paragraph. Saved entries get autism, ADHD, and Disney/career reads when sync is connected.</p>
       </div>
-      <div class="dropzone" data-role="dropzone">
-        <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
-        <div class="intake-controls">
-          <label class="file-inline">
-            <span>files / images</span>
-            <input id="brain-files" type="file" multiple>
-          </label>
-          <button id="brain-save" type="button">save to vault</button>
+      <div class="intake-workspace">
+        <div class="dropzone" data-role="dropzone">
+          <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
+          <div class="intake-controls">
+            <label class="file-inline">
+              <span>files / images</span>
+              <input id="brain-files" type="file" multiple>
+            </label>
+            <button id="brain-save" type="button">save to vault</button>
+          </div>
+          <div id="brain-pending" class="pending-list" aria-live="polite"></div>
         </div>
-        <div id="brain-pending" class="pending-list" aria-live="polite"></div>
+        <aside id="brain-summary" class="bank-summary" aria-live="polite">
+          <h2>all notes</h2>
+          <p>Saved notes will summarize here after sync loads.</p>
+        </aside>
       </div>
       <p id="brain-sync-status" class="sync-status">checking sync</p>
     </section>

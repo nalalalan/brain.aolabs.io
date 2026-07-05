@@ -28,6 +28,7 @@ const pendingList = document.getElementById("brain-pending");
 const vaultList = document.getElementById("brain-vault");
 const syncStatus = document.getElementById("brain-sync-status");
 const dropzone = document.querySelector("[data-role='dropzone']");
+const bankSummary = document.getElementById("brain-summary");
 const exportStartButton = document.getElementById("brain-export-start");
 const exportActions = document.getElementById("brain-export-actions");
 const exportAllButton = document.getElementById("brain-export-all");
@@ -99,6 +100,7 @@ renderPending();
 renderOverallLifeScore();
 renderOverallScore();
 renderOverallAdhdScore();
+renderBankSummary();
 renderExportToolbar();
 renderVault();
 void initSync();
@@ -494,6 +496,7 @@ async function renderVault() {
   renderOverallLifeScore();
   renderOverallScore();
   renderOverallAdhdScore();
+  renderBankSummary();
   syncExportSelection();
   renderExportToolbar();
   revokeOpenUrls();
@@ -637,6 +640,131 @@ function bankAdhdScore() {
     ? `strongest evidence: ADHD letter + ${highNotes} high-signal saved note${highNotes === 1 ? "" : "s"}`
     : "strongest evidence: ADHD letter";
   return { score, detail };
+}
+
+function renderBankSummary() {
+  if (!bankSummary) return;
+  const summary = buildBankSummary();
+  bankSummary.replaceChildren();
+  const title = document.createElement("h2");
+  title.textContent = "all notes";
+  const main = document.createElement("p");
+  main.className = "summary-main";
+  main.textContent = summary.main;
+  bankSummary.append(title, main);
+  if (summary.detail) {
+    const detail = document.createElement("p");
+    detail.className = "summary-detail";
+    detail.textContent = summary.detail;
+    bankSummary.append(detail);
+  }
+}
+
+function buildBankSummary() {
+  const notes = sortRecords(state.filter(isGeneratedPdf));
+  if (!notes.length) {
+    return {
+      main: sync.status === "checking"
+        ? "Saved notes will summarize here after sync loads."
+        : "No saved notes yet. Paste a thought, save it, and this becomes the archive-level read.",
+      detail: "",
+    };
+  }
+
+  const themeText = summaryThemes(notes).slice(0, 3).map((theme) => theme.label);
+  const themeSentence = themeText.length
+    ? `mostly about ${humanJoin(themeText)}`
+    : "a mix of goal work, friction, and daily thought patterns";
+  const anchor = summaryAnchorPhrase(notes);
+  const life = bankLifeLeverageScore();
+  const autism = bankAutismScore();
+  const adhd = bankAdhdScore();
+  const highCareerCount = notes.filter((item) => lifeLeverageScoreForRecord(item) >= 70).length;
+  const lowCareerCount = notes.filter((item) => lifeLeverageScoreForRecord(item) <= 35).length;
+  const recentAverage = averageScore(notes.slice(0, Math.min(8, notes.length)), lifeLeverageScoreForRecord);
+  const allAverage = averageScore(notes, lifeLeverageScoreForRecord);
+  const direction = recentAverage >= allAverage + 6
+    ? "Recent notes are moving more toward useful career or system signal."
+    : recentAverage <= allAverage - 6
+      ? "Recent notes are more sideways than the older bank, so the useful move is pulling them back into a next artifact."
+      : "Recent notes are roughly consistent with the rest of the bank.";
+  const anchorSentence = anchor
+    ? `The phrase "${anchor}" is the strongest archive anchor right now; it shows the kind of thought that can become movement instead of staying as noise.`
+    : "The strongest entries are the ones that turn irritation, exactness, or interest into a next artifact instead of leaving it as a loose thought.";
+  const countText = `${notes.length} saved note${notes.length === 1 ? "" : "s"}`;
+  return {
+    main: `Across ${countText}, this bank is ${themeSentence}. ${anchorSentence}`,
+    detail: `The archive is most useful when exact rules, sensory/social uncertainty, task friction, or interest-driven focus become research, money, career, Disney/R&D, or AO Labs movement. Right now it reads Disney ${life.score}/100, autism ${autism.score}/100, ADHD ${adhd.score}/100, with ${highCareerCount} high-career note${highCareerCount === 1 ? "" : "s"} and ${lowCareerCount} lower-return thought${lowCareerCount === 1 ? "" : "s"}. ${direction}`,
+  };
+}
+
+function summaryThemes(notes) {
+  const themes = [
+    { label: "Disney/Imagineering and R&D ambition", pattern: /\b(?:disney|imagineer(?:ing)?|wdi|r&d|r and d|research scientist|scientist engineer)\b/gi },
+    { label: "research, papers, prototypes, and soft robotics", pattern: /\b(?:phd|research|paper|publication|experiment|prototype|soft robotics|robotics|mechanism|linkage|pneumatic|actuator|morph(?:ing)?|simulation|fabricat(?:e|ion)|portfolio|patent)\b/gi },
+    { label: "systems that reduce daily friction", pattern: /\b(?:codex|aolabs|app|site|workflow|system|automation|automate|fix|verify|deploy|sync|progress|spec|rule|source of truth|less cognitive load|reduce friction)\b/gi },
+    { label: "money, car, and future-life motivation", pattern: /\b(?:money|rich|career|job|income|finance|financial|car|a3|audi|mini|salary|cash|spend|buy|happiness|happy|nice life)\b/gi },
+    { label: "exact rules, consistency, and formatting standards", pattern: /\b(?:exact|consistent|same|rule|standard|format|formatted|make sure|should stay|only way|predictable|certainty|uncertain|know for a fact|no difference|specific)\b/gi },
+    { label: "task-starting pressure and interest-driven focus", pattern: /\b(?:focus|attention|interesting|boring|task|start|finish|stuck|frustrat(?:ed|ing|ion)|overwhelm(?:ed|ing)?|motivation|hyperfocus|one thing|priority|memory|time|organize)\b/gi },
+    { label: "social certainty and feeling understood", pattern: /\b(?:relationship|social|people|understood|unheard|invalidated|mask(?:ing)?|conversation|texted|reply|respond|group chat|friend|safe with)\b/gi },
+    { label: "sensory comfort, body mapping, and safety", pattern: /\b(?:sensory|comfort|comfortable|body|sound|ugly sound|safe|safety|driving|throat|bumpy|metal|soft|squishy|shape|space|spatial)\b/gi },
+    { label: "daily-life logistics becoming system work", pattern: /\b(?:recipe|food|cook|meal|restaurant|drink|water|milk|entry|list|table|column|price|quantity|manufacturing|target|step)\b/gi },
+  ];
+  return themes
+    .map((theme) => ({
+      label: theme.label,
+      score: notes.reduce((total, item, index) => {
+        const text = summaryTextForRecord(item);
+        const stats = matchStats(text, new RegExp(theme.pattern.source, "gi"));
+        if (!stats.count) return total;
+        const recency = index < 8 ? 1.35 : 1;
+        const careerWeight = Math.max(0.75, lifeLeverageScoreForRecord(item) / 72);
+        return total + Math.min(9, stats.count * 2.2 + stats.terms.length) * recency * careerWeight;
+      }, 0),
+    }))
+    .filter((theme) => theme.score > 0)
+    .sort((a, b) => b.score - a.score);
+}
+
+function summaryAnchorPhrase(notes) {
+  const candidates = [];
+  notes.forEach((item, index) => {
+    const recency = Math.max(0, 12 - index);
+    const base = lifeLeverageScoreForRecord(item) + autismScoreForRecord(item) * 0.18 + adhdScoreForRecord(item) * 0.18 + recency;
+    [
+      { text: item.lifeLeverageHighlightText, bonus: 22 },
+      { text: item.autismHighlightText, bonus: 12 },
+      { text: item.adhdHighlightText, bonus: 12 },
+    ].forEach((entry) => {
+      const phrase = completeHighlightPhrase(entry.text || "", 18);
+      if (!phrase || isWeakHighlight(phrase)) return;
+      candidates.push({ phrase, score: base + entry.bonus + phraseFitScore(phrase, 18) });
+    });
+  });
+  const best = candidates.sort((a, b) => b.score - a.score)[0];
+  return best?.phrase || "";
+}
+
+function summaryTextForRecord(item) {
+  return textPdfSource([
+    item?.sourceText,
+    item?.lifeLeverageExplanation,
+    item?.lifeLeverageHighlightText,
+    item?.lifeLeverageHighlightExplanation,
+    item?.autismScoreExplanation,
+    item?.autismHighlightText,
+    item?.autismHighlightExplanation,
+    item?.adhdScoreExplanation,
+    item?.adhdHighlightText,
+    item?.adhdHighlightExplanation,
+    item?.name,
+  ].filter(Boolean).join(" "));
+}
+
+function averageScore(items, scoreFn) {
+  const scores = items.map(scoreFn).filter((score) => Number.isFinite(score));
+  if (!scores.length) return 1;
+  return scores.reduce((sum, score) => sum + score, 0) / scores.length;
 }
 
 function generatedScoreWeight(item) {

@@ -139,9 +139,17 @@ input {
   overflow-wrap: anywhere;
 }
 
+.intake-workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, .82fr) minmax(320px, .56fr);
+  gap: 12px;
+  align-items: start;
+}
+
 .dropzone {
   display: grid;
   gap: 10px;
+  min-width: 0;
   padding: 12px;
   border: 1px dashed color-mix(in srgb, var(--accent) 42%, var(--line));
   border-radius: 7px;
@@ -168,6 +176,45 @@ input {
 
 .dropzone textarea::placeholder {
   color: #7f8884;
+}
+
+.bank-summary {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  border-radius: 7px;
+  background: #f8f5ee;
+}
+
+.bank-summary h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.bank-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 680;
+  line-height: 1.38;
+  overflow-wrap: break-word;
+}
+
+.bank-summary .summary-main {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.38;
+}
+
+.bank-summary .summary-detail {
+  color: #53615c;
 }
 
 .intake-controls {
@@ -559,6 +606,10 @@ input {
 
   .local-intake {
     padding: 12px;
+  }
+
+  .intake-workspace {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .document-intro {
