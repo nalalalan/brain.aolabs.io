@@ -107,7 +107,7 @@ input {
 
 .local-intake {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   margin-top: 26px;
   padding: 16px;
   border: 1px solid var(--line);
@@ -116,27 +116,12 @@ input {
   box-shadow: 0 10px 28px rgba(30, 39, 36, .05);
 }
 
-.intake-copy {
-  display: grid;
-  gap: 4px;
-}
-
 .intake-copy h2 {
   margin: 0;
   font-size: 20px;
   line-height: 1.1;
   letter-spacing: 0;
   text-transform: lowercase;
-}
-
-.intake-copy p {
-  max-width: 760px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
 }
 
 .intake-workspace {
@@ -211,10 +196,6 @@ input {
   font-size: 13px;
   font-weight: 760;
   line-height: 1.38;
-}
-
-.bank-summary .summary-detail {
-  color: #53615c;
 }
 
 .intake-controls {

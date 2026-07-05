@@ -652,12 +652,6 @@ function renderBankSummary() {
   main.className = "summary-main";
   main.textContent = summary.main;
   bankSummary.append(title, main);
-  if (summary.detail) {
-    const detail = document.createElement("p");
-    detail.className = "summary-detail";
-    detail.textContent = summary.detail;
-    bankSummary.append(detail);
-  }
 }
 
 function buildBankSummary() {
@@ -666,35 +660,26 @@ function buildBankSummary() {
     return {
       main: sync.status === "checking"
         ? "Saved notes will summarize here after sync loads."
-        : "No saved notes yet. Paste a thought, save it, and this becomes the archive-level read.",
-      detail: "",
+        : "No saved notes yet. Paste a thought, save it, and this becomes the notes summary.",
     };
   }
 
-  const themeText = summaryThemes(notes).slice(0, 3).map((theme) => theme.label);
+  const themes = summaryThemes(notes).map((theme) => theme.label);
+  const themeText = themes.slice(0, 3);
   const themeSentence = themeText.length
     ? `mostly about ${humanJoin(themeText)}`
     : "a mix of goal work, friction, and daily thought patterns";
-  const anchor = summaryAnchorPhrase(notes);
-  const life = bankLifeLeverageScore();
-  const autism = bankAutismScore();
-  const adhd = bankAdhdScore();
-  const highCareerCount = notes.filter((item) => lifeLeverageScoreForRecord(item) >= 70).length;
-  const lowCareerCount = notes.filter((item) => lifeLeverageScoreForRecord(item) <= 35).length;
-  const recentAverage = averageScore(notes.slice(0, Math.min(8, notes.length)), lifeLeverageScoreForRecord);
-  const allAverage = averageScore(notes, lifeLeverageScoreForRecord);
-  const direction = recentAverage >= allAverage + 6
-    ? "Recent notes are moving more toward useful career or system signal."
-    : recentAverage <= allAverage - 6
-      ? "Recent notes are more sideways than the older bank, so the useful move is pulling them back into a next artifact."
-      : "Recent notes are roughly consistent with the rest of the bank.";
-  const anchorSentence = anchor
-    ? `The phrase "${anchor}" is the strongest archive anchor right now; it shows the kind of thought that can become movement instead of staying as noise.`
-    : "The strongest entries are the ones that turn irritation, exactness, or interest into a next artifact instead of leaving it as a loose thought.";
+  const recentThemes = summaryThemes(notes.slice(0, Math.min(8, notes.length))).slice(0, 2).map((theme) => theme.label);
+  const recentSentence = recentThemes.length
+    ? `The newest notes keep returning to ${humanJoin(recentThemes)}.`
+    : "The newest notes continue the same mixture of work, daily systems, and personal pattern-tracking.";
+  const otherThemes = themes.slice(3, 7);
+  const otherSentence = otherThemes.length
+    ? `Other recurring threads include ${humanJoin(otherThemes)}.`
+    : "";
   const countText = `${notes.length} saved note${notes.length === 1 ? "" : "s"}`;
   return {
-    main: `Across ${countText}, this bank is ${themeSentence}. ${anchorSentence}`,
-    detail: `The archive is most useful when exact rules, sensory/social uncertainty, task friction, or interest-driven focus become research, money, career, Disney/R&D, or AO Labs movement. Right now it reads Disney ${life.score}/100, autism ${autism.score}/100, ADHD ${adhd.score}/100, with ${highCareerCount} high-career note${highCareerCount === 1 ? "" : "s"} and ${lowCareerCount} lower-return thought${lowCareerCount === 1 ? "" : "s"}. ${direction}`,
+    main: `Across ${countText}, the notes are ${themeSentence}. ${recentSentence} ${otherSentence}`.replace(/\s+/g, " ").trim(),
   };
 }
 
@@ -726,25 +711,6 @@ function summaryThemes(notes) {
     .sort((a, b) => b.score - a.score);
 }
 
-function summaryAnchorPhrase(notes) {
-  const candidates = [];
-  notes.forEach((item, index) => {
-    const recency = Math.max(0, 12 - index);
-    const base = lifeLeverageScoreForRecord(item) + autismScoreForRecord(item) * 0.18 + adhdScoreForRecord(item) * 0.18 + recency;
-    [
-      { text: item.lifeLeverageHighlightText, bonus: 22 },
-      { text: item.autismHighlightText, bonus: 12 },
-      { text: item.adhdHighlightText, bonus: 12 },
-    ].forEach((entry) => {
-      const phrase = completeHighlightPhrase(entry.text || "", 18);
-      if (!phrase || isWeakHighlight(phrase)) return;
-      candidates.push({ phrase, score: base + entry.bonus + phraseFitScore(phrase, 18) });
-    });
-  });
-  const best = candidates.sort((a, b) => b.score - a.score)[0];
-  return best?.phrase || "";
-}
-
 function summaryTextForRecord(item) {
   return textPdfSource([
     item?.sourceText,
@@ -759,12 +725,6 @@ function summaryTextForRecord(item) {
     item?.adhdHighlightExplanation,
     item?.name,
   ].filter(Boolean).join(" "));
-}
-
-function averageScore(items, scoreFn) {
-  const scores = items.map(scoreFn).filter((score) => Number.isFinite(score));
-  if (!scores.length) return 1;
-  return scores.reduce((sum, score) => sum + score, 0) / scores.length;
 }
 
 function generatedScoreWeight(item) {
