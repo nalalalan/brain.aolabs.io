@@ -2758,13 +2758,19 @@ function lifeLeverageCardAnalysis(value, options = {}) {
   }
   let text = normalizeAnalysisExplanation(value);
   text = text
-    .replace(/^This is highly useful because\s+/i, "The Disney score is high because ")
-    .replace(/^This is useful because\s+/i, "The Disney score is built around ")
+    .replace(/^This is highly useful because\s+/i, "This sits close to the Disney/R&D path because ")
+    .replace(/^This is useful because\s+/i, "This is useful because ")
     .replace(/^This could help if\s+/i, "The Disney read starts with whether ")
-    .replace(/^This note is useful as\s+/i, "The Disney score is built around ")
-    .replace(/^The note is useful because\s+/i, "The Disney score is built around ")
-    .replace(/^The life-leverage signal is\s+/i, "The Disney score is built around ")
-    .replace(/^The life leverage signal is\s+/i, "The Disney score is built around ")
+    .replace(/\bThe Disney score is built around\s+/gi, "This is useful because ")
+    .replace(/\bThe Disney score is high because\s+/gi, "This sits close to the Disney/R&D path because ")
+    .replace(/\bThe Disney score is real because\s+/gi, "This can help because ")
+    .replace(/\bThe Disney score is lower-to-middle:\s*/gi, "")
+    .replace(/\bThe Disney score stays low because\s+/gi, "This stays low because ")
+    .replace(/\bThe Disney score stays lower because\s+/gi, "This stays lower because ")
+    .replace(/^This note is useful as\s+/i, "This is useful as ")
+    .replace(/^The note is useful because\s+/i, "This is useful because ")
+    .replace(/^The life-leverage signal is\s+/i, "The useful part is ")
+    .replace(/^The life leverage signal is\s+/i, "The useful part is ")
     .replace(/^The life-leverage read is\s+/i, "The Disney read is ")
     .replace(/^The leverage stays limited because\s+/i, "It stays limited because ")
     .replace(/^It is not higher because\s+/i, "It is not higher because ")
@@ -2778,30 +2784,30 @@ function lifeLeverageCardAnalysis(value, options = {}) {
   text = firstSentences(text, 2);
   text = cardSentenceClip(text, 250);
   if (visibleAnalysisLength(text) < 145) {
-    text = cardSentenceClip(`${text} ${lifeLeverageBoundarySentence(options.score)}`, 250);
+    text = cardSentenceClip(`${text} ${scoreBasisSentence({ ...options, trait: "disney" })}`, 250);
   }
   text = trimIncompleteSentence(text) || text;
   return removeRepeatedSignalSentences(text, options);
 }
 
 function lifeLeverageFallbackSummary(options = {}) {
-  const details = cardConcreteDetails(options.sourceText, options.highlightText || "", "").slice(0, 2);
-  const detailText = details.length ? ` The note points to ${humanJoin(details)}.` : "";
+  const details = scoreBasisDetailList(options, "disney").slice(0, 2);
+  const detailText = details.length ? ` It connects to ${humanJoin(details)}.` : "";
   const leadPhrase = analysisLeadPhrase(options.highlightExplanation)
     .replace(/^(?:it|this)\s+/i, "")
     .replace(/\s+/g, " ")
     .trim();
   const lead = options.highlightExplanation
-    ? `The Disney score starts from ${leadPhrase || "the clearest goal-moving line in the note"}.`
-    : "The Disney score is about whether this thought can move the Imagineering, R&D, money, and execution path.";
-  return `${lead}${detailText} ${lifeLeverageBoundarySentence(options.score)}`;
+    ? `The Disney/R&D read starts from ${leadPhrase || "the clearest goal-moving line in the note"}.`
+    : "This is judged by whether the thought can move the Imagineering, R&D, money, or execution path.";
+  return `${lead}${detailText} ${scoreBasisSentence({ ...options, trait: "disney" })}`;
 }
 
 function lifeLeverageBoundarySentence(score = 0) {
   const value = Number(score || 0);
-  if (value >= 80) return "It scores high because it can move research, career, money, or a durable system forward.";
-  if (value >= 55) return "It sits in the middle because it helps motivation or execution, but is not the full Disney/R&D path by itself.";
-  return "It stays lower because the direct career, research, money, or execution payoff is still limited.";
+  if (value >= 80) return "It can move research, career, money, or a durable system forward.";
+  if (value >= 55) return "It helps motivation or execution, but it is not the full Disney/R&D path by itself.";
+  return "The direct career, research, money, or execution payoff is still limited.";
 }
 
 function compactCardAnalysis(value, options = {}, maxChars = 300) {
@@ -2816,7 +2822,7 @@ function fillShortCardAnalysis(value, options = {}, minChars = 150) {
   let text = normalizeAnalysisExplanation(value);
   if (!text) return "";
   if (visibleAnalysisLength(text) >= minChars) return text;
-  const boundary = scoreBoundarySentence(options.score, options.trait);
+  const boundary = scoreBasisSentence(options) || scoreBoundarySentence(options.score, options.trait);
   return cardSentenceClip(`${text} ${boundary}`, 250);
 }
 
@@ -2859,27 +2865,165 @@ function visibleAnalysisLength(value) {
 function scoreBoundarySentence(score, trait = "autism") {
   const label = trait === "adhd" ? "ADHD" : "autism";
   const value = clampAutismScore(score);
-  if (value >= 80) return `The ${label} score is high because the note gives more than one real signal.`;
-  if (value >= 50) return `The ${label} score stays in the middle because the signal is real but mixed.`;
-  return `The ${label} score stays lower because the clue is present but not the main point of the note.`;
+  if (trait === "disney") return lifeLeverageBoundarySentence(value);
+  if (value >= 80) return `The ${label} read is strong only when the note gives connected evidence, not one isolated line.`;
+  if (value >= 50) return `The ${label} read is real but mixed across the note.`;
+  return `The ${label} read stays lighter when the clue is present but not the main engine of the note.`;
 }
 
 function scoreBasisSentence(options = {}) {
   const trait = options.trait === "adhd" ? "adhd" : options.trait === "disney" ? "disney" : "autism";
   const value = clampAutismScore(options.score);
-  const level = value >= 80 ? "high" : value >= 55 ? "in the middle" : "lower";
-  const themes = scoreBasisThemes(options, trait);
-  const themeText = themes.length ? humanJoin(themes.slice(0, 2)) : "";
+  const details = scoreBasisDetailList(options, trait).slice(0, 2);
+  const detailText = details.length ? humanJoin(details) : "";
+  const seed = `${trait}:${options.seedText || ""}:${options.highlightText || ""}:${detailText}:${value}`;
+  if (!detailText) return scoreFallbackBasisSentence(trait, value, seed);
+  const subject = detailSubject(detailText, details.length);
+  const level = value >= 80 ? "high" : value >= 55 ? "middle" : "low";
+  const templates = scoreBasisTemplates(trait, level, subject);
+  return templates[stableAnalysisIndex(seed, templates.length)];
+}
+
+function scoreBasisDetailList(options = {}, trait = "autism") {
+  const direct = cardConcreteDetails(
+    options.sourceText,
+    options.highlightText || "",
+    [options.highlightExplanation, options.highlightText].filter(Boolean).join(" ")
+  ).slice(0, 2);
+  if (direct.length) return direct;
+  return scoreBasisThemes(options, trait).slice(0, 2);
+}
+
+function detailSubject(detailText, count = 1) {
+  const text = String(detailText || "").replace(/\s+/g, " ").trim();
+  return {
+    text,
+    cap: sentenceStart(text),
+    verb: count === 1 ? "shows" : "show",
+    points: count === 1 ? "points" : "point",
+  };
+}
+
+function scoreBasisTemplates(trait, level, subject) {
   if (trait === "adhd") {
-    if (themeText) return `The score is ${level} because the note also has ${themeText}, so the attention and task-friction read is broader than one line.`;
-    return `The score is ${level} because the clearest clue is about attention, task-starting, urgency, or execution friction rather than a diagnosis label.`;
+    if (level === "high") {
+      return [
+        `${subject.cap} ${subject.verb} the same executive-load problem in the body of the note.`,
+        `The ADHD read gets stronger because the note keeps moving through ${subject.text}.`,
+        `That makes the highlighted line feel representative: ${subject.text} ${subject.points} to the same task, focus, or regulation strain.`,
+        `${subject.cap} ${subject.verb} attention pressure turning into concrete task friction.`,
+      ];
+    }
+    if (level === "middle") {
+      return [
+        `${subject.cap} ${subject.verb} real ADHD-shaped friction, while the rest of the thought is doing other work too.`,
+        `The ADHD read stays moderate because ${subject.text} ${subject.points} in the same direction without carrying the whole note.`,
+        `${subject.cap} ${subject.verb} concrete task or attention friction, but the signal is still mixed.`,
+        `The attention/execution clue is believable because it sits beside ${subject.text}.`,
+      ];
+    }
+    return [
+      `${subject.cap} ${subject.verb} a small ADHD-shaped clue, but the note is mostly doing something else.`,
+      `The ADHD read stays lighter because ${subject.text} ${subject.points} to some executive-load friction without becoming the main pattern.`,
+      `${subject.cap} ${subject.verb} task or attention pressure, but it stays secondary.`,
+      `This is not zero because ${subject.text} ${subject.verb} some task friction; it is just not the center of the note.`,
+    ];
   }
   if (trait === "disney") {
-    if (themeText) return `The score is ${level} because the line connects with ${themeText}, so the Disney/R&D goal is carrying the note instead of appearing once.`;
-    return `The score is ${level} because the note is being judged by how directly it moves the Disney, R&D, money, and career path.`;
+    if (level === "high") {
+      return [
+        `${subject.cap} ${subject.verb} why this belongs close to the Disney/R&D path instead of sitting as a random saved thought.`,
+        `This belongs high for Disney/R&D because ${subject.text} ${subject.verb} career, research, money, or execution direction in the body of the note.`,
+        `That makes this more than motivation: ${subject.text} ${subject.points} toward the work and life path the bank is supposed to protect.`,
+        `${subject.cap} ${subject.verb} the thought turning into something usable for the larger career path.`,
+      ];
+    }
+    if (level === "middle") {
+      return [
+        `${subject.cap} ${subject.verb} useful momentum, but the note is not a direct Disney, research, or career move by itself.`,
+        `The Disney/R&D read stays moderate because ${subject.text} ${subject.points} toward the long-term path, but indirectly.`,
+        `The thought can still help because ${subject.text} ${subject.verb} motivation, systems, or execution, even if it is not the main career lane.`,
+        `${subject.cap} ${subject.verb} something usable, just not a clean Imagineering/R&D move by itself.`,
+      ];
+    }
+    return [
+      `${subject.cap} ${subject.verb} some possible use, but the direct Disney, R&D, money, or career payoff is small.`,
+      `The Disney/R&D read stays lighter because ${subject.text} ${subject.points} somewhere useful, but not toward the main path strongly enough.`,
+      `It stays low because ${subject.text} ${subject.verb} a side pattern more than a clear career, research, money, or execution move.`,
+      `${subject.cap} ${subject.verb} why it can remain saved without becoming a main-path thought.`,
+    ];
   }
-  if (themeText) return `The score is ${level} because the note also has ${themeText}, so the autism read is broader than one isolated reaction.`;
-  return `The score is ${level} because the clearest clue is about social fit, certainty, sensory load, routine, or exactness rather than a diagnosis label.`;
+  if (level === "high") {
+    return [
+      `${subject.cap} ${subject.verb} the same need for fit, certainty, sensory safety, or social clarity in the body of the note.`,
+      `The autism read gets stronger because the note keeps returning to ${subject.text}.`,
+      `That makes the highlighted line feel representative: ${subject.text} ${subject.points} to repeated rigidity, certainty, sensory, or social-meaning pressure.`,
+      `${subject.cap} ${subject.verb} the pattern spreading beyond one sentence into how the whole situation is being sorted.`,
+    ];
+  }
+  if (level === "middle") {
+    return [
+      `${subject.cap} ${subject.verb} a real autism-shaped clue, while the rest of the thought is mixed.`,
+      `The autism read stays moderate because ${subject.text} ${subject.points} in the same direction without carrying the whole note.`,
+      `${subject.cap} ${subject.verb} concrete fit, certainty, sensory, or social strain, but it is not the only thing happening.`,
+      `The autism clue is believable because it sits beside ${subject.text}.`,
+    ];
+  }
+  return [
+    `${subject.cap} ${subject.verb} a small autism-shaped clue, but the note is mostly doing something else.`,
+    `The autism read stays lighter because ${subject.text} ${subject.points} to some fit, certainty, sensory, or social strain without becoming the main pattern.`,
+    `${subject.cap} ${subject.verb} real friction, but it stays secondary.`,
+    `This is not zero because ${subject.text} ${subject.verb} some fit or certainty pressure; it is just not the center of the note.`,
+  ];
+}
+
+function scoreFallbackBasisSentence(trait, score, seed = "") {
+  const level = score >= 80 ? "high" : score >= 55 ? "middle" : "low";
+  const templates = trait === "adhd"
+    ? {
+      high: [
+        "The ADHD read is high only when attention, task-starting, time, or regulation pressure shows up in more than one way.",
+        "This sits high for ADHD because the card is looking for repeated executive-load pressure, not a single keyword.",
+      ],
+      middle: [
+        "The ADHD read stays in the middle when the task or attention clue is real but not the whole point of the note.",
+        "This is a middle ADHD read: there is executive-load friction, but it is not the only pattern carrying the entry.",
+      ],
+      low: [
+        "The ADHD read stays light when the entry gives only a small task, attention, time, or regulation clue.",
+        "This is low-signal for ADHD, not zero; the note just does not give a strong executive-load pattern.",
+      ],
+    }
+    : trait === "disney"
+      ? {
+        high: [
+          "The Disney/R&D read is high only when the thought can move research, career, money, or a durable system forward.",
+          "This goes high when the note protects the long-term Disney, R&D, money, or execution path instead of only recording a mood.",
+        ],
+        middle: [
+          "The Disney/R&D read stays in the middle when the thought helps momentum or systems but is not a direct career move.",
+          "This is useful, but indirect: it can support the bigger path without being the bigger path itself.",
+        ],
+        low: [
+          "The Disney/R&D read stays light when the direct career, research, money, or execution payoff is small.",
+          "This can stay saved, but it is not one of the thoughts that clearly moves the main life path.",
+        ],
+      }
+      : {
+        high: [
+          "The autism read is high only when certainty, sensory, social, routine, or exact-fit pressure repeats across the note.",
+          "This sits high for autism because the card is looking for a repeated pattern, not one dramatic sentence.",
+        ],
+        middle: [
+          "The autism read stays in the middle when the clue is real but the note is not carried by autism-shaped pressure alone.",
+          "This is a middle autism read: the fit, certainty, sensory, or social clue is present but mixed with other material.",
+        ],
+        low: [
+          "The autism read stays light when the entry gives only a small fit, certainty, sensory, or social clue.",
+          "This is low-signal for autism, not zero; the note just does not give a strong whole-note pattern.",
+        ],
+      };
+  return templates[level][stableAnalysisIndex(seed, templates[level].length)];
 }
 
 function scoreBasisThemes(options = {}, trait = "autism") {
@@ -2993,42 +3137,47 @@ function traitCardSummary(options = {}) {
   const lead = options.highlightExplanation
     ? traitSignalLead(options.trait, options.highlightExplanation, options.seedText)
     : traitFallbackLead(options.trait, options.seedText);
-  return `${lead} ${scoreBoundarySentence(options.score, options.trait)}`;
+  return `${lead} ${scoreBasisSentence(options) || scoreBoundarySentence(options.score, options.trait)}`;
 }
 
 function normalizeCardAnalysisTone(value, trait = "autism", seedText = "") {
   return normalizeAnalysisExplanation(value)
-    .replace(/\bThe rest of the note adds:\s*/gi, "The note also mentions ")
-    .replace(/\bThe note also adds:\s*/gi, "The note also mentions ")
-    .replace(/\bThe note also mentions:\s*/gi, "The note also mentions ")
+    .replace(/\bThe rest of the note adds:\s*/gi, "The surrounding note keeps ")
+    .replace(/\bThe note also adds:\s*/gi, "The surrounding note keeps ")
+    .replace(/\bThe note also mentions:\s*/gi, "The surrounding note keeps ")
     .replace(/^That line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
       return `${traitSignalLead(trait, explanation, seedText)} `;
     })
     .replace(/^The selected (?:autism|ADHD) line matters because\s+([^.!?]+[.!?])\s*/i, (_match, explanation) => {
       return `${traitSignalLead(trait, explanation, seedText)} `;
     })
-    .replace(/\.\s*;\s*/g, ". The note also mentions ")
+    .replace(/\.\s*;\s*/g, ". The surrounding note keeps ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function cleanCardAnalysisArtifacts(value, options = {}) {
   return normalizeAnalysisExplanation(value)
-    .replace(/\bThe rest of the note adds:\s*/gi, "The note also mentions ")
-    .replace(/\bThe note also adds:\s*/gi, "The note also mentions ")
-    .replace(/\bThe note also mentions:\s*/gi, "The note also mentions ")
+    .replace(/\bThe rest of the note adds:\s*/gi, "The surrounding note keeps ")
+    .replace(/\bThe note also adds:\s*/gi, "The surrounding note keeps ")
+    .replace(/\bThe note also mentions:\s*/gi, "The surrounding note keeps ")
     .replace(/^["'“”]\s*/, "")
     .replace(/\bI read the (ADHD|autism) signal as ([^.]+)\./gi, (_match, label, phrase) => {
       return traitSignalLead(label.toLowerCase() === "adhd" ? "adhd" : "autism", phrase, options.seedText);
     })
-    .replace(/\bI read it as ([^.]+?) because the (?:ADHD|autism)-relevant weight is\b/gi, "I score it as $1 because")
+    .replace(/\bI read it as ([^.]+?) because the (?:ADHD|autism)-relevant weight is\b/gi, "This reads as $1 because")
+    .replace(/\bI score it as ([^.]+?) because\b/gi, "This reads as $1 because")
+    .replace(/\bI score that as ([^.]+?)\./gi, "This reads as $1.")
+    .replace(/\bI read that as ([^.]+?)\./gi, "This reads as $1.")
+    .replace(/\bI treat it as ([^.]+?) because\b/gi, "It lands as $1 because")
+    .replace(/\bI stop short of 100 because\b/gi, "It stays below 100 because")
     .replace(/\bThe (?:ADHD|autism)-relevant weight is\b/gi, "The signal is")
     .replace(/\bThat puts it in the middle rather than the diagnostic-letter range\./g, "That keeps it in the middle instead of treating it like a diagnosis letter.")
     .replace(/\s+([,.;:])/g, "$1")
-    .replace(/\.\s*;\s*/g, ". The note also mentions ")
+    .replace(/\.\s*;\s*/g, ". The surrounding note keeps ")
     .replace(/\s*;\s*(?:The score is not even higher|The note is not higher|The score is not higher|The entry is not higher)[^.]*\.?/gi, "")
     .replace(/\bpdf\s+(?=(?:This entry|This note|The note)\b)/gi, "")
-    .replace(/\bThe phrase is (autism|ADHD)-shaped because\s+/gi, "I read that phrase as $1-shaped because ")
+    .replace(/\bThe phrase is (autism|ADHD)-shaped because\s+/gi, "That phrase is $1-shaped because ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -3060,13 +3209,13 @@ function traitFallbackLead(trait, seedText = "") {
       "The ADHD read starts from the strongest attention or task-friction clue available in this note.",
       "The ADHD card is using the clearest attention, task, time, or regulation clue in the text.",
       "For ADHD, the note gives a weaker but still readable attention-and-execution pattern.",
-      "The ADHD score is based on the strongest executive-function clue the note gives.",
+      "The ADHD read uses the strongest executive-function clue the note gives.",
     ]
     : [
       "The autism read starts from the strongest predictability, sensory, social, or exactness clue available in this note.",
       "The autism card is using the clearest certainty, routine, sensory, or social-meaning clue in the text.",
       "For autism, the note gives a weaker but still readable autistic-trait pattern.",
-      "The autism score is based on the strongest autism-shaped clue the note gives.",
+      "The autism read uses the strongest autism-shaped clue the note gives.",
     ];
   return templates[stableAnalysisIndex(`${trait}:${seedText}:fallback`, templates.length)];
 }
@@ -3112,7 +3261,14 @@ function supportDetailsSentence(details) {
     .filter(Boolean)
     .slice(0, 3);
   if (!cleaned.length) return "";
-  return `The note also mentions ${humanJoin(cleaned)}.`;
+  const joined = humanJoin(cleaned);
+  const subject = detailSubject(joined, cleaned.length);
+  const templates = [
+    `${subject.cap} ${subject.verb} the same pattern from another angle.`,
+    `That same pressure shows up around ${joined}.`,
+    `The surrounding details point to ${joined}.`,
+  ];
+  return templates[stableAnalysisIndex(joined, templates.length)];
 }
 
 function cardConcreteDetails(sourceText, highlightText, analysisText = "") {
@@ -3451,7 +3607,7 @@ function analyzeLifeLeverageText(value) {
   if (readableText.length < 20) {
     return {
       score: 1,
-      explanation: "There is not enough readable thought here to tell whether it moves the Disney, R&D, career, money, or execution path. I keep it low because the bank should not pretend empty text is useful.",
+      explanation: "There is not enough readable thought here to tell whether it moves the Disney, R&D, career, money, or execution path. It stays low because the bank should not pretend empty text is useful.",
       highlightText: "",
       highlightExplanation: "",
       scoreSource: "heuristic",
@@ -3524,19 +3680,22 @@ function lifeLeverageAnalysisText(score, evidence) {
   const concrete = evidence.anchors?.slice(0, 3) || [];
   if (score >= 80) {
     const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "the Disney/R&D path";
-    return `The Disney score is high because this connects directly to ${lane} instead of staying as a side thought. The concrete parts are ${humanJoin(concrete) || "specific enough to turn into an action or system change"}.`;
+    const detailText = concrete.length
+      ? `It gives ${humanJoin(concrete)}.`
+      : "The details are specific enough to turn into an action or system change.";
+    return `This connects directly to ${lane} instead of staying as a side thought. ${detailText}`;
   }
   if (score >= 55) {
     const lane = strongest.length ? humanJoin(strongest.slice(0, 3)) : "execution";
-    return `The Disney score is real because this can improve ${lane}, but it is not a direct Imagineering or research move by itself. It lands in the middle because it still helps motivation, systems, or execution if acted on.`;
+    return `This can improve ${lane}, but it is not a direct Imagineering or research move by itself. It still helps motivation, systems, or execution if acted on.`;
   }
   if (evidence.lowReturn.count && evidence.execution.count) {
-    return "The Disney score is lower-to-middle: it starts as a side thought, but it also captures a system or friction rule that can prevent the same annoying mistake later. Useful, not the core career lane.";
+    return "This starts as a side thought, but it also captures a system or friction rule that can prevent the same annoying mistake later. Useful, not the core career lane.";
   }
   if (evidence.lowReturn.count) {
-    return "The Disney score stays low because the entry reads mostly like a side thought rather than a career, research, money, car-motivation, or execution move. It can stay saved without dominating attention.";
+    return "This reads mostly like a side thought rather than a career, research, money, car-motivation, or execution move. It can stay saved without dominating attention.";
   }
-  return "The Disney score stays lower because it does not clearly point toward Imagineering, R&D, money, career, the car path, or a concrete system improvement. I keep it above zero because saved thoughts can still reveal patterns later.";
+  return "This does not clearly point toward Imagineering, R&D, money, career, the car path, or a concrete system improvement. It stays above zero because saved thoughts can still reveal patterns later.";
 }
 
 function heuristicDisneyHighlightForText(value, evidence = {}) {
@@ -3653,7 +3812,7 @@ function adhdAnalysisText(score, evidence) {
   const highlight = evidence.highlight || {};
   if (score <= 14) {
     if (!evidence.hasReadableText) {
-      return "This file has almost no readable text for ADHD analysis. I am leaving it at a low baseline, not calling it 0 or treating it as proof of no ADHD traits.";
+      return "This file has almost no readable text for ADHD analysis. It stays at a low baseline, not 0 and not proof of no ADHD traits.";
     }
     return `${adhdLowSignalLead(anchors, `${highlight.text || ""}:${score}`)} Low does not mean zero; it means this note does not give much attention, task-starting, time, memory, restlessness, or impulsivity evidence.`;
   }
@@ -3695,12 +3854,12 @@ function adhdAnalysisText(score, evidence) {
     const detailText = detailAnchors.length
       ? ` ${supportDetailsSentence(detailAnchors)}`
       : "";
-    return `${reason}${detailText} I score it as ${strength} because ${mainReason}. ${boundary}`;
+    return `${reason}${detailText} This reads as ${strength} because ${mainReason}. ${boundary}`;
   }
   const anchorLead = anchors.length
     ? `This entry turns on ${humanJoin(anchors.slice(0, 3))}.`
     : "This entry has enough readable material to judge the ADHD-trait signal.";
-  return `${anchorLead} I score that as ${strength}. The signal is ${mainReason}. ${boundary}`;
+  return `${anchorLead} This reads as ${strength}. The signal is ${mainReason}. ${boundary}`;
 }
 
 function normalizeHighlightText(value) {
@@ -3718,11 +3877,16 @@ function lowercaseFirst(value) {
   return text ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : "";
 }
 
+function sentenceStart(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : "";
+}
+
 function autismAnalysisText(score, evidence) {
   const anchors = evidence.anchors || [];
   if (score <= 14) {
     if (!evidence.hasReadableText) {
-      return "This file has almost no readable text for me to judge. I am leaving it as a low baseline, not calling it 0 or saying there are no autistic traits.";
+      return "This file has almost no readable text for autism analysis. It stays at a low baseline, not 0 and not proof of no autistic traits.";
     }
     const anchorText = anchors.length ? ` The readable parts cover ${humanJoin(anchors.slice(0, 2))}.` : "";
     return `This is low-signal for autism from the readable text, but I would not call it 0 or use it as neurotypical proof.${anchorText}`;
@@ -3748,17 +3912,17 @@ function autismAnalysisText(score, evidence) {
     ? `This note turns on ${humanJoin(anchors.slice(0, 3))}.`
     : "This note has enough readable material to judge the autism-trait signal.";
   const lead = score >= 94
-    ? `${anchorLead} I read that as very strong autism evidence.`
+    ? `${anchorLead} This reads as very strong autism evidence.`
     : score >= 80
-      ? `${anchorLead} I read that as strongly autism-shaped.`
+      ? `${anchorLead} This reads as strongly autism-shaped.`
       : score >= 50
-        ? `${anchorLead} I read that as a real autism-trait signal.`
-        : `${anchorLead} I read that as a lighter autism-trait signal.`;
+        ? `${anchorLead} This reads as a real autism-trait signal.`
+        : `${anchorLead} This reads as a lighter autism-trait signal.`;
   let boundary = "";
   if (evidence.support.count) {
-    boundary = "I treat it as very high because support or severity is named too.";
+    boundary = "It lands very high because support or severity is named too.";
   } else if (score >= 94) {
-    boundary = "I stop short of 100 because it does not say Level 3 or high-support autism.";
+    boundary = "It stays below 100 because it does not say Level 3 or high-support autism.";
   } else if (!evidence.formal.count && !evidence.direct.count && score >= 80) {
     boundary = "It can still score high without the word autism because those patterns keep stacking up.";
   } else if (evidence.adhd.count && score < 50) {
