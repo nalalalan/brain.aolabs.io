@@ -104,6 +104,7 @@ renderBankSummary();
 renderExportToolbar();
 renderVault();
 void initSync();
+installRepairHooks();
 
 function resolveApiBase() {
   const configured = window.BRAIN_API_BASE;
@@ -1457,10 +1458,41 @@ function hasStoredScoreAnalysisIssue(item) {
   if (!text.trim()) return true;
   return /^\s*,/i.test(text)
     || /\b(?:The rest of the note adds|The note also mentions|bolded signal|score basis|AI analysis|selected line)\b/i.test(text)
-    || /\b(?:Score \d|DSM core|raw \d|capped at|\bhits?\b)\b/i.test(text)
+    || /\b(?:Score \d|DSM core|raw \d|capped at|hits?:|hit count|hits count)\b/i.test(text)
     || /\b(?:I read|I score|I treat|I keep|I stop|I would not call it 0)\b/i.test(text)
     || /\b(?:The Disney score is|The Disney score stays|The Disney score is built around)\b/i.test(text)
     || /\b(?:This entry has limited|low baseline|fallback|not proof of no)\b/i.test(text);
+}
+
+function installRepairHooks() {
+  const params = new URLSearchParams(window.location.search || "");
+  if (params.get("repair") !== "score-records-20260706") return;
+  window.__brainRepairGeneratedPdf = async (id, fields = {}) => {
+    if (sync.status !== "connected") throw new Error("sync is not connected");
+    const item = state.find((record) => record.id === id);
+    if (!item) throw new Error("record not found");
+    if (!isGeneratedPdf(item)) throw new Error("record is not generated pdf");
+    const sourceText = textPdfSource(item.sourceText || await pdfTextForRecord(item));
+    if (!sourceText) throw new Error("record has no source text");
+    const updated = { ...item, ...fields, generatedNoteLayoutVersion, analysisQualityVersion };
+    const rebuilt = rebuildGeneratedPdf(updated, sourceText);
+    const synced = await rebuildSyncGeneratedNote(item, rebuilt);
+    state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
+    persistState();
+    renderVault();
+    return {
+      id: synced.id,
+      name: synced.name,
+      autismScore: synced.autismScore,
+      adhdScore: synced.adhdScore,
+      lifeLeverageScore: synced.lifeLeverageScore,
+      autismScoreSource: synced.autismScoreSource,
+      adhdScoreSource: synced.adhdScoreSource,
+      lifeLeverageScoreSource: synced.lifeLeverageScoreSource,
+      pages: synced.pages,
+      size: synced.size,
+    };
+  };
 }
 
 async function postJson(url, payload) {
