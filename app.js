@@ -2,7 +2,7 @@ const stateKey = "brain-pdf-bank-v1";
 const dbName = "brain-pdf-bank-files";
 const fileStore = "files";
 const generatedNoteLayoutVersion = "20260624-continuous-paragraph-v2";
-const analysisQualityVersion = "20260628-disney-score-v1";
+const analysisQualityVersion = "20260706-score-explanation-v2";
 
 let state = loadState();
 let pendingFiles = [];
@@ -819,16 +819,16 @@ function bankSummarySupport(primary, support) {
   if (primary.key === "externalBrain") {
     return hasCareer
       ? `The systems matter most when they point back to ${summaryDetailJoin(career.details.slice(0, 2))} and the Disney/Imagineering path.`
-      : "The useful part is not collecting more categories; it is making the saved material easier to act on.";
+      : "Saved material matters when it becomes easier to act on, not when it becomes another category collection.";
   }
   if (primary.key === "friction") {
     if (hasCareer) return `The friction matters because it blocks ${summaryDetailJoin(career.details.slice(0, 2))} and the career work underneath it.`;
-    return "The useful part is knowing which ambiguity to remove first instead of preserving every concern equally.";
+    return "The next cleanup target should be the ambiguity that blocks action first, not every concern equally.";
   }
   if (primary.key === "lifeMotivation") {
     return hasCareer
       ? `The money, car, comfort, and safety material matters most when it feeds ${summaryDetailJoin(career.details.slice(0, 2))} and the Disney/Imagineering direction.`
-      : "The useful part is separating real motivation from side thoughts that only add noise.";
+      : "Real motivation should be separated from side thoughts that only add noise.";
   }
   return "";
 }
@@ -1446,20 +1446,24 @@ async function rebuildOutdatedGeneratedNotes() {
 }
 
 function hasStoredScoreAnalysisIssue(item) {
-  const text = [
+  const fields = [
     item.autismScoreExplanation,
     item.adhdScoreExplanation,
     item.lifeLeverageExplanation,
     item.autismHighlightExplanation,
     item.adhdHighlightExplanation,
     item.lifeLeverageHighlightExplanation,
-  ].filter(Boolean).join(" ");
+  ].filter(Boolean).map((value) => String(value || "").replace(/\s+/g, " ").trim());
+  const text = fields.join(" ");
   if (!text.trim()) return true;
-  return /^\s*,/i.test(text)
+  return fields.some((value) => /^\s*[,;:]/.test(value))
+    || fields.some((value) => /^(?:io|pdf)\b/i.test(value))
     || /\b(?:The rest of the note adds|The note also mentions|bolded signal|score basis|AI analysis|selected line)\b/i.test(text)
     || /\b(?:Score \d|DSM core|raw \d|capped at|hits?:|hit count|hits count)\b/i.test(text)
-    || /\b(?:I read|I score|I treat|I keep|I stop|I would not call it 0)\b/i.test(text)
+    || /\b(?:I read|I score|I treat|I keep it above zero|I stop|I would not call it 0)\b/i.test(text)
     || /\b(?:The Disney score is|The Disney score stays|The Disney score is built around)\b/i.test(text)
+    || /\b(?:The useful part is|The most useful part is|The useful pattern is|The strongest useful pattern is|The strongest useful thread is|The strongest value is|The clearest value is|The clearest useful pattern is)\b/i.test(text)
+    || /\b(?:It stays (?:very )?(?:low|below|low-to-mid|well below|mid-low|modest|moderate|mid|lower)|The score (?:is|stays|gets|sits)|score (?:stays|comes|lands)|It scores very high|It earns a middle)\b/i.test(text)
     || /\b(?:This entry has limited|low baseline|fallback|not proof of no)\b/i.test(text);
 }
 
@@ -2746,8 +2750,6 @@ function cardAnalysisExplanation(value, options = {}) {
   text = normalizeCardAnalysisTone(text, options.trait, options.seedText);
   if (isThinAnalysisText(text)) {
     text = distinctCardContext(options);
-  } else {
-    text = addMissingCardDetails(text, options);
   }
   text = compactCardAnalysis(cleanCardAnalysisArtifacts(text, options), options, 260);
   return removeRepeatedSignalSentences(text, options);
@@ -2776,31 +2778,29 @@ function lifeLeverageCardAnalysis(value, options = {}) {
     .replace(/^This is highly useful because\s+/i, "This sits close to the Disney/R&D path because ")
     .replace(/^This is useful because\s+/i, "This is useful because ")
     .replace(/^This could help if\s+/i, "The Disney read starts with whether ")
-    .replace(/\bThe Disney score is built around\s+/gi, "This is useful because ")
+    .replace(/\bThe Disney score is built around\s+/gi, "The goal-moving read comes from ")
     .replace(/\bThe Disney score is high because\s+/gi, "This sits close to the Disney/R&D path because ")
     .replace(/\bThe Disney score is real because\s+/gi, "This can help because ")
     .replace(/\bThe Disney score is lower-to-middle:\s*/gi, "")
-    .replace(/\bThe Disney score stays low because\s+/gi, "This stays low because ")
-    .replace(/\bThe Disney score stays lower because\s+/gi, "This stays lower because ")
+    .replace(/\bThe Disney score stays low because\s+/gi, "The direct goal payoff is limited because ")
+    .replace(/\bThe Disney score stays lower because\s+/gi, "The direct goal payoff is limited because ")
     .replace(/^This note is useful as\s+/i, "This is useful as ")
     .replace(/^The note is useful because\s+/i, "This is useful because ")
-    .replace(/^The life-leverage signal is\s+/i, "The useful part is ")
-    .replace(/^The life leverage signal is\s+/i, "The useful part is ")
+    .replace(/^The life-leverage signal is\s+/i, "The goal-moving signal is ")
+    .replace(/^The life leverage signal is\s+/i, "The goal-moving signal is ")
     .replace(/^The life-leverage read is\s+/i, "The Disney read is ")
     .replace(/^The leverage stays limited because\s+/i, "It stays limited because ")
     .replace(/^It is not higher because\s+/i, "It is not higher because ")
     .replace(/^It is not quite perfect because\s+/i, "It is not higher because ")
     .replace(/^It is not even higher because\s+/i, "It is not higher because ")
-    .replace(/^It stays low because\s+/i, "It stays lower because ")
+    .replace(/^It stays low because\s+/i, "The direct goal payoff is limited because ")
     .replace(/\s+/g, " ")
     .trim();
   text = removeRepeatedSignalSentences(text, options);
   if (!text) text = distinctCardContext(options, "disney");
   text = firstSentences(text, 2);
   text = cardSentenceClip(text, 250);
-  if (visibleAnalysisLength(text) < 145) {
-    text = cardSentenceClip(`${text} ${scoreBasisSentence({ ...options, trait: "disney" })}`, 250);
-  }
+  if (visibleAnalysisLength(text) < 120) text = distinctCardContext(options, "disney") || text;
   text = trimIncompleteSentence(text) || text;
   return removeRepeatedSignalSentences(text, options);
 }
@@ -2964,7 +2964,7 @@ function scoreBasisTemplates(trait, level, subject) {
     return [
       `${subject.cap} ${subject.verb} some possible use, but the direct Disney, R&D, money, or career payoff is small.`,
       `The Disney/R&D read stays lighter because ${subject.text} ${subject.points} somewhere useful, but not toward the main path strongly enough.`,
-      `It stays low because ${subject.text} ${subject.verb} a side pattern more than a clear career, research, money, or execution move.`,
+      `${subject.cap} ${subject.verb} a side pattern more than a clear career, research, money, or execution move.`,
       `${subject.cap} ${subject.verb} why it can remain saved without becoming a main-path thought.`,
     ];
   }
@@ -3185,7 +3185,7 @@ function cleanCardAnalysisArtifacts(value, options = {}) {
     .replace(/\bI score that as ([^.]+?)\./gi, "This reads as $1.")
     .replace(/\bI read that as ([^.]+?)\./gi, "This reads as $1.")
     .replace(/\bI treat it as ([^.]+?) because\b/gi, "It lands as $1 because")
-    .replace(/\bI stop short of 100 because\b/gi, "It stays below 100 because")
+    .replace(/\bI stop short of 100 because\b/gi, "A perfect read would need ")
     .replace(/\bThe (?:ADHD|autism)-relevant weight is\b/gi, "The signal is")
     .replace(/\bThat puts it in the middle rather than the diagnostic-letter range\./g, "That keeps it in the middle instead of treating it like a diagnosis letter.")
     .replace(/\s+([,.;:])/g, "$1")
@@ -3622,7 +3622,7 @@ function analyzeLifeLeverageText(value) {
   if (readableText.length < 20) {
     return {
       score: 1,
-      explanation: "There is not enough readable thought here to tell whether it moves the Disney, R&D, career, money, or execution path. It stays low because the bank should not pretend empty text is useful.",
+      explanation: "There is not enough readable thought here to tell whether it moves the Disney, R&D, career, money, or execution path. The bank should not pretend empty text is useful.",
       highlightText: "",
       highlightExplanation: "",
       scoreSource: "heuristic",
@@ -3827,7 +3827,7 @@ function adhdAnalysisText(score, evidence) {
   const highlight = evidence.highlight || {};
   if (score <= 14) {
     if (!evidence.hasReadableText) {
-      return "This file has almost no readable text for ADHD analysis. It stays at a low baseline, not 0 and not proof of no ADHD traits.";
+      return "This file has almost no readable text for ADHD analysis. The read is cautious and low-signal, not 0 and not proof of no ADHD traits.";
     }
     return `${adhdLowSignalLead(anchors, `${highlight.text || ""}:${score}`)} Low does not mean zero; it means this note does not give much attention, task-starting, time, memory, restlessness, or impulsivity evidence.`;
   }
@@ -3853,7 +3853,7 @@ function adhdAnalysisText(score, evidence) {
         ? "a real ADHD-trait signal"
         : "a lighter ADHD-trait signal";
   const boundary = score >= 94
-    ? "It stays below 100 unless the entry itself gives fuller impairment or diagnostic detail."
+    ? "A perfect read would need fuller impairment or diagnostic detail from the entry itself."
     : score >= 70
       ? "That is high because the attention/execution pattern stacks across more than one setting, not because one word appears."
       : score < 40
@@ -3901,7 +3901,7 @@ function autismAnalysisText(score, evidence) {
   const anchors = evidence.anchors || [];
   if (score <= 14) {
     if (!evidence.hasReadableText) {
-      return "This file has almost no readable text for autism analysis. It stays at a low baseline, not 0 and not proof of no autistic traits.";
+      return "This file has almost no readable text for autism analysis. The read is cautious and low-signal, not 0 and not proof of no autistic traits.";
     }
     const anchorText = anchors.length ? ` The readable parts cover ${humanJoin(anchors.slice(0, 2))}.` : "";
     return `This is low-signal for autism from the readable text, but I would not call it 0 or use it as neurotypical proof.${anchorText}`;
@@ -3937,7 +3937,7 @@ function autismAnalysisText(score, evidence) {
   if (evidence.support.count) {
     boundary = "It lands very high because support or severity is named too.";
   } else if (score >= 94) {
-    boundary = "It stays below 100 because it does not say Level 3 or high-support autism.";
+    boundary = "A perfect read would need Level 3 or high-support autism detail in the entry itself.";
   } else if (!evidence.formal.count && !evidence.direct.count && score >= 80) {
     boundary = "It can still score high without the word autism because those patterns keep stacking up.";
   } else if (evidence.adhd.count && score < 50) {

@@ -110,7 +110,11 @@ async function analyzeWithAi(payload) {
           "No topic is automatically low or high. Judge the exact thought by whether it creates an actionable path, reusable system fix, durable decision, source insight, or relief toward Disney/Imagineering/R&D, money, career, research, happiness, car/finance motivation, health, relationships, or daily execution. A side-topic note can score high if it clearly moves one of those goals; a goal-themed note can score low if it is vague or unactionable.",
           "If Alan names a topic as an example of lower-return thinking, do not turn that topic into a scoring category. Use topic-neutral language such as side thought, unclear action path, wording loop, or low direct usefulness unless the exact content depends on naming the topic.",
           "Never write topic-category phrases such as cheese detours, food detours, recipe tangent, object tangent, movie tangent, or similar wording. If the source uses an example topic, call it an example side thought or specific formatting issue instead of making that topic the reason for a low score.",
-          "For the Disney score analysis, match the autism and ADHD card vibe: two compact complete human sentences, about 150-260 characters, starting from the strongest useful pattern in this exact note, then explaining why the score is not higher or lower. Do not moralize, do not call the thought stupid, and do not imply low-score thoughts should be deleted.",
+          "For the Disney score analysis, match the autism and ADHD card vibe: two compact complete human sentences, about 150-260 characters, starting from the strongest goal-moving evidence in this exact note, then explaining why the number lands high, middle, or low. Do not moralize, do not call the thought stupid, and do not imply low-score thoughts should be deleted.",
+          "The explanation must make the score understandable from the note itself. It should answer what evidence made the number high, middle, or low by weighing the strongest concrete signal against the limiting evidence, without sounding like a rubric.",
+          "Do not write repeated stem phrases such as 'The useful part is', 'The most useful part is', 'The useful pattern is', 'The strongest useful pattern is', 'The strongest useful thread is', 'The strongest value is', 'The clearest value is', or 'The clearest useful pattern is'.",
+          "Do not write score-mechanics phrases such as 'The score is', 'The score stays', 'The score sits', 'The score gets', 'score stays', 'score comes', 'score lands', 'It scores very high', 'It earns a middle', 'It stays low', 'It stays below', 'It stays moderate', or close variants. Explain the number in natural language with the note's concrete details instead.",
+          "Do not start any analysis with a comma, semicolon, colon, 'io', 'pdf', or a mid-sentence fragment. Every analysis must be a clean complete paragraph that can stand alone on a card.",
           "Choose exactly one short phrase from the saved input that is the strongest autism-trait signal, exactly one short phrase that is the strongest ADHD-trait signal, and exactly one short phrase that best explains the Disney/career-goal score. The autism and ADHD phrases will be bolded in the generated PDF; the Disney phrase appears on the card.",
           "Each bolded phrase must be copied from the saved input after normalizing whitespace. Prefer concrete trait evidence over bare self-label words such as autistic, autism, ASD, ADHD, diagnosis, or evaluation. If the whole note is weak-signal, still choose the strongest available personal pattern instead of a random topic phrase.",
           "The selected phrase must make sense by itself. It needs enough concrete context that a card reader can understand what it refers to without rereading the full note.",
@@ -228,7 +232,7 @@ async function analyzeWithAi(payload) {
                   type: "string",
                   minLength: 80,
                   maxLength: 420,
-                  description: "One unique two-sentence human paragraph explaining the Disney/career-goal score in the same compact card style as the autism and ADHD paragraphs. It should start from the strongest useful pattern in this exact note, then say why the score is not higher or lower without moralizing.",
+                  description: "One unique two-sentence human paragraph explaining the Disney/career-goal score in the same compact card style as the autism and ADHD paragraphs. It should start from concrete goal-moving evidence in this exact note, then make the number understandable without score-mechanics wording or moralizing.",
                 },
                 lifeLeverageSpecificDetails: {
                   type: "array",
@@ -367,7 +371,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   const adhdHighlightExplanation = cleanExplanation(value?.adhdHighlightExplanation).slice(0, 320);
   let adhdAnalysis = cleanExplanation(value?.adhdAnalysis);
   if (!adhdAnalysis || adhdAnalysis.length < 40) {
-    adhdAnalysis = "This entry has limited ADHD-specific readable detail, so I keep the ADHD score close to the fallback and treat the result as a low-confidence signal rather than a diagnosis.";
+    adhdAnalysis = "The note gives only a small ADHD-specific clue, so the read should stay cautious and low-confidence rather than clinical. The explanation needs a concrete attention, task, time, or regulation detail before it can land higher.";
   }
   adhdAnalysis = removeRepeatedHighlightSentences(adhdAnalysis, adhdHighlightText);
   adhdAnalysis = removeRepeatedSignalSentences(adhdAnalysis, adhdHighlightExplanation, adhdHighlightText);
@@ -394,7 +398,7 @@ function normalizeAiAnalysis(value, fallbackScore, fallbackAdhdScore, fallbackLi
   const lifeLeverageHighlightExplanation = cleanExplanation(value?.lifeLeverageHighlightExplanation).slice(0, 320);
   let lifeLeverageAnalysis = cleanExplanation(value?.lifeLeverageAnalysis);
   if (!lifeLeverageAnalysis || lifeLeverageAnalysis.length < 40) {
-    lifeLeverageAnalysis = "This entry has limited Disney-goal detail, so I keep the score close to the fallback. Low score means low direct usefulness right now, not that the thought should be deleted.";
+    lifeLeverageAnalysis = "The note gives only a small goal-moving clue, so the Disney/R&D read should stay cautious. Low direct usefulness right now does not mean the thought should be deleted.";
   }
   lifeLeverageAnalysis = removeRepeatedHighlightSentences(lifeLeverageAnalysis, lifeLeverageHighlightText);
   lifeLeverageAnalysis = removeRepeatedSignalSentences(lifeLeverageAnalysis, lifeLeverageHighlightExplanation, lifeLeverageHighlightText);
@@ -718,17 +722,17 @@ function scrubAnalysisScaffolding(value) {
     .replace(/^The rest of the note adds\s+/i, "")
     .replace(/\bThe rest of the note adds:\s*/gi, "")
     .replace(/\bThe note also mentions\s+/gi, "")
-    .replace(/\bThe Disney score is built around\s+/gi, "This is useful because ")
+    .replace(/\bThe Disney score is built around\s+/gi, "The goal-moving read comes from ")
     .replace(/\bThe Disney score is high because\s+/gi, "This sits close to the Disney/R&D path because ")
     .replace(/\bThe Disney score is real because\s+/gi, "This can help because ")
-    .replace(/\bThe Disney score stays low because\s+/gi, "This stays low because ")
-    .replace(/\bThe Disney score stays lower because\s+/gi, "This stays lower because ")
+    .replace(/\bThe Disney score stays low because\s+/gi, "The direct goal payoff is limited because ")
+    .replace(/\bThe Disney score stays lower because\s+/gi, "The direct goal payoff is limited because ")
     .replace(/\bThe Disney score is lower-to-middle:\s*/gi, "")
     .replace(/\bI would not call it 0 or use it as neurotypical proof\b/gi, "that does not make it 0 or proof of no traits")
     .replace(/\bI keep it above zero\b/gi, "It stays above zero")
-    .replace(/\bI keep the score close to the fallback\b/gi, "the score stays cautious")
-    .replace(/\bI score it as\b/gi, "It lands as")
-    .replace(/\bI score that as\b/gi, "That lands as")
+    .replace(/\bI keep the score close to the fallback\b/gi, "the read stays cautious")
+    .replace(/\bI score it as\b/gi, "It reads as")
+    .replace(/\bI score that as\b/gi, "That reads as")
     .replace(/\bI read this as\b/gi, "This reads as")
     .replace(/\bI read it as\b/gi, "It reads as")
     .replace(/\bI read the entry as\b/gi, "The entry reads as")
