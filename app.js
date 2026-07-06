@@ -960,7 +960,7 @@ async function createVaultItem(item) {
   score.className = "autism-score";
   score.textContent = `autism score ${autismScoreForRecord(item)}/100`;
   const scoreWhy = document.createElement("p");
-  scoreWhy.className = "autism-score-why";
+  scoreWhy.className = "autism-score-why autism-signal";
   const autismExplanation = autismExplanationForRecord(item);
   const autismCardOptions = {
     highlightText: signal.text,
@@ -970,21 +970,12 @@ async function createVaultItem(item) {
     trait: "autism",
     seedText: itemSeed,
   };
-  scoreWhy.title = autismExplanation;
-  const signalWhy = document.createElement("p");
-  signalWhy.className = "autism-signal";
-  if (signal.text) {
-    const strong = document.createElement("strong");
-    strong.textContent = `"${signal.text}"`;
-    signalWhy.append(strong);
-    if (signal.explanation) signalWhy.append(document.createTextNode(` ${cardSignalExplanation(signal.explanation)}`));
-    signalWhy.title = [signal.text, signal.explanation].filter(Boolean).join(" ");
-  }
+  scoreWhy.title = [signal.text, signal.explanation, autismExplanation].filter(Boolean).join(" ");
   const adhdScore = document.createElement("p");
   adhdScore.className = "adhd-score";
   adhdScore.textContent = `adhd score ${adhd.score}/100`;
   const adhdWhy = document.createElement("p");
-  adhdWhy.className = "adhd-score-why";
+  adhdWhy.className = "adhd-score-why autism-signal adhd-signal";
   const adhdExplanation = adhd.explanation;
   const adhdCardOptions = {
     highlightText: adhd.highlightText,
@@ -1000,32 +991,14 @@ async function createVaultItem(item) {
     autismCardOptions,
     adhdCardOptions
   );
-  scoreWhy.textContent = pairedAnalysis.autism;
-  adhdWhy.textContent = pairedAnalysis.adhd;
-  adhdWhy.title = adhdExplanation;
-  const adhdSignalWhy = document.createElement("p");
-  adhdSignalWhy.className = "autism-signal adhd-signal";
-  if (adhd.highlightText) {
-    const strong = document.createElement("strong");
-    strong.textContent = `"${adhd.highlightText}"`;
-    adhdSignalWhy.append(strong);
-    if (adhd.highlightExplanation) adhdSignalWhy.append(document.createTextNode(` ${cardSignalExplanation(adhd.highlightExplanation)}`));
-    adhdSignalWhy.title = [adhd.highlightText, adhd.highlightExplanation].filter(Boolean).join(" ");
-  }
+  writeScoreExplanation(scoreWhy, signal.text, pairedAnalysis.autism);
+  writeScoreExplanation(adhdWhy, adhd.highlightText, pairedAnalysis.adhd);
+  adhdWhy.title = [adhd.highlightText, adhd.highlightExplanation, adhdExplanation].filter(Boolean).join(" ");
   const lifeScore = document.createElement("p");
   lifeScore.className = "life-score";
   lifeScore.textContent = `disney score ${leverage.score}/100`;
-  const lifeSignalWhy = document.createElement("p");
-  lifeSignalWhy.className = "autism-signal life-signal";
-  if (leverage.highlightText) {
-    const strong = document.createElement("strong");
-    strong.textContent = `"${leverage.highlightText}"`;
-    lifeSignalWhy.append(strong);
-    if (leverage.highlightExplanation) lifeSignalWhy.append(document.createTextNode(` ${cardSignalExplanation(leverage.highlightExplanation)}`));
-    lifeSignalWhy.title = [leverage.highlightText, leverage.highlightExplanation].filter(Boolean).join(" ");
-  }
   const lifeWhy = document.createElement("p");
-  lifeWhy.className = "life-score-why";
+  lifeWhy.className = "life-score-why autism-signal life-signal";
   const lifeExplanation = lifeLeverageCardAnalysis(leverage.explanation, {
     score: leverage.score,
     highlightText: leverage.highlightText,
@@ -1033,8 +1006,8 @@ async function createVaultItem(item) {
     sourceText: cardSourceText,
     seedText: itemSeed,
   });
-  lifeWhy.textContent = lifeExplanation;
-  lifeWhy.title = leverage.explanation;
+  writeScoreExplanation(lifeWhy, leverage.highlightText, lifeExplanation);
+  lifeWhy.title = [leverage.highlightText, leverage.highlightExplanation, leverage.explanation].filter(Boolean).join(" ");
   const meta = document.createElement("p");
   meta.className = "vault-meta";
   meta.textContent = [
@@ -1048,7 +1021,6 @@ async function createVaultItem(item) {
     adhd.scoreSource === "heuristic" ? "adhd fallback" : "",
   ].filter(Boolean).join(" - ");
   main.append(title, score);
-  if (signal.text) main.append(signalWhy);
   const appendedWhy = new Set();
   const appendScoreWhy = (element) => {
     const key = comparableAnalysisText(element.textContent);
@@ -1056,32 +1028,11 @@ async function createVaultItem(item) {
     appendedWhy.add(key);
     main.append(element);
   };
-  if (!signal.text) {
-    appendScoreWhy(scoreWhy);
-  } else {
-    appendScoreBasis(signalWhy, autismCardOptions);
-  }
+  appendScoreWhy(scoreWhy);
   main.append(adhdScore);
-  if (adhd.highlightText) {
-    appendScoreBasis(adhdSignalWhy, adhdCardOptions);
-    main.append(adhdSignalWhy);
-  } else {
-    appendScoreWhy(adhdWhy);
-  }
+  appendScoreWhy(adhdWhy);
   main.append(lifeScore);
-  if (leverage.highlightText) {
-    appendScoreBasis(lifeSignalWhy, {
-      score: leverage.score,
-      trait: "disney",
-      sourceText: cardSourceText,
-      highlightText: leverage.highlightText,
-      highlightExplanation: leverage.highlightExplanation,
-      seedText: itemSeed,
-    });
-    main.append(lifeSignalWhy);
-  } else {
-    appendScoreWhy(lifeWhy);
-  }
+  appendScoreWhy(lifeWhy);
   main.append(meta);
 
   const actions = document.createElement("div");
@@ -1096,6 +1047,21 @@ async function createVaultItem(item) {
   renderOverallLifeScore();
   renderOverallAdhdScore();
   return row;
+}
+
+function writeScoreExplanation(element, highlightText, explanation) {
+  element.textContent = "";
+  const quote = normalizeHighlightText(highlightText || "");
+  if (quote) {
+    const strong = document.createElement("strong");
+    strong.textContent = `"${quote}"`;
+    element.append(strong);
+  }
+  const text = normalizeAnalysisExplanation(explanation || "");
+  if (text) {
+    if (quote) element.append(document.createTextNode(" "));
+    element.append(document.createTextNode(text));
+  }
 }
 
 function actionButton(text, action, extraClass = "") {
