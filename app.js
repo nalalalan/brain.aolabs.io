@@ -1384,6 +1384,7 @@ async function rebuildOutdatedGeneratedNotes() {
       || item.autismScoreSource !== "ai"
       || item.adhdScoreSource !== "ai"
       || item.lifeLeverageScoreSource !== "ai"
+      || hasStoredScoreAnalysisIssue(item)
       || item.lifeLeverageScore === undefined
       || item.lifeLeverageScore === null
       || item.lifeLeverageScore === ""
@@ -1399,6 +1400,10 @@ async function rebuildOutdatedGeneratedNotes() {
     let updated = item;
     if (
       item.analysisQualityVersion !== analysisQualityVersion
+      || item.autismScoreSource !== "ai"
+      || item.adhdScoreSource !== "ai"
+      || item.lifeLeverageScoreSource !== "ai"
+      || hasStoredScoreAnalysisIssue(item)
       || item.lifeLeverageScore === undefined
       || item.lifeLeverageScore === null
       || item.lifeLeverageScore === ""
@@ -1438,6 +1443,24 @@ async function rebuildOutdatedGeneratedNotes() {
       break;
     }
   }
+}
+
+function hasStoredScoreAnalysisIssue(item) {
+  const text = [
+    item.autismScoreExplanation,
+    item.adhdScoreExplanation,
+    item.lifeLeverageExplanation,
+    item.autismHighlightExplanation,
+    item.adhdHighlightExplanation,
+    item.lifeLeverageHighlightExplanation,
+  ].filter(Boolean).join(" ");
+  if (!text.trim()) return true;
+  return /^\s*,/i.test(text)
+    || /\b(?:The rest of the note adds|The note also mentions|bolded signal|score basis|AI analysis|selected line)\b/i.test(text)
+    || /\b(?:Score \d|DSM core|raw \d|capped at|\bhits?\b)\b/i.test(text)
+    || /\b(?:I read|I score|I treat|I keep|I stop|I would not call it 0)\b/i.test(text)
+    || /\b(?:The Disney score is|The Disney score stays|The Disney score is built around)\b/i.test(text)
+    || /\b(?:This entry has limited|low baseline|fallback|not proof of no)\b/i.test(text);
 }
 
 async function postJson(url, payload) {
