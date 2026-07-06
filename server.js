@@ -285,6 +285,8 @@ function compactAnalysisText(value) {
 }
 
 function parseAiJson(body) {
+  const parsed = extractResponseJson(body);
+  if (parsed) return parsed;
   const text = extractResponseText(body);
   try {
     return JSON.parse(text);
@@ -299,12 +301,28 @@ function parseAiJson(body) {
   }
 }
 
+function extractResponseJson(body) {
+  if (body && typeof body.output_parsed === "object" && body.output_parsed) return body.output_parsed;
+  if (body && typeof body.parsed === "object" && body.parsed) return body.parsed;
+  for (const item of body?.output || []) {
+    if (item && typeof item.parsed === "object" && item.parsed) return item.parsed;
+    for (const content of item?.content || []) {
+      if (content && typeof content.parsed === "object" && content.parsed) return content.parsed;
+      if (content && typeof content.json === "object" && content.json) return content.json;
+    }
+  }
+  return null;
+}
+
 function extractResponseText(body) {
   if (typeof body?.output_text === "string") return body.output_text;
   const parts = [];
   for (const item of body?.output || []) {
+    if (typeof item?.text === "string") parts.push(item.text);
     for (const content of item?.content || []) {
       if (typeof content?.text === "string") parts.push(content.text);
+      else if (typeof content?.json === "object" && content.json) parts.push(JSON.stringify(content.json));
+      else if (typeof content?.parsed === "object" && content.parsed) parts.push(JSON.stringify(content.parsed));
     }
   }
   return parts.join("").trim();
@@ -686,7 +704,32 @@ function trimIncompleteSentence(value) {
 }
 
 function cleanAnalysisParagraph(value) {
-  return cleanExplanation(value).replace(/^["'`]\s*/g, "").trim();
+  return scrubAnalysisScaffolding(cleanExplanation(value).replace(/^["'`]\s*/g, "").trim());
+}
+
+function scrubAnalysisScaffolding(value) {
+  return String(value || "")
+    .replace(/^\s*,\s*(?:so\s+)?/i, "")
+    .replace(/^The rest of the note adds\s+/i, "")
+    .replace(/\bThe rest of the note adds:\s*/gi, "")
+    .replace(/\bThe note also mentions\s+/gi, "")
+    .replace(/\bThe Disney score is built around\s+/gi, "This is useful because ")
+    .replace(/\bThe Disney score is high because\s+/gi, "This sits close to the Disney/R&D path because ")
+    .replace(/\bThe Disney score is real because\s+/gi, "This can help because ")
+    .replace(/\bThe Disney score stays low because\s+/gi, "This stays low because ")
+    .replace(/\bThe Disney score stays lower because\s+/gi, "This stays lower because ")
+    .replace(/\bThe Disney score is lower-to-middle:\s*/gi, "")
+    .replace(/\bI would not call it 0 or use it as neurotypical proof\b/gi, "that does not make it 0 or proof of no traits")
+    .replace(/\bI keep it above zero\b/gi, "It stays above zero")
+    .replace(/\bI keep the score close to the fallback\b/gi, "the score stays cautious")
+    .replace(/\bI score it as\b/gi, "It lands as")
+    .replace(/\bI score that as\b/gi, "That lands as")
+    .replace(/\bI read this as\b/gi, "This reads as")
+    .replace(/\bI read it as\b/gi, "It reads as")
+    .replace(/\bI read the entry as\b/gi, "The entry reads as")
+    .replace(/\bI treat (?:the result|it) as\b/gi, "The result stays")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function removeRepeatedHighlightSentences(value, highlightText) {
@@ -910,7 +953,7 @@ async function saveUploadedFile(payload) {
     kind: payload.kind || "file",
     pages: Number(payload.pages || 0),
     autismScore: clampScore(payload.autismScore),
-    autismScoreExplanation: cleanExplanation(payload.autismScoreExplanation),
+    autismScoreExplanation: cleanAnalysisParagraph(payload.autismScoreExplanation),
     autismHighlightText: cleanExplanation(payload.autismHighlightText).slice(0, 160),
     autismHighlightExplanation: cleanExplanation(payload.autismHighlightExplanation).slice(0, 360),
     autismScoreSource: scoreSource(payload.autismScoreSource),
@@ -919,7 +962,7 @@ async function saveUploadedFile(payload) {
     autismScoreWarning: cleanExplanation(payload.autismScoreWarning).slice(0, 180),
     autismTextChars: Math.max(0, Number(payload.autismTextChars || 0)),
     adhdScore: clampScore(payload.adhdScore),
-    adhdScoreExplanation: cleanExplanation(payload.adhdScoreExplanation),
+    adhdScoreExplanation: cleanAnalysisParagraph(payload.adhdScoreExplanation),
     adhdHighlightText: cleanExplanation(payload.adhdHighlightText).slice(0, 160),
     adhdHighlightExplanation: cleanExplanation(payload.adhdHighlightExplanation).slice(0, 360),
     adhdScoreSource: scoreSource(payload.adhdScoreSource),
@@ -928,7 +971,7 @@ async function saveUploadedFile(payload) {
     adhdScoreWarning: cleanExplanation(payload.adhdScoreWarning).slice(0, 180),
     adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
     lifeLeverageScore: clampScore(payload.lifeLeverageScore),
-    lifeLeverageExplanation: cleanExplanation(payload.lifeLeverageExplanation),
+    lifeLeverageExplanation: cleanAnalysisParagraph(payload.lifeLeverageExplanation),
     lifeLeverageHighlightText: cleanExplanation(payload.lifeLeverageHighlightText).slice(0, 160),
     lifeLeverageHighlightExplanation: cleanExplanation(payload.lifeLeverageHighlightExplanation).slice(0, 360),
     lifeLeverageScoreSource: scoreSource(payload.lifeLeverageScoreSource),
@@ -980,7 +1023,7 @@ async function rebuildGeneratedEntry(id, payload) {
   entry.generatedNoteLayoutVersion = cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80);
   if (payload.analysisQualityVersion !== undefined) entry.analysisQualityVersion = cleanExplanation(payload.analysisQualityVersion).slice(0, 80);
   if (payload.autismScore !== undefined) entry.autismScore = clampScore(payload.autismScore);
-  if (payload.autismScoreExplanation !== undefined) entry.autismScoreExplanation = cleanExplanation(payload.autismScoreExplanation);
+  if (payload.autismScoreExplanation !== undefined) entry.autismScoreExplanation = cleanAnalysisParagraph(payload.autismScoreExplanation);
   if (payload.autismHighlightText !== undefined) entry.autismHighlightText = cleanExplanation(payload.autismHighlightText).slice(0, 160);
   if (payload.autismHighlightExplanation !== undefined) entry.autismHighlightExplanation = cleanExplanation(payload.autismHighlightExplanation).slice(0, 360);
   if (payload.autismScoreSource !== undefined) entry.autismScoreSource = scoreSource(payload.autismScoreSource);
@@ -989,7 +1032,7 @@ async function rebuildGeneratedEntry(id, payload) {
   if (payload.autismScoreWarning !== undefined) entry.autismScoreWarning = cleanExplanation(payload.autismScoreWarning).slice(0, 180);
   if (payload.autismTextChars !== undefined) entry.autismTextChars = Math.max(0, Number(payload.autismTextChars || 0));
   if (payload.adhdScore !== undefined) entry.adhdScore = clampScore(payload.adhdScore);
-  if (payload.adhdScoreExplanation !== undefined) entry.adhdScoreExplanation = cleanExplanation(payload.adhdScoreExplanation);
+  if (payload.adhdScoreExplanation !== undefined) entry.adhdScoreExplanation = cleanAnalysisParagraph(payload.adhdScoreExplanation);
   if (payload.adhdHighlightText !== undefined) entry.adhdHighlightText = cleanExplanation(payload.adhdHighlightText).slice(0, 160);
   if (payload.adhdHighlightExplanation !== undefined) entry.adhdHighlightExplanation = cleanExplanation(payload.adhdHighlightExplanation).slice(0, 360);
   if (payload.adhdScoreSource !== undefined) entry.adhdScoreSource = scoreSource(payload.adhdScoreSource);
@@ -998,9 +1041,44 @@ async function rebuildGeneratedEntry(id, payload) {
   if (payload.adhdScoreWarning !== undefined) entry.adhdScoreWarning = cleanExplanation(payload.adhdScoreWarning).slice(0, 180);
   if (payload.adhdTextChars !== undefined) entry.adhdTextChars = Math.max(0, Number(payload.adhdTextChars || 0));
   if (payload.lifeLeverageScore !== undefined) entry.lifeLeverageScore = clampScore(payload.lifeLeverageScore);
-  if (payload.lifeLeverageExplanation !== undefined) entry.lifeLeverageExplanation = cleanExplanation(payload.lifeLeverageExplanation);
+  if (payload.lifeLeverageExplanation !== undefined) entry.lifeLeverageExplanation = cleanAnalysisParagraph(payload.lifeLeverageExplanation);
   if (payload.lifeLeverageHighlightText !== undefined) entry.lifeLeverageHighlightText = cleanExplanation(payload.lifeLeverageHighlightText).slice(0, 160);
   if (payload.lifeLeverageHighlightExplanation !== undefined) entry.lifeLeverageHighlightExplanation = cleanExplanation(payload.lifeLeverageHighlightExplanation).slice(0, 360);
+  if (payload.lifeLeverageScoreSource !== undefined) entry.lifeLeverageScoreSource = scoreSource(payload.lifeLeverageScoreSource);
+  if (payload.lifeLeverageScoreModel !== undefined) entry.lifeLeverageScoreModel = cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80);
+  if (payload.lifeLeverageScoreConfidence !== undefined) entry.lifeLeverageScoreConfidence = scoreConfidence(payload.lifeLeverageScoreConfidence);
+  if (payload.lifeLeverageScoreWarning !== undefined) entry.lifeLeverageScoreWarning = cleanExplanation(payload.lifeLeverageScoreWarning).slice(0, 180);
+  if (payload.lifeLeverageTextChars !== undefined) entry.lifeLeverageTextChars = Math.max(0, Number(payload.lifeLeverageTextChars || 0));
+  await writeIndex(files);
+  return entry;
+}
+
+async function updateEntryAnalysis(id, payload) {
+  const { files, entry } = await findEntry(id);
+  if (!entry) throw Object.assign(new Error("File not found"), { status: 404 });
+  if (payload.analysisQualityVersion !== undefined) entry.analysisQualityVersion = cleanExplanation(payload.analysisQualityVersion).slice(0, 80);
+  if (payload.autismScore !== undefined) entry.autismScore = clampScore(payload.autismScore);
+  if (payload.autismScoreExplanation !== undefined) entry.autismScoreExplanation = cleanAnalysisParagraph(payload.autismScoreExplanation);
+  if (payload.autismHighlightText !== undefined) entry.autismHighlightText = cleanExplanation(payload.autismHighlightText).slice(0, 160);
+  if (payload.autismHighlightExplanation !== undefined) entry.autismHighlightExplanation = cleanAnalysisParagraph(payload.autismHighlightExplanation).slice(0, 360);
+  if (payload.autismScoreSource !== undefined) entry.autismScoreSource = scoreSource(payload.autismScoreSource);
+  if (payload.autismScoreModel !== undefined) entry.autismScoreModel = cleanExplanation(payload.autismScoreModel).slice(0, 80);
+  if (payload.autismScoreConfidence !== undefined) entry.autismScoreConfidence = scoreConfidence(payload.autismScoreConfidence);
+  if (payload.autismScoreWarning !== undefined) entry.autismScoreWarning = cleanExplanation(payload.autismScoreWarning).slice(0, 180);
+  if (payload.autismTextChars !== undefined) entry.autismTextChars = Math.max(0, Number(payload.autismTextChars || 0));
+  if (payload.adhdScore !== undefined) entry.adhdScore = clampScore(payload.adhdScore);
+  if (payload.adhdScoreExplanation !== undefined) entry.adhdScoreExplanation = cleanAnalysisParagraph(payload.adhdScoreExplanation);
+  if (payload.adhdHighlightText !== undefined) entry.adhdHighlightText = cleanExplanation(payload.adhdHighlightText).slice(0, 160);
+  if (payload.adhdHighlightExplanation !== undefined) entry.adhdHighlightExplanation = cleanAnalysisParagraph(payload.adhdHighlightExplanation).slice(0, 360);
+  if (payload.adhdScoreSource !== undefined) entry.adhdScoreSource = scoreSource(payload.adhdScoreSource);
+  if (payload.adhdScoreModel !== undefined) entry.adhdScoreModel = cleanExplanation(payload.adhdScoreModel).slice(0, 80);
+  if (payload.adhdScoreConfidence !== undefined) entry.adhdScoreConfidence = scoreConfidence(payload.adhdScoreConfidence);
+  if (payload.adhdScoreWarning !== undefined) entry.adhdScoreWarning = cleanExplanation(payload.adhdScoreWarning).slice(0, 180);
+  if (payload.adhdTextChars !== undefined) entry.adhdTextChars = Math.max(0, Number(payload.adhdTextChars || 0));
+  if (payload.lifeLeverageScore !== undefined) entry.lifeLeverageScore = clampScore(payload.lifeLeverageScore);
+  if (payload.lifeLeverageExplanation !== undefined) entry.lifeLeverageExplanation = cleanAnalysisParagraph(payload.lifeLeverageExplanation);
+  if (payload.lifeLeverageHighlightText !== undefined) entry.lifeLeverageHighlightText = cleanExplanation(payload.lifeLeverageHighlightText).slice(0, 160);
+  if (payload.lifeLeverageHighlightExplanation !== undefined) entry.lifeLeverageHighlightExplanation = cleanAnalysisParagraph(payload.lifeLeverageHighlightExplanation).slice(0, 360);
   if (payload.lifeLeverageScoreSource !== undefined) entry.lifeLeverageScoreSource = scoreSource(payload.lifeLeverageScoreSource);
   if (payload.lifeLeverageScoreModel !== undefined) entry.lifeLeverageScoreModel = cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80);
   if (payload.lifeLeverageScoreConfidence !== undefined) entry.lifeLeverageScoreConfidence = scoreConfidence(payload.lifeLeverageScoreConfidence);
@@ -1149,6 +1227,13 @@ const server = http.createServer(async (req, res) => {
     const rebuildMatch = requestUrl.pathname.match(/^\/api\/files\/([^/]+)\/rebuild$/);
     if (rebuildMatch && req.method === "POST") {
       const entry = await rebuildGeneratedEntry(rebuildMatch[1], await readJson(req));
+      sendJson(res, 200, { file: publicEntry(entry) });
+      return;
+    }
+
+    const analysisMatch = requestUrl.pathname.match(/^\/api\/files\/([^/]+)\/analysis$/);
+    if (analysisMatch && req.method === "POST") {
+      const entry = await updateEntryAnalysis(analysisMatch[1], await readJson(req));
       sendJson(res, 200, { file: publicEntry(entry) });
       return;
     }
