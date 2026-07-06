@@ -2741,10 +2741,6 @@ function normalizeAnalysisExplanation(value) {
 }
 
 function cardAnalysisExplanation(value, options = {}) {
-  if (options.highlightText || options.highlightExplanation) {
-    const context = distinctCardContext(options);
-    return context ? compactCardAnalysis(context, {}, 260) : "";
-  }
   let text = removeRepeatedHighlightSentences(normalizeAnalysisExplanation(value), options.highlightText);
   text = removeRepeatedSignalSentences(text, options);
   text = normalizeCardAnalysisTone(text, options.trait, options.seedText);
@@ -2775,10 +2771,6 @@ function pairedCardAnalysisText(autismText, adhdText, autismOptions = {}, adhdOp
 }
 
 function lifeLeverageCardAnalysis(value, options = {}) {
-  if (options.highlightText || options.highlightExplanation) {
-    const context = distinctCardContext(options);
-    return context ? compactCardAnalysis(context, {}, 250) : "";
-  }
   let text = normalizeAnalysisExplanation(value);
   text = text
     .replace(/^This is highly useful because\s+/i, "This sits close to the Disney/R&D path because ")
