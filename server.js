@@ -778,20 +778,7 @@ function removeRepeatedSignalSentences(value, highlightExplanation, highlightTex
 }
 
 function distinctStoredAnalysis(sourceText = "", highlightText = "", highlightExplanation = "", analysisText = "") {
-  const text = cleanAnalysisParagraph(analysisText);
-  if (!text) return "";
-  const avoidText = [highlightText, highlightExplanation].filter(Boolean).join(" ");
-  const details = extractAnalysisAnchors(sourceText)
-    .filter((anchor) => {
-      const comparable = comparableAnalysisText(anchor);
-      const avoid = comparableAnalysisText(avoidText);
-      if (!comparable || comparable.length < 12) return false;
-      if (avoid && (avoid.includes(comparable) || comparable.includes(avoid) || anchorSimilarity(comparable, avoid) > 0.58)) return false;
-      return true;
-    })
-    .slice(0, 3);
-  if (details.length < 2 || analysisMentionsDetails(text, details)) return text;
-  return `${text} This also weighs ${naturalJoin(details)}.`;
+  return cleanAnalysisParagraph(analysisText);
 }
 
 function analysisMentionsDetails(analysis, details) {
