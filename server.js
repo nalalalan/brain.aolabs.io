@@ -12,7 +12,8 @@ const indexPath = path.join(storageRoot, ".brain-files.json");
 const maxUploadBytes = Number(process.env.BRAIN_MAX_UPLOAD_MB || 100) * 1024 * 1024;
 const openAiModel = process.env.BRAIN_OPENAI_MODEL || process.env.OPENAI_MODEL || "gpt-5.4-mini";
 const analyzeMaxChars = Number(process.env.BRAIN_ANALYZE_MAX_CHARS || 28000);
-const analyzeTimeoutMs = Number(process.env.BRAIN_ANALYZE_TIMEOUT_MS || 25000);
+const analyzeTimeoutMs = Number(process.env.BRAIN_ANALYZE_TIMEOUT_MS || 60000);
+const analyzeMaxOutputTokens = Number(process.env.BRAIN_ANALYZE_MAX_OUTPUT_TOKENS || 4200);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -95,8 +96,8 @@ async function analyzeWithAi(payload) {
       body: JSON.stringify({
         model: openAiModel,
         store: false,
-        reasoning: { effort: "medium" },
-        max_output_tokens: 2200,
+        reasoning: { effort: "low" },
+        max_output_tokens: analyzeMaxOutputTokens,
         instructions: [
           "You analyze one saved personal note or uploaded text for a private self-reference PDF bank.",
           "Return three nuanced private self-reference scores from 1 to 100 for this entry: autism-trait signal, ADHD-trait signal, and Disney/career-goal usefulness. The autism and ADHD scores are not clinical diagnoses and not severity labels.",
@@ -288,6 +289,10 @@ function parseAiJson(body) {
   const parsed = extractResponseJson(body);
   if (parsed) return parsed;
   const text = extractResponseText(body);
+  if (!text && body?.status === "incomplete") {
+    const reason = body?.incomplete_details?.reason || "incomplete";
+    throw Object.assign(new Error(`AI analysis incomplete: ${reason}`), { status: 502 });
+  }
   try {
     return JSON.parse(text);
   } catch {
