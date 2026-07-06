@@ -1467,7 +1467,45 @@ function hasStoredScoreAnalysisIssue(item) {
 function installRepairHooks() {
   const params = new URLSearchParams(window.location.search || "");
   if (params.get("repair") !== "score-records-20260706") return;
-  window.__brainRepairGeneratedPdf = async (id, fields = {}) => {
+  window.__brainRepairGeneratedPdf = repairGeneratedPdfRecord;
+  if (params.get("apply") === "flux-note") {
+    void (async () => {
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        if (sync.status === "connected" && state.some((record) => record.id === "de6a2d81-f706-4940-a67e-590ccfac238f")) break;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      if (sync.status !== "connected") return;
+      await repairGeneratedPdfRecord("de6a2d81-f706-4940-a67e-590ccfac238f", {
+        autismScore: 63,
+        autismScoreExplanation: "The exact field-consistency check is the autism signal here: low flux beside the iron, red farther away, and air looking magnetized when the setup says it should not. The score sits in the middle because it is mostly precision and model-sanity distress, not social, sensory, or routine pressure.",
+        autismHighlightText: "I don't know if this is actually a thing",
+        autismHighlightExplanation: "This captures the uncertainty loop around whether the field behavior is physically real or a broken visual model.",
+        autismScoreSource: "ai",
+        autismScoreModel: "manual audit after AI highlight collision",
+        autismScoreConfidence: "medium",
+        autismScoreWarning: "",
+        adhdScore: 24,
+        adhdScoreExplanation: "The ADHD signal is lighter: the note loops through doubt, maybe-it-is and maybe-it-isn't, while checking whether the physics is real or just a visual bug. It stays low because the entry is sustained focused debugging, not scattered task switching, time loss, or unfinished execution.",
+        adhdHighlightText: "Maybe it is. I'm not sure",
+        adhdHighlightExplanation: "This is the closest ADHD-shaped piece because the thought briefly loops through uncertainty rather than settling.",
+        adhdScoreSource: "ai",
+        adhdScoreModel: "manual audit after AI highlight collision",
+        adhdScoreConfidence: "medium",
+        adhdScoreWarning: "",
+        lifeLeverageScore: 84,
+        lifeLeverageExplanation: "This is useful for the Disney/R&D path because it catches a physics visualization that would make the magnetic-valve work look fake: iron, flux density, air, and field lines need to obey the model. It is high because it turns confusion into a concrete simulator and paper correction.",
+        lifeLeverageHighlightText: "there's no magnet between the iron and the magnet",
+        lifeLeverageHighlightExplanation: "This matters for the career score because it points to a specific physics-model inconsistency that can improve the simulator.",
+        lifeLeverageScoreSource: "ai",
+        lifeLeverageScoreModel: "manual audit after AI highlight collision",
+        lifeLeverageScoreConfidence: "medium",
+        lifeLeverageScoreWarning: "",
+      });
+    })();
+  }
+}
+
+async function repairGeneratedPdfRecord(id, fields = {}) {
     if (sync.status !== "connected") throw new Error("sync is not connected");
     const item = state.find((record) => record.id === id);
     if (!item) throw new Error("record not found");
@@ -1492,7 +1530,6 @@ function installRepairHooks() {
       pages: synced.pages,
       size: synced.size,
     };
-  };
 }
 
 async function postJson(url, payload) {
