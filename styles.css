@@ -280,6 +280,17 @@ input {
   text-transform: lowercase;
 }
 
+.score-trend-read {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 9px;
+  margin: 0 0 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .score-history svg {
   width: 100%;
   height: auto;
@@ -304,13 +315,29 @@ input {
 .score-series-path {
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
+.score-observation-path {
+  opacity: .34;
+  stroke-width: 1.2;
+}
+
 .score-series-point {
   fill: currentColor;
+}
+
+.score-observation-point {
+  opacity: .48;
+}
+
+.score-trend-path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  stroke-linecap: round;
 }
 
 .score-series-label {

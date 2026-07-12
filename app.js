@@ -586,17 +586,39 @@ function buildScoreHistoryPlot(rows) {
   chart.className = "score-history-plot";
   const title = document.createElement("p");
   title.className = "score-history-title";
-  title.textContent = "scores over time";
+  title.textContent = "score trends";
+  const series = [
+    { key: "autism", label: "autism", colorClass: "autism-series", value: autismScoreForRecord },
+    { key: "adhd", label: "adhd", colorClass: "adhd-series", value: adhdScoreForRecord },
+    { key: "disney", label: "disney", colorClass: "life-series", value: lifeLeverageScoreForRecord },
+  ].map((seriesItem) => {
+    const observations = rows.map((item) => ({
+      time: scoreHistoryTime(item),
+      value: clampAutismScore(seriesItem.value(item)),
+    }));
+    return { ...seriesItem, observations, trend: scoreSeriesTrend(observations) };
+  });
+  const trendRead = document.createElement("p");
+  trendRead.className = "score-trend-read";
+  for (const seriesItem of series) {
+    const trendItem = document.createElement("span");
+    trendItem.className = seriesItem.colorClass;
+    trendItem.textContent = `${seriesItem.label} ${formatScoreTrend(seriesItem.trend)}`;
+    trendRead.append(trendItem);
+  }
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", scoreHistoryAriaLabel(rows));
+  svg.setAttribute("aria-label", scoreHistoryAriaLabel(rows, series));
   svg.setAttribute("preserveAspectRatio", "none");
 
   const margin = { top: 16, right: 68, bottom: 28, left: 30 };
   const width = 560 - margin.left - margin.right;
   const height = 210 - margin.top - margin.bottom;
-  const x = (index) => margin.left + (rows.length === 1 ? width / 2 : (index / (rows.length - 1)) * width);
+  const firstTime = scoreHistoryTime(rows[0]);
+  const lastTime = scoreHistoryTime(rows[rows.length - 1]);
+  const timeSpan = Math.max(1, lastTime - firstTime);
+  const x = (time) => margin.left + (timeSpan === 1 ? width / 2 : ((time - firstTime) / timeSpan) * width);
   const y = (value) => margin.top + ((100 - clampAutismScore(value)) / 100) * height;
   const append = (tagName, attributes = {}, text = "") => {
     const node = document.createElementNS(namespace, tagName);
@@ -612,39 +634,89 @@ function buildScoreHistoryPlot(rows) {
     append("text", { x: margin.left - 7, y: lineY + 4, class: "score-axis-label", "text-anchor": "end" }, String(value));
   });
 
-  const dateIndexes = rows.length === 1 ? [0] : [0, Math.round((rows.length - 1) / 2), rows.length - 1];
-  [...new Set(dateIndexes)].forEach((index) => {
-    const label = displayHistoryDate(rows[index].sourceCreatedAt || rows[index].createdAt, false);
-    append("text", { x: x(index), y: margin.top + height + 20, class: "score-axis-label", "text-anchor": index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle" }, label);
+  const dateTimes = timeSpan === 1 ? [firstTime] : [firstTime, firstTime + timeSpan / 2, lastTime];
+  [...new Set(dateTimes)].forEach((time) => {
+    const label = displayHistoryDate(time, false);
+    append("text", { x: x(time), y: margin.top + height + 20, class: "score-axis-label", "text-anchor": time === firstTime ? "start" : time === lastTime ? "end" : "middle" }, label);
   });
 
-  const series = [
-    { key: "autism", label: "autism", colorClass: "autism-series", value: autismScoreForRecord },
-    { key: "adhd", label: "adhd", colorClass: "adhd-series", value: adhdScoreForRecord },
-    { key: "disney", label: "disney", colorClass: "life-series", value: lifeLeverageScoreForRecord },
-  ];
   const labelOffsets = { autism: -10, adhd: 4, disney: 16 };
   for (const seriesItem of series) {
-    const values = rows.map((item) => clampAutismScore(seriesItem.value(item)));
-    const pathData = values.map((value, index) => `${index === 0 ? "M" : "L"}${x(index).toFixed(2)} ${y(value).toFixed(2)}`).join(" ");
-    append("path", { d: pathData, class: `score-series-path ${seriesItem.colorClass}` });
-    values.forEach((value, index) => {
-      const point = append("circle", { cx: x(index), cy: y(value), r: 2.4, class: `score-series-point ${seriesItem.colorClass}` });
+    const pathData = seriesItem.observations.map((point, index) => `${index === 0 ? "M" : "L"}${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`).join(" ");
+    append("path", { d: pathData, class: `score-series-path score-observation-path ${seriesItem.colorClass}` });
+    seriesItem.observations.forEach((point, index) => {
+      const item = rows[index];
+      const dot = append("circle", { cx: x(point.time), cy: y(point.value), r: 2.15, class: `score-series-point score-observation-point ${seriesItem.colorClass}` });
       const pointTitle = document.createElementNS(namespace, "title");
-      pointTitle.textContent = `${displayHistoryDate(rows[index].sourceCreatedAt || rows[index].createdAt)}: ${seriesItem.label} ${value}/100`;
-      point.append(pointTitle);
+      pointTitle.textContent = `${displayHistoryDate(item.sourceCreatedAt || item.createdAt)}: ${seriesItem.label} ${point.value}/100`;
+      dot.append(pointTitle);
     });
-    const lastValue = values[values.length - 1];
+    const trendStart = scoreTrendValueAt(seriesItem.trend, firstTime);
+    const trendEnd = scoreTrendValueAt(seriesItem.trend, lastTime);
+    if (Number.isFinite(trendStart) && Number.isFinite(trendEnd)) {
+      append("path", { d: `M${x(firstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(lastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
+    }
+    const lastValue = seriesItem.observations[seriesItem.observations.length - 1].value;
     append("text", { x: margin.left + width + 7, y: y(lastValue) + labelOffsets[seriesItem.key], class: `score-series-label ${seriesItem.colorClass}` }, `${seriesItem.label} ${lastValue}`);
   }
 
-  chart.append(title, svg);
+  chart.append(title, trendRead, svg);
   return chart;
 }
 
-function scoreHistoryAriaLabel(rows) {
+function scoreSeriesTrend(observations) {
+  const dayGroups = new Map();
+  for (const observation of observations) {
+    if (!Number.isFinite(observation.time) || !Number.isFinite(observation.value)) continue;
+    const dayKey = new Date(observation.time).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    const group = dayGroups.get(dayKey) || { times: [], values: [] };
+    group.times.push(observation.time);
+    group.values.push(observation.value);
+    dayGroups.set(dayKey, group);
+  }
+  const points = [...dayGroups.values()]
+    .map((group) => ({ time: medianNumber(group.times), value: medianNumber(group.values) }))
+    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.value))
+    .sort((a, b) => a.time - b.time);
+  if (points.length < 2) return { rate: NaN, intercept: NaN, origin: NaN, points };
+
+  const slopes = [];
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      const dayDelta = (points[j].time - points[i].time) / 86400000;
+      if (dayDelta > 0) slopes.push((points[j].value - points[i].value) / dayDelta);
+    }
+  }
+  const rate = medianNumber(slopes);
+  const origin = points[0].time;
+  const intercept = medianNumber(points.map((point) => point.value - rate * ((point.time - origin) / 86400000)));
+  return { rate, intercept, origin, points };
+}
+
+function scoreTrendValueAt(trend, time) {
+  if (!Number.isFinite(trend?.rate) || !Number.isFinite(trend?.intercept) || !Number.isFinite(trend?.origin)) return NaN;
+  return Math.max(0, Math.min(100, trend.intercept + trend.rate * ((time - trend.origin) / 86400000)));
+}
+
+function medianNumber(values) {
+  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return NaN;
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function formatScoreTrend(trend) {
+  if (!Number.isFinite(trend?.rate)) return "needs more days";
+  const perWeek = trend.rate * 7;
+  if (Math.abs(perWeek) < 1) return "about flat";
+  const rounded = Math.round(perWeek * 10) / 10;
+  return `about ${rounded > 0 ? "+" : ""}${rounded}/week`;
+}
+
+function scoreHistoryAriaLabel(rows, series = []) {
   const latest = rows[rows.length - 1];
-  return `Scores over time for ${rows.length} generated notes. Latest: autism ${clampAutismScore(autismScoreForRecord(latest))} out of 100, ADHD ${clampAutismScore(adhdScoreForRecord(latest))} out of 100, Disney ${clampAutismScore(lifeLeverageScoreForRecord(latest))} out of 100.`;
+  const trends = series.map((item) => `${item.label} ${formatScoreTrend(item.trend)}`).join(", ");
+  return `Scores over time for ${rows.length} generated notes. ${trends}. Latest: autism ${clampAutismScore(autismScoreForRecord(latest))} out of 100, ADHD ${clampAutismScore(adhdScoreForRecord(latest))} out of 100, Disney ${clampAutismScore(lifeLeverageScoreForRecord(latest))} out of 100.`;
 }
 
 function displayHistoryDate(value, includeTime = true) {
