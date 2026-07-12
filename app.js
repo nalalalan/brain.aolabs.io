@@ -38,6 +38,7 @@ const exportCount = document.getElementById("brain-export-count");
 const overallLifeScore = document.getElementById("overall-life-score");
 const overallScore = document.getElementById("overall-autism-score");
 const overallAdhdScore = document.getElementById("overall-adhd-score");
+const scoreHistory = document.getElementById("brain-score-history");
 const autismReferenceScores = [
   { score: 96, weight: 3, label: "autism evaluation" },
   { score: 34, weight: 0.5, label: "adhd letter" },
@@ -496,6 +497,7 @@ async function renderVault() {
   renderOverallLifeScore();
   renderOverallScore();
   renderOverallAdhdScore();
+  renderScoreHistory();
   renderBankSummary();
   syncExportSelection();
   renderExportToolbar();
@@ -550,6 +552,77 @@ function renderOverallAdhdScore() {
   const detail = document.createElement("em");
   detail.textContent = result.detail;
   overallAdhdScore.append(label, value, detail);
+}
+
+function renderScoreHistory() {
+  if (!scoreHistory) return;
+  scoreHistory.replaceChildren();
+  const rows = scoreHistoryRows();
+  if (!rows.length) {
+    const empty = document.createElement("p");
+    empty.className = "score-history-empty";
+    empty.textContent = "No score history yet.";
+    scoreHistory.append(empty);
+    return;
+  }
+
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  for (const label of ["date", "autism", "adhd", "disney"]) {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = label;
+    headRow.append(cell);
+  }
+  thead.append(headRow);
+
+  const tbody = document.createElement("tbody");
+  for (const item of rows) {
+    const row = document.createElement("tr");
+    row.title = item.name || "";
+    appendHistoryCell(row, displayHistoryDate(item.sourceCreatedAt || item.createdAt));
+    appendHistoryCell(row, scoreHistoryValue(autismScoreForRecord(item)), "score-number autism-series");
+    appendHistoryCell(row, scoreHistoryValue(adhdScoreForRecord(item)), "score-number adhd-series");
+    appendHistoryCell(row, scoreHistoryValue(lifeLeverageScoreForRecord(item)), "score-number life-series");
+    tbody.append(row);
+  }
+  table.append(thead, tbody);
+  scoreHistory.append(table);
+}
+
+function scoreHistoryRows() {
+  return state
+    .filter(isGeneratedPdf)
+    .filter((item) => scoreHistoryTime(item) > 0)
+    .sort((a, b) => scoreHistoryTime(a) - scoreHistoryTime(b));
+}
+
+function scoreHistoryTime(item) {
+  return Date.parse(item?.sourceCreatedAt || item?.createdAt || 0) || 0;
+}
+
+function appendHistoryCell(row, text, className = "") {
+  const cell = document.createElement("td");
+  if (className) cell.className = className;
+  cell.textContent = text;
+  row.append(cell);
+}
+
+function scoreHistoryValue(value) {
+  return Number.isFinite(Number(value)) ? String(clampAutismScore(value)) : "";
+}
+
+function displayHistoryDate(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("en-US", {
+    year: "2-digit",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).replace(",", "");
 }
 
 function bankLifeLeverageScore() {

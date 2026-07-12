@@ -263,6 +263,78 @@ input {
   gap: 18px;
 }
 
+.score-history {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdfa;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(30, 39, 36, .04);
+}
+
+.score-history-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.score-history table {
+  width: 100%;
+  min-width: 380px;
+  border-collapse: collapse;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.score-history th,
+.score-history td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.score-history th {
+  background: #f8f5ee;
+  color: var(--muted);
+  font-weight: 900;
+  text-align: left;
+  text-transform: lowercase;
+}
+
+.score-history td {
+  font-weight: 760;
+}
+
+.score-history tr:last-child td {
+  border-bottom: 0;
+}
+
+.score-history .score-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-history .autism-series {
+  color: #8f3d4b;
+}
+
+.score-history .adhd-series {
+  color: #214f8f;
+}
+
+.score-history .life-series {
+  color: #7a4a16;
+}
+
+.score-history-empty {
+  margin: 0;
+  padding: 9px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.2;
+}
+
 .document-bank {
   display: grid;
   gap: 18px;

@@ -24,9 +24,9 @@
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260706-score-explanation-v4">
+  <link rel="stylesheet" href="./styles.css?v=20260712-score-history-v1">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260706-score-explanation-v4" defer></script>
+  <script src="./app.js?v=20260712-score-history-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -78,6 +78,10 @@
         </aside>
       </div>
       <p id="brain-sync-status" class="sync-status">checking sync</p>
+    </section>
+
+    <section class="score-history" aria-label="score history">
+      <div id="brain-score-history" class="score-history-table" aria-live="polite"></div>
     </section>
 
     <section class="document-bank" aria-label="document bank">
