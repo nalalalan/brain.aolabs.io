@@ -38,7 +38,6 @@ const exportCount = document.getElementById("brain-export-count");
 const overallLifeScore = document.getElementById("overall-life-score");
 const overallScore = document.getElementById("overall-autism-score");
 const overallAdhdScore = document.getElementById("overall-adhd-score");
-const scoreHistory = document.getElementById("brain-score-history");
 const autismReferenceScores = [
   { score: 96, weight: 3, label: "autism evaluation" },
   { score: 34, weight: 0.5, label: "adhd letter" },
@@ -497,8 +496,8 @@ async function renderVault() {
   renderOverallLifeScore();
   renderOverallScore();
   renderOverallAdhdScore();
-  renderScoreHistory();
   renderBankSummary();
+  renderScoreHistory();
   syncExportSelection();
   renderExportToolbar();
   revokeOpenUrls();
@@ -555,6 +554,7 @@ function renderOverallAdhdScore() {
 }
 
 function renderScoreHistory() {
+  const scoreHistory = document.getElementById("brain-score-history");
   if (!scoreHistory) return;
   scoreHistory.replaceChildren();
   const rows = scoreHistoryRows();
@@ -566,29 +566,7 @@ function renderScoreHistory() {
     return;
   }
 
-  const table = document.createElement("table");
-  const thead = document.createElement("thead");
-  const headRow = document.createElement("tr");
-  for (const label of ["date", "autism", "adhd", "disney"]) {
-    const cell = document.createElement("th");
-    cell.scope = "col";
-    cell.textContent = label;
-    headRow.append(cell);
-  }
-  thead.append(headRow);
-
-  const tbody = document.createElement("tbody");
-  for (const item of rows) {
-    const row = document.createElement("tr");
-    row.title = item.name || "";
-    appendHistoryCell(row, displayHistoryDate(item.sourceCreatedAt || item.createdAt));
-    appendHistoryCell(row, scoreHistoryValue(autismScoreForRecord(item)), "score-number autism-series");
-    appendHistoryCell(row, scoreHistoryValue(adhdScoreForRecord(item)), "score-number adhd-series");
-    appendHistoryCell(row, scoreHistoryValue(lifeLeverageScoreForRecord(item)), "score-number life-series");
-    tbody.append(row);
-  }
-  table.append(thead, tbody);
-  scoreHistory.append(table);
+  scoreHistory.append(buildScoreHistoryPlot(rows));
 }
 
 function scoreHistoryRows() {
@@ -602,26 +580,82 @@ function scoreHistoryTime(item) {
   return Date.parse(item?.sourceCreatedAt || item?.createdAt || 0) || 0;
 }
 
-function appendHistoryCell(row, text, className = "") {
-  const cell = document.createElement("td");
-  if (className) cell.className = className;
-  cell.textContent = text;
-  row.append(cell);
+function buildScoreHistoryPlot(rows) {
+  const namespace = "http://www.w3.org/2000/svg";
+  const chart = document.createElement("div");
+  chart.className = "score-history-plot";
+  const title = document.createElement("p");
+  title.className = "score-history-title";
+  title.textContent = "scores over time";
+  const svg = document.createElementNS(namespace, "svg");
+  svg.setAttribute("viewBox", "0 0 560 210");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", scoreHistoryAriaLabel(rows));
+  svg.setAttribute("preserveAspectRatio", "none");
+
+  const margin = { top: 16, right: 68, bottom: 28, left: 30 };
+  const width = 560 - margin.left - margin.right;
+  const height = 210 - margin.top - margin.bottom;
+  const x = (index) => margin.left + (rows.length === 1 ? width / 2 : (index / (rows.length - 1)) * width);
+  const y = (value) => margin.top + ((100 - clampAutismScore(value)) / 100) * height;
+  const append = (tagName, attributes = {}, text = "") => {
+    const node = document.createElementNS(namespace, tagName);
+    Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, String(value)));
+    if (text) node.textContent = text;
+    svg.append(node);
+    return node;
+  };
+
+  [0, 50, 100].forEach((value) => {
+    const lineY = y(value);
+    append("line", { x1: margin.left, y1: lineY, x2: margin.left + width, y2: lineY, class: "score-grid-line" });
+    append("text", { x: margin.left - 7, y: lineY + 4, class: "score-axis-label", "text-anchor": "end" }, String(value));
+  });
+
+  const dateIndexes = rows.length === 1 ? [0] : [0, Math.round((rows.length - 1) / 2), rows.length - 1];
+  [...new Set(dateIndexes)].forEach((index) => {
+    const label = displayHistoryDate(rows[index].sourceCreatedAt || rows[index].createdAt, false);
+    append("text", { x: x(index), y: margin.top + height + 20, class: "score-axis-label", "text-anchor": index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle" }, label);
+  });
+
+  const series = [
+    { key: "autism", label: "autism", colorClass: "autism-series", value: autismScoreForRecord },
+    { key: "adhd", label: "adhd", colorClass: "adhd-series", value: adhdScoreForRecord },
+    { key: "disney", label: "disney", colorClass: "life-series", value: lifeLeverageScoreForRecord },
+  ];
+  const labelOffsets = { autism: -10, adhd: 4, disney: 16 };
+  for (const seriesItem of series) {
+    const values = rows.map((item) => clampAutismScore(seriesItem.value(item)));
+    const pathData = values.map((value, index) => `${index === 0 ? "M" : "L"}${x(index).toFixed(2)} ${y(value).toFixed(2)}`).join(" ");
+    append("path", { d: pathData, class: `score-series-path ${seriesItem.colorClass}` });
+    values.forEach((value, index) => {
+      const point = append("circle", { cx: x(index), cy: y(value), r: 2.4, class: `score-series-point ${seriesItem.colorClass}` });
+      const pointTitle = document.createElementNS(namespace, "title");
+      pointTitle.textContent = `${displayHistoryDate(rows[index].sourceCreatedAt || rows[index].createdAt)}: ${seriesItem.label} ${value}/100`;
+      point.append(pointTitle);
+    });
+    const lastValue = values[values.length - 1];
+    append("text", { x: margin.left + width + 7, y: y(lastValue) + labelOffsets[seriesItem.key], class: `score-series-label ${seriesItem.colorClass}` }, `${seriesItem.label} ${lastValue}`);
+  }
+
+  chart.append(title, svg);
+  return chart;
 }
 
-function scoreHistoryValue(value) {
-  return Number.isFinite(Number(value)) ? String(clampAutismScore(value)) : "";
+function scoreHistoryAriaLabel(rows) {
+  const latest = rows[rows.length - 1];
+  return `Scores over time for ${rows.length} generated notes. Latest: autism ${clampAutismScore(autismScoreForRecord(latest))} out of 100, ADHD ${clampAutismScore(adhdScoreForRecord(latest))} out of 100, Disney ${clampAutismScore(lifeLeverageScoreForRecord(latest))} out of 100.`;
 }
 
-function displayHistoryDate(value) {
+function displayHistoryDate(value, includeTime = true) {
   const date = value ? new Date(value) : null;
   if (!date || Number.isNaN(date.getTime())) return "";
   return date.toLocaleString("en-US", {
     year: "2-digit",
     month: "numeric",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    ...(includeTime ? { hour: "numeric", minute: "2-digit" } : {}),
+    timeZone: "America/New_York",
   }).replace(",", "");
 }
 
@@ -722,7 +756,11 @@ function renderBankSummary() {
   const main = document.createElement("p");
   main.className = "summary-main";
   main.textContent = summary.main;
-  bankSummary.append(main);
+  const history = document.createElement("div");
+  history.id = "brain-score-history";
+  history.className = "score-history";
+  history.setAttribute("aria-live", "polite");
+  bankSummary.append(main, history);
 }
 
 function buildBankSummary() {

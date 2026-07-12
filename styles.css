@@ -166,7 +166,7 @@ input {
 .bank-summary {
   display: grid;
   align-content: start;
-  gap: 0;
+  gap: 12px;
   min-width: 0;
   padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
@@ -264,54 +264,60 @@ input {
 }
 
 .score-history {
-  margin-top: 14px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #fffdfa;
-  overflow: hidden;
-  box-shadow: 0 8px 22px rgba(30, 39, 36, .04);
+  min-width: 0;
 }
 
-.score-history-table {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.score-history-plot {
+  min-width: 0;
 }
 
-.score-history table {
-  width: 100%;
-  min-width: 380px;
-  border-collapse: collapse;
-  color: var(--ink);
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.score-history th,
-.score-history td {
-  padding: 7px 10px;
-  border-bottom: 1px solid var(--line);
-  white-space: nowrap;
-}
-
-.score-history th {
-  background: #f8f5ee;
+.score-history-title {
+  margin: 0 0 4px;
   color: var(--muted);
-  font-weight: 900;
-  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
   text-transform: lowercase;
 }
 
-.score-history td {
-  font-weight: 760;
+.score-history svg {
+  width: 100%;
+  height: auto;
+  min-height: 156px;
+  display: block;
+  overflow: visible;
 }
 
-.score-history tr:last-child td {
-  border-bottom: 0;
+.score-grid-line {
+  stroke: var(--line);
+  stroke-width: 1;
 }
 
-.score-history .score-number {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+.score-axis-label {
+  color: var(--muted);
+  fill: var(--muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.score-series-path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.score-series-point {
+  fill: currentColor;
+}
+
+.score-series-label {
+  fill: currentColor;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .score-history .autism-series {
@@ -328,7 +334,6 @@ input {
 
 .score-history-empty {
   margin: 0;
-  padding: 9px 10px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 760;
