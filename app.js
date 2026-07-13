@@ -632,7 +632,7 @@ function buildScoreHistoryPlot(rows) {
     append("text", { x: x(time), y: margin.top + height + 20, class: "score-axis-label", "text-anchor": time === firstTime ? "start" : time === lastTime ? "end" : "middle" }, label);
   });
 
-  const labelOffsets = { autism: -10, adhd: 4, disney: 16 };
+  const endpointLabels = [];
   for (const seriesItem of series) {
     const pathData = seriesItem.observations.map((point, index) => `${index === 0 ? "M" : "L"}${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`).join(" ");
     append("path", { d: pathData, class: `score-series-path score-observation-path ${seriesItem.colorClass}` });
@@ -650,8 +650,23 @@ function buildScoreHistoryPlot(rows) {
       const trendTitle = document.createElementNS(namespace, "title");
       trendTitle.textContent = `${seriesItem.label} trend ${formatScoreTrend(seriesItem.trend)}`;
       trendPath.append(trendTitle);
-      append("text", { x: margin.left + width + 7, y: y(trendEnd) + labelOffsets[seriesItem.key], class: `score-series-label ${seriesItem.colorClass}` }, formatScoreTrendEndpoint(seriesItem));
+      endpointLabels.push({ seriesItem, trendEnd });
     }
+  }
+
+  const labelGap = 13;
+  const labelBottom = margin.top + height - 4;
+  let previousLabelY = margin.top + 5 - labelGap;
+  const placedEndpointLabels = endpointLabels
+    .sort((a, b) => y(a.trendEnd) - y(b.trendEnd))
+    .map((item) => {
+      const labelY = Math.max(y(item.trendEnd), previousLabelY + labelGap);
+      previousLabelY = labelY;
+      return { ...item, labelY };
+    });
+  const overflow = Math.max(0, previousLabelY - labelBottom);
+  for (const item of placedEndpointLabels) {
+    append("text", { x: margin.left + width + 7, y: item.labelY - overflow, class: `score-series-label ${item.seriesItem.colorClass}` }, formatScoreTrendEndpoint(item.seriesItem));
   }
 
   chart.append(title, svg);
