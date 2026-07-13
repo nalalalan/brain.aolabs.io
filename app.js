@@ -598,14 +598,6 @@ function buildScoreHistoryPlot(rows) {
     }));
     return { ...seriesItem, observations, trend: scoreSeriesTrend(observations) };
   });
-  const trendRead = document.createElement("p");
-  trendRead.className = "score-trend-read";
-  for (const seriesItem of series) {
-    const trendItem = document.createElement("span");
-    trendItem.className = seriesItem.colorClass;
-    trendItem.textContent = `${seriesItem.label} ${formatScoreTrend(seriesItem.trend)}`;
-    trendRead.append(trendItem);
-  }
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
@@ -654,13 +646,15 @@ function buildScoreHistoryPlot(rows) {
     const trendStart = scoreTrendValueAt(seriesItem.trend, firstTime);
     const trendEnd = scoreTrendValueAt(seriesItem.trend, lastTime);
     if (Number.isFinite(trendStart) && Number.isFinite(trendEnd)) {
-      append("path", { d: `M${x(firstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(lastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
+      const trendPath = append("path", { d: `M${x(firstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(lastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
+      const trendTitle = document.createElementNS(namespace, "title");
+      trendTitle.textContent = `${seriesItem.label} trend ${formatScoreTrend(seriesItem.trend)}`;
+      trendPath.append(trendTitle);
+      append("text", { x: margin.left + width + 7, y: y(trendEnd) + labelOffsets[seriesItem.key], class: `score-series-label ${seriesItem.colorClass}` }, formatScoreTrendEndpoint(seriesItem));
     }
-    const lastValue = seriesItem.observations[seriesItem.observations.length - 1].value;
-    append("text", { x: margin.left + width + 7, y: y(lastValue) + labelOffsets[seriesItem.key], class: `score-series-label ${seriesItem.colorClass}` }, `${seriesItem.label} ${lastValue}`);
   }
 
-  chart.append(title, trendRead, svg);
+  chart.append(title, svg);
   return chart;
 }
 
@@ -711,6 +705,14 @@ function formatScoreTrend(trend) {
   if (Math.abs(perWeek) < 1) return "about flat";
   const rounded = Math.round(perWeek * 10) / 10;
   return `about ${rounded > 0 ? "+" : ""}${rounded}/week`;
+}
+
+function formatScoreTrendEndpoint(seriesItem) {
+  if (!Number.isFinite(seriesItem?.trend?.rate)) return `${seriesItem.label} no trend`;
+  const perWeek = seriesItem.trend.rate * 7;
+  if (Math.abs(perWeek) < 1) return `${seriesItem.label} flat`;
+  const rounded = Math.round(perWeek * 10) / 10;
+  return `${seriesItem.label} ${rounded > 0 ? "+" : ""}${rounded}/wk`;
 }
 
 function scoreHistoryAriaLabel(rows, series = []) {
