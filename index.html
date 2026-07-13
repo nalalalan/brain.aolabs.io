@@ -24,9 +24,9 @@
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260712-score-trend-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260712-score-trend-layout-v1">
   <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260712-score-trend-v1" defer></script>
+  <script src="./app.js?v=20260712-score-trend-layout-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -62,20 +62,23 @@
         <h2>add to bank</h2>
       </div>
       <div class="intake-workspace">
-        <div class="dropzone" data-role="dropzone">
-          <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
-          <div class="intake-controls">
-            <label class="file-inline">
-              <span>files / images</span>
-              <input id="brain-files" type="file" multiple>
-            </label>
-            <button id="brain-save" type="button">save to vault</button>
+        <div class="intake-input-column">
+          <div class="dropzone" data-role="dropzone">
+            <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
+            <div class="intake-controls">
+              <label class="file-inline">
+                <span>files / images</span>
+                <input id="brain-files" type="file" multiple>
+              </label>
+              <button id="brain-save" type="button">save to vault</button>
+            </div>
+            <div id="brain-pending" class="pending-list" aria-live="polite"></div>
           </div>
-          <div id="brain-pending" class="pending-list" aria-live="polite"></div>
+          <aside id="brain-summary" class="bank-summary" aria-live="polite">
+            <p>Saved notes will appear after sync loads.</p>
+          </aside>
         </div>
-        <aside id="brain-summary" class="bank-summary" aria-live="polite">
-          <p>Saved notes will appear after sync loads.</p>
-        </aside>
+        <section id="brain-score-history" class="score-history score-history-panel" aria-live="polite"></section>
       </div>
       <p id="brain-sync-status" class="sync-status">checking sync</p>
     </section>

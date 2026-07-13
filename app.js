@@ -828,11 +828,7 @@ function renderBankSummary() {
   const main = document.createElement("p");
   main.className = "summary-main";
   main.textContent = summary.main;
-  const history = document.createElement("div");
-  history.id = "brain-score-history";
-  history.className = "score-history";
-  history.setAttribute("aria-live", "polite");
-  bankSummary.append(main, history);
+  bankSummary.append(main);
 }
 
 function buildBankSummary() {
