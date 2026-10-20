@@ -1,8 +1,8 @@
 /* Original layout and plotting geometry are preserved. Only score evidence styling is added. */
 .score-excerpt mark { padding:0;background:transparent;font-weight:800; }
-.score-excerpt mark.clarity { color:#8f3d4b; }
-.score-excerpt mark.agency { color:#214f8f; }
-.score-excerpt mark.fit { color:#7a4a16; }
+.score-excerpt mark.voice { color:#8f3d4b; }
+.score-excerpt mark.followthrough { color:#214f8f; }
+.score-excerpt mark.support { color:#7a4a16; }
 .score-basis { color:var(--muted)!important;font-size:11px!important; }
 .note-full { white-space:pre-wrap;max-height:400px;overflow:auto;font-size:13px;line-height:1.4; }
 .vault-main details { font-size:12px;overflow-wrap:anywhere; }

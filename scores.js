@@ -1,5 +1,5 @@
 (() => {
-  const base=window.BRAIN_API_BASE.replace(/\/$/,''), metrics=[{key:'clarity',label:'Clarity',cls:'autism'},{key:'agency',label:'Agency',cls:'adhd'},{key:'fit',label:'Life fit',cls:'life'}];
+  const base=window.BRAIN_API_BASE.replace(/\/$/,''), metrics=[{key:'voice',label:'Voice',cls:'autism'},{key:'followthrough',label:'Follow-through',cls:'adhd'},{key:'support',label:'Support',cls:'life'}];
   let entries={}; const busy=new Set(), errors=new Map(), previews=new Map();
   const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
   const dateOf=item=>Date.parse(item.sourceCreatedAt||item.createdAt||0);
@@ -17,7 +17,7 @@
     summary.append(node('p','AI readings of each note. Trends reflect the notes recorded, not a clinical assessment.','score-basis'));
     if(typeof renderVault==='function')renderVault();
   }
-  async function load(){try{const response=await fetch(base+'/api/note-scores',{cache:'no-store'});if(!response.ok)throw Error('Scores could not load.');entries=(await response.json()).entries;refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
+  async function load(){try{const response=await fetch(base+'/api/note-scores',{cache:'no-store'});if(!response.ok)throw Error('Scores could not load.');entries=Object.fromEntries(Object.entries((await response.json()).entries).filter(([,entry])=>metrics.every(m=>entry.values?.[m.key])));refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
   async function analyze(item){if(busy.has(item.id))return;busy.add(item.id);errors.delete(item.id);renderVault();try{const r=await fetch(base+'/api/note-scores/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sourceId:item.id})});const result=await r.json();if(!r.ok)throw Error(result.error||'Could not score this note.');entries[item.id]=result.entry;refresh();}catch(e){errors.set(item.id,e.message);}finally{busy.delete(item.id);renderVault();}}
   window.BrainScores={
     refresh,analyze,

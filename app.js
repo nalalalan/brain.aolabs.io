@@ -61,9 +61,9 @@ const notePreviewLayout = Object.freeze({
   leading: 16,
 });
 const traitHighlightStyle = Object.freeze({
-  clarity: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
-  agency: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
-  fit: { canvas: "#7a4a16", pdf: "0.48 0.29 0.09 rg" },
+  voice: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
+  followthrough: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
+  support: { canvas: "#7a4a16", pdf: "0.48 0.29 0.09 rg" },
   autism: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
   adhd: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
   text: { canvas: "#1e2724", pdf: "0.12 0.15 0.14 rg" },
@@ -429,9 +429,9 @@ function buildScoreHistoryPlot(rows) {
   title.className = "score-history-title";
   title.textContent = "score trends";
   const series = [
-    { key: "clarity", label: "clarity", colorClass: "autism-series", value: item => window.BrainScores.score(item,"clarity") },
-    { key: "agency", label: "agency", colorClass: "adhd-series", value: item => window.BrainScores.score(item,"agency") },
-    { key: "fit", label: "life fit", colorClass: "life-series", value: item => window.BrainScores.score(item,"fit") },
+    { key: "voice", label: "voice", colorClass: "autism-series", value: item => window.BrainScores.score(item,"voice") },
+    { key: "followthrough", label: "follow-through", colorClass: "adhd-series", value: item => window.BrainScores.score(item,"followthrough") },
+    { key: "support", label: "support", colorClass: "life-series", value: item => window.BrainScores.score(item,"support") },
   ].map((seriesItem) => {
     const observations = rows.map((item) => ({
       time: scoreHistoryTime(item),
@@ -442,7 +442,7 @@ function buildScoreHistoryPlot(rows) {
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Clarity, agency and life fit scores over time for ${rows.length} distinct notes. Solid lines connect note scores; dashed lines show trends.`);
+  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines connect note scores; dashed lines show trends.`);
   svg.setAttribute("preserveAspectRatio", "none");
 
   const margin = { top: 16, right: 112, bottom: 28, left: 30 };
@@ -495,7 +495,7 @@ function buildScoreHistoryPlot(rows) {
     }
   }
 
-  const labelGap = 13;
+  const labelGap = 26;
   const labelBottom = margin.top + height - 4;
   let previousLabelY = margin.top + 5 - labelGap;
   const placedEndpointLabels = endpointLabels
@@ -507,7 +507,8 @@ function buildScoreHistoryPlot(rows) {
     });
   const overflow = Math.max(0, previousLabelY - labelBottom);
   for (const item of placedEndpointLabels) {
-    append("text", { x: margin.left + width + 7, y: item.labelY - overflow, class: `score-series-label ${item.seriesItem.colorClass}` }, formatScoreTrendEndpoint(item.seriesItem));
+    append("text", { x: margin.left + width + 7, y: item.labelY - overflow - 6, class: `score-series-label ${item.seriesItem.colorClass}` }, item.seriesItem.label);
+    append("text", { x: margin.left + width + 7, y: item.labelY - overflow + 6, class: `score-series-label ${item.seriesItem.colorClass}` }, formatScoreTrendEndpoint(item.seriesItem).slice(item.seriesItem.label.length).trim());
   }
 
   chart.append(title, svg);
@@ -1587,7 +1588,7 @@ function sourceRangeSegments(source, start, end, ranges) {
 }
 
 function normalizeTraitHighlights(input) {
-  return Object.fromEntries(['clarity','agency','fit'].map(key => [key, String(input?.[key] || '')]));
+  return Object.fromEntries(['voice','followthrough','support'].map(key => [key, String(input?.[key] || '')]));
 }
 
 function traitFlavorRanges(text, highlights) {
@@ -1635,7 +1636,7 @@ function autismFlavorRanges(text, highlightText = "") {
     { pattern: /\b(?:overwhelm|overwhelmed|overwhelming|panic|shutdown|meltdown|spiral|body stops feeling alert|body feel(?:s)? unsafe)\b/gi, weight: 106 },
     { pattern: /\b(?:sensory|metal box|fluorescent|sound|noise|comfort|comfortable|safe|safety|body|bumpy|smooth|quiet|texture|light|smell)\b/gi, weight: 104 },
     { pattern: /\b(?:routine|routines|transition|transitions|switching|same|stable|change|changes|back and forth|commitment|commit)\b/gi, weight: 100 },
-    { pattern: /\b(?:masking|mask|camouflage|appear normal|fit in|hide|compensate)\b/gi, weight: 98 },
+    { pattern: /\b(?:masking|mask|camouflage|appear normal|support in|hide|compensate)\b/gi, weight: 98 },
     { pattern: /\b(?:social cues|eye contact|text back|respond|relationship|conversation|tone|misread|blunt|block me|love me|social)\b/gi, weight: 96 },
     { pattern: /\b(?:special interest|fixed preference|focused interest|fixated|exact|details|rules|patterns|categories|system)\b/gi, weight: 94 },
     { pattern: /\b(?:autism|autistic|asd|diagnosis|diagnostic evaluation)\b/gi, weight: 78 },
@@ -2718,7 +2719,7 @@ function scoreBasisTemplates(trait, level, subject) {
   }
   if (level === "high") {
     return [
-      `${subject.cap} ${subject.verb} the same need for fit, certainty, sensory safety, or social clarity in the body of the note.`,
+      `${subject.cap} ${subject.verb} the same need for support, certainty, sensory safety, or social voice in the body of the note.`,
       `The autism read gets stronger because the note keeps returning to ${subject.text}.`,
       `That makes the highlighted line feel representative: ${subject.text} ${subject.points} to repeated rigidity, certainty, sensory, or social-meaning pressure.`,
       `${subject.cap} ${subject.verb} the pattern spreading beyond one sentence into how the whole situation is being sorted.`,
@@ -2728,15 +2729,15 @@ function scoreBasisTemplates(trait, level, subject) {
     return [
       `${subject.cap} ${subject.verb} a real autism-shaped clue, while the rest of the thought is mixed.`,
       `The autism read stays moderate because ${subject.text} ${subject.points} in the same direction without carrying the whole note.`,
-      `${subject.cap} ${subject.verb} concrete fit, certainty, sensory, or social strain, but it is not the only thing happening.`,
+      `${subject.cap} ${subject.verb} concrete support, certainty, sensory, or social strain, but it is not the only thing happening.`,
       `The autism clue is believable because it sits beside ${subject.text}.`,
     ];
   }
   return [
     `${subject.cap} ${subject.verb} a small autism-shaped clue, but the note is mostly doing something else.`,
-    `The autism read stays lighter because ${subject.text} ${subject.points} to some fit, certainty, sensory, or social strain without becoming the main pattern.`,
+    `The autism read stays lighter because ${subject.text} ${subject.points} to some support, certainty, sensory, or social strain without becoming the main pattern.`,
     `${subject.cap} ${subject.verb} real friction, but it stays secondary.`,
-    `This is not zero because ${subject.text} ${subject.verb} some fit or certainty pressure; it is just not the center of the note.`,
+    `This is not zero because ${subject.text} ${subject.verb} some support or certainty pressure; it is just not the center of the note.`,
   ];
 }
 
@@ -2774,15 +2775,15 @@ function scoreFallbackBasisSentence(trait, score, seed = "") {
       }
       : {
         high: [
-          "The autism read is high only when certainty, sensory, social, routine, or exact-fit pressure repeats across the note.",
+          "The autism read is high only when certainty, sensory, social, routine, or exact-support pressure repeats across the note.",
           "This sits high for autism because the card is looking for a repeated pattern, not one dramatic sentence.",
         ],
         middle: [
           "The autism read stays in the middle when the clue is real but the note is not carried by autism-shaped pressure alone.",
-          "This is a middle autism read: the fit, certainty, sensory, or social clue is present but mixed with other material.",
+          "This is a middle autism read: the support, certainty, sensory, or social clue is present but mixed with other material.",
         ],
         low: [
-          "The autism read stays light when the entry gives only a small fit, certainty, sensory, or social clue.",
+          "The autism read stays light when the entry gives only a small support, certainty, sensory, or social clue.",
           "This is low-signal for autism, not zero; the note just does not give a strong whole-note pattern.",
         ],
       };
@@ -2812,7 +2813,7 @@ function scoreBasisThemes(options = {}, trait = "autism") {
     add("social nonresponse", /\b(group chat|nobody responded|unheard|invalidated)\b/);
     add("withdrawal from mismatch", /\b(leave environments|environment|mismatch|reciprocity|lack of reciprocity)\b/);
     add("feeling socially minimized", /\b(small and unimpressive|minimized|judged|unheard)\b/);
-    add("certainty or exact-fit pressure", /\b(certainty|exact|predictable|routine|same|stable|rule)\b/);
+    add("certainty or exact-support pressure", /\b(certainty|exact|predictable|routine|same|stable|rule)\b/);
     add("sensory or overwhelm load", /\b(sensory|overwhelm|comfortable|safe)\b/);
   }
   return themes.slice(0, 3);
@@ -3240,7 +3241,7 @@ function highlightExplanationForPhrase(value) {
   if (/\broutine|transition|switch|same|stable|change|back and forth|commit\b/.test(text)) {
     return "It shows switching and change carrying a heavier cost than the surface situation suggests.";
   }
-  if (/\bmask|camouflage|normal|fit in|hide|compensate\b/.test(text)) {
+  if (/\bmask|camouflage|normal|support in|hide|compensate\b/.test(text)) {
     return "It shows the social self-monitoring and masking layer that often makes autistic experience harder to see from outside.";
   }
   if (/\bsocial|conversation|relationship|tone|misread|block|love|respond\b/.test(text)) {
@@ -3755,7 +3756,7 @@ function anchorScore(value) {
     /\boverwhelm|panic|shutdown|meltdown|stress|anxiety|hard to handle|too much\b/,
     /\bfocus|fixed|interest|exact|details|pattern|rule|category|audi|car\b/,
     /\btask|start|finish|setup steps|getting started|lost momentum|motivation|deadline|schedule|forget|time\b/,
-    /\bmask|normal|fit in|hide|compensat|camouflag\b/,
+    /\bmask|normal|support in|hide|compensat|camouflag\b/,
     /\badhd|executive function|attention|hyperfocus\b/,
     /\bautis|asd|diagnos|evaluation|assessment\b/,
   ];
