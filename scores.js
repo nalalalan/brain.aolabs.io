@@ -24,7 +24,8 @@
     score(item,key){return entries[item.id]?.values[key]?.score??NaN;},
     preview(item){const entry=entries[item.id];if(!entry||!item.sourceText)return '';const key=entry.sourceHash+entry.createdAt;if(!previews.has(key))previews.set(key,createTextPreviewDataUrl(item.sourceText,item.sourceCreatedAt||item.createdAt,Object.fromEntries(metrics.map(m=>[m.key,entry.values[m.key].quote]))));return previews.get(key);},
     append(main,item){const entry=entries[item.id];if(entry){for(const m of metrics){const value=entry.values[m.key],score=node('p',m.label.toLowerCase()+' '+(value.score===null?'— not enough evidence':value.score+'/100'),m.cls+'-score');const explanation=node('p',undefined,m.cls+'-score-why score-excerpt');if(value.quote){const quote=node('mark','“'+value.quote+'”',m.key);explanation.append(quote,' ');}explanation.append(document.createTextNode(value.explanation));main.append(score,explanation);}if(entry.analyzedChars<entry.sourceChars)main.append(node('p','Based on the first '+entry.analyzedChars.toLocaleString()+' characters.','vault-meta'));}
-      else if(item.sourceText){const p=node('p',busy.has(item.id)?'Reading and scoring this note…':errors.get(item.id)||'Not scored yet.','vault-meta');main.append(p);if(!busy.has(item.id))main.append(actionButton(errors.has(item.id)?'Retry scores':'Read and score',()=>analyze(item)));}
+      else if(item.sourceText){const p=node('p',busy.has(item.id)?'Reading and scoring this note…':errors.get(item.id)||'Not scored yet.','vault-meta');main.append(p);if(!busy.has(item.id)&&item.source==='sync')main.append(actionButton(errors.has(item.id)?'Retry scores':'Read and score',()=>analyze(item)));}
+      if(item.sourceText?.length===20000&&item.analysisQualityVersion)main.append(node('p','Based on saved text; this older entry may continue in the original PDF.','vault-meta'));
     }
   };
   load();

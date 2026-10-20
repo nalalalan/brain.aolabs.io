@@ -1182,6 +1182,7 @@ async function autoSyncLocalRecords() {
         await deleteBlob(item.id);
         state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
         persistState();
+        if (synced.sourceText) void window.BrainScores?.analyze(synced);
       } catch {
         markSyncLocal();
         break;
