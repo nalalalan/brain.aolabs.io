@@ -557,19 +557,12 @@ function medianNumber(values) {
 }
 
 function formatScoreTrend(trend) {
-  if (!Number.isFinite(trend?.rate)) return "needs more days";
-  const perWeek = trend.rate * 7;
-  if (Math.abs(perWeek) < 1) return "about flat";
-  const rounded = Math.round(perWeek * 10) / 10;
-  return `about ${rounded > 0 ? "+" : ""}${rounded}/week`;
+  if (!Number.isFinite(trend?.rate)) return "needs more evidence";
+  const change=trend.rate*(trend.points.at(-1).time-trend.origin)/86400000;
+  return `${change>0?"+":""}${change.toFixed(1)} pts over period`;
 }
-
 function formatScoreTrendEndpoint(seriesItem) {
-  if (!Number.isFinite(seriesItem?.trend?.rate)) return `${seriesItem.label} no trend`;
-  const perWeek = seriesItem.trend.rate * 7;
-  if (Math.abs(perWeek) < 1) return `${seriesItem.label} flat`;
-  const rounded = Math.round(perWeek * 10) / 10;
-  return `${seriesItem.label} ${rounded > 0 ? "+" : ""}${rounded}/wk`;
+  return `${seriesItem.label} ${formatScoreTrend(seriesItem.trend).replace(' over period',' trend')}`;
 }
 
 function scoreHistoryAriaLabel(rows, series = []) {
