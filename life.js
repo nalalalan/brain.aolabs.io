@@ -145,6 +145,7 @@
     async suggest(item) {
       if (loading) { message('Still reading the previous note.'); return; }
       loading = true; message('Looking for a completed step in this note…');
+      document.getElementById('life-message').scrollIntoView({ behavior: 'smooth', block: 'center' });
       try { const before = data?.suggestions.length || 0; await request('/suggest', { sourceId: item.id }); message(data.suggestions.length > before ? 'Possible steps are ready to review above. They are not counted yet.' : 'No new supported steps found. The note stays valuable as a note.'); }
       catch (e) { message(e.message); } finally { loading = false; }
     }
