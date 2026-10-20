@@ -48,7 +48,7 @@ module.exports = function noteScores(root, readFiles) {
         const explanation=normalize(value.explanation).slice(0,700),quote=indexed.get(source.id)[value.quoteId]||'';
         if(value.score===null){values[key]={score:null,quote:'',explanation:explanation||'No new evidence for this score.',change:'unknown'};continue;}
         if(!Number.isInteger(value.score)||value.score<0||value.score>100||!quote||!explanation)throw fail('A score needs exact source evidence.',502);
-        if(value.change==='advance'&&!['observed_action','outcome','sustained_pattern'].includes(value.evidenceType))throw fail('An advance needs demonstrated personal action or results.',502);
+        if(value.change==='advance'&&!['observed_action','outcome','sustained_pattern'].includes(value.evidenceType)){values[key]={score:null,quote:'',explanation:'This adds reflection or intention, but no new demonstrated action or result to change this score.',change:'unknown'};continue;}
         const previous=[...history].reverse().find(e=>Number.isFinite(e.values[key].score));
         if(!['baseline','advance','maintain','regression'].includes(value.change))throw fail('Missing longitudinal comparison.',502);
         if(value.comparisonSourceId&&!history.some(e=>e.sourceId===value.comparisonSourceId))throw fail('Invalid earlier evidence reference.',502);
@@ -71,7 +71,7 @@ module.exports = function noteScores(root, readFiles) {
     }
     if(url.pathname==='/api/note-scores/analyze'&&req.method==='POST'){
       const payload=await readJson(req),files=await readFiles(),source=files.find(s=>s.id===payload.sourceId);if(!source)throw fail('Source note not found.',404);if(!source.sourceText?.trim())throw fail('No saved readable text.',422);
-      if(!pending.has(source.id)){const task=analysisQueue.then(async()=>{const all=ordered(await readFiles()),ctx=contexts(all),end=all.findIndex(s=>s.id===source.id);let data=await read();const missing=all.slice(0,end+1).filter(s=>!valid(data.entries[s.id],s,ctx));for(let i=0;i<missing.length;i+=8)await analyzeBatch(missing.slice(i,i+8),all,ctx);data=await read();return data.entries[source.id];}).finally(()=>pending.delete(source.id));analysisQueue=task.catch(()=>{});pending.set(source.id,task);}
+      if(!pending.has(source.id)){const task=analysisQueue.then(async()=>{const all=ordered(await readFiles()),ctx=contexts(all),end=all.findIndex(s=>s.id===source.id);let data=await read();const missing=all.slice(0,end+1).filter(s=>!valid(data.entries[s.id],s,ctx));for(let i=0;i<missing.length;i+=8){const batch=missing.slice(i,i+8);try{await analyzeBatch(batch,all,ctx);}catch(error){if(!/earlier evidence reference|decrease needs|increase needs|Incomplete chronological/.test(error.message))throw error;for(const item of batch){const current=await read();if(!valid(current.entries[item.id],item,ctx))await analyzeBatch([item],all,ctx);}}}data=await read();return data.entries[source.id];}).finally(()=>pending.delete(source.id));analysisQueue=task.catch(()=>{});pending.set(source.id,task);}
       send(200,{entry:await pending.get(source.id)});return true;
     }
     throw fail('Not found.',404);
