@@ -442,7 +442,7 @@ function buildScoreHistoryPlot(rows) {
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines connect note scores; dashed lines show trends.`);
+  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines show the evidenced score carried forward; dashed lines connect the first and latest evidenced score.`);
   svg.setAttribute("preserveAspectRatio", "none");
 
   const margin = { top: 16, right: 112, bottom: 28, left: 30 };
@@ -516,32 +516,11 @@ function buildScoreHistoryPlot(rows) {
 }
 
 function scoreSeriesTrend(observations) {
-  const dayGroups = new Map();
-  for (const observation of observations) {
-    if (!Number.isFinite(observation.time) || !Number.isFinite(observation.value)) continue;
-    const dayKey = new Date(observation.time).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-    const group = dayGroups.get(dayKey) || { times: [], values: [] };
-    group.times.push(observation.time);
-    group.values.push(observation.value);
-    dayGroups.set(dayKey, group);
-  }
-  const points = [...dayGroups.values()]
-    .map((group) => ({ time: medianNumber(group.times), value: medianNumber(group.values) }))
-    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.value))
-    .sort((a, b) => a.time - b.time);
-  if (points.length < 2) return { rate: NaN, intercept: NaN, origin: NaN, points };
-
-  const slopes = [];
-  for (let i = 0; i < points.length; i += 1) {
-    for (let j = i + 1; j < points.length; j += 1) {
-      const dayDelta = (points[j].time - points[i].time) / 86400000;
-      if (dayDelta > 0) slopes.push((points[j].value - points[i].value) / dayDelta);
-    }
-  }
-  const rate = medianNumber(slopes);
-  const origin = points[0].time;
-  const intercept = medianNumber(points.map((point) => point.value - rate * ((point.time - origin) / 86400000)));
-  return { rate, intercept, origin, points };
+  const points=observations.filter(p=>Number.isFinite(p.time)&&Number.isFinite(p.value)).sort((a,b)=>a.time-b.time);
+  if(points.length<2)return {rate:NaN,intercept:NaN,origin:NaN,points};
+  const origin=points[0].time,duration=(points.at(-1).time-origin)/86400000;
+  const rate=duration>0?(points.at(-1).value-points[0].value)/duration:0;
+  return {rate,intercept:points[0].value,origin,points};
 }
 
 function scoreTrendValueAt(trend, time) {
@@ -562,7 +541,7 @@ function formatScoreTrend(trend) {
   return `${change>0?"+":""}${change.toFixed(1)} pts over period`;
 }
 function formatScoreTrendEndpoint(seriesItem) {
-  return `${seriesItem.label} ${formatScoreTrend(seriesItem.trend).replace(' over period',' trend')}`;
+  return `${seriesItem.label} ${formatScoreTrend(seriesItem.trend).replace(' over period',' change')}`;
 }
 
 function scoreHistoryAriaLabel(rows, series = []) {
