@@ -32,7 +32,7 @@ module.exports = function noteScores(root, readFiles) {
     const indexed=new Map(batch.map(s=>[s.id,passages(s.sourceText)]));
     const apiKey=process.env.OPENAI_API_KEY;if(!apiKey)throw fail('Scoring is unavailable. Your note is saved.',503);
     const model=process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4-mini';
-    const input='Earlier chronological evidence: '+JSON.stringify(evidence)+'\nRead these current notes strictly IN ORDER. For each note use only earlier history and earlier notes in this batch, never later notes. Carry each preceding estimate forward into the next comparison. Return {entries:[{sourceId,values:{voice,followthrough,support}}]} in the same order, one entry per source. Keep each explanation under 240 characters.\n'+JSON.stringify(batch.map(s=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,passages:indexed.get(s.id)})));
+    const input='Earlier chronological evidence: '+JSON.stringify(evidence)+'\nRead these current notes strictly IN ORDER. For each note use only earlier history and earlier notes in this batch, never later notes. Carry each preceding estimate forward into the next comparison. Return JSON {entries:[{sourceId,values:{voice,followthrough,support}}]} in the same order, one entry per source. Keep each explanation under 240 characters.\n'+JSON.stringify(batch.map(s=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,passages:indexed.get(s.id)})));
     const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:AbortSignal.timeout(180000),headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model,store:false,reasoning:{effort:'low'},max_output_tokens:Math.min(18000,2400*batch.length),instructions,input,text:{format:{type:'json_object'}}})});
     if(!response.ok)throw fail('Could not score this note right now. Your original is saved.',502);
     const body=await response.json(),output=body.output?.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('')||'';
@@ -76,3 +76,4 @@ module.exports = function noteScores(root, readFiles) {
   }
   return {handle};
 };
+
