@@ -959,34 +959,7 @@ async function saveUploadedFile(payload) {
     sourceCreatedAt: payload.sourceCreatedAt || "",
     kind: payload.kind || "file",
     pages: Number(payload.pages || 0),
-    autismScore: clampScore(payload.autismScore),
-    autismScoreExplanation: cleanAnalysisParagraph(payload.autismScoreExplanation),
-    autismHighlightText: cleanExplanation(payload.autismHighlightText).slice(0, 160),
-    autismHighlightExplanation: cleanExplanation(payload.autismHighlightExplanation).slice(0, 360),
-    autismScoreSource: scoreSource(payload.autismScoreSource),
-    autismScoreModel: cleanExplanation(payload.autismScoreModel).slice(0, 80),
-    autismScoreConfidence: scoreConfidence(payload.autismScoreConfidence),
-    autismScoreWarning: cleanExplanation(payload.autismScoreWarning).slice(0, 180),
-    autismTextChars: Math.max(0, Number(payload.autismTextChars || 0)),
-    adhdScore: clampScore(payload.adhdScore),
-    adhdScoreExplanation: cleanAnalysisParagraph(payload.adhdScoreExplanation),
-    adhdHighlightText: cleanExplanation(payload.adhdHighlightText).slice(0, 160),
-    adhdHighlightExplanation: cleanExplanation(payload.adhdHighlightExplanation).slice(0, 360),
-    adhdScoreSource: scoreSource(payload.adhdScoreSource),
-    adhdScoreModel: cleanExplanation(payload.adhdScoreModel).slice(0, 80),
-    adhdScoreConfidence: scoreConfidence(payload.adhdScoreConfidence),
-    adhdScoreWarning: cleanExplanation(payload.adhdScoreWarning).slice(0, 180),
-    adhdTextChars: Math.max(0, Number(payload.adhdTextChars || 0)),
-    lifeLeverageScore: clampScore(payload.lifeLeverageScore),
-    lifeLeverageExplanation: cleanAnalysisParagraph(payload.lifeLeverageExplanation),
-    lifeLeverageHighlightText: cleanExplanation(payload.lifeLeverageHighlightText).slice(0, 160),
-    lifeLeverageHighlightExplanation: cleanExplanation(payload.lifeLeverageHighlightExplanation).slice(0, 360),
-    lifeLeverageScoreSource: scoreSource(payload.lifeLeverageScoreSource),
-    lifeLeverageScoreModel: cleanExplanation(payload.lifeLeverageScoreModel).slice(0, 80),
-    lifeLeverageScoreConfidence: scoreConfidence(payload.lifeLeverageScoreConfidence),
-    lifeLeverageScoreWarning: cleanExplanation(payload.lifeLeverageScoreWarning).slice(0, 180),
-    lifeLeverageTextChars: Math.max(0, Number(payload.lifeLeverageTextChars || 0)),
-    sourceText: cleanSourceText(payload.sourceText),
+    sourceText: String(payload.sourceText || ''),
     generatedNoteLayoutVersion: cleanExplanation(payload.generatedNoteLayoutVersion).slice(0, 80),
     analysisQualityVersion: cleanExplanation(payload.analysisQualityVersion).slice(0, 80),
     storageName,
@@ -1197,6 +1170,8 @@ function sendStatic(req, res, pathname) {
   });
 }
 
+const life = require("./life-store")(storageRoot, readIndex);
+
 const server = http.createServer(async (req, res) => {
   setCors(res);
   if (req.method === "OPTIONS") {
@@ -1208,8 +1183,12 @@ const server = http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+    if (await life.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
+    if (req.method === 'POST' && (requestUrl.pathname === '/api/analyze' || /^\/api\/files\/[^/]+\/(rebuild|analysis)$/.test(requestUrl.pathname))) {
+      sendJson(res, 410, { error: 'Trait scoring has been retired. Original notes are preserved.' }); return;
+    }
     if (requestUrl.pathname === "/api/health" && req.method === "GET") {
-      sendJson(res, 200, { ok: true, app: "brain", storage: storageRoot, ai: Boolean(process.env.OPENAI_API_KEY), aiModel: openAiModel });
+      sendJson(res, 200, { ok: true, app: "brain", lifeProgress: "20261019-v1", storage: storageRoot, ai: Boolean(process.env.OPENAI_API_KEY), aiModel: openAiModel });
       return;
     }
 

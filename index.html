@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>brain.aolabs.io</title>
-  <meta name="description" content="Brain PDF bank for autism, ADHD, and Disney/career-goal notes." />
+  <meta name="description" content="Life progress: meaningful steps, daily ease, enjoyment, and your saved notes." />
   <link rel="canonical" href="https://aolabs.io/brain/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="AO Labs">
   <meta property="og:title" content="brain">
-  <meta property="og:description" content="PDF bank for autism, ADHD, and Disney/career-goal notes.">
+  <meta property="og:description" content="Meaningful steps, daily ease, enjoyment, and your saved notes.">
   <meta property="og:url" content="https://aolabs.io/brain/">
   <meta property="og:image" content="https://aolabs.io/previews/brain-20260612.png">
   <meta property="og:image:secure_url" content="https://aolabs.io/previews/brain-20260612.png">
@@ -19,14 +19,16 @@
   <meta property="og:image:alt" content="brain preview card.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="brain">
-  <meta name="twitter:description" content="PDF bank for autism, ADHD, and Disney/career-goal notes.">
+  <meta name="twitter:description" content="Meaningful steps, daily ease, enjoyment, and your saved notes.">
   <meta name="twitter:image" content="https://aolabs.io/previews/brain-20260612.png">
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20260713-trend-endpoints-v1">
-  <script src="./config.js?v=20260610-railway-sync"></script>
-  <script src="./app.js?v=20260713-trend-endpoints-v2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261019-life-v1">
+  <script src="./config.js?v=20261019-life-v1"></script>
+  <script src="./app.js?v=20261019-life-v1" defer></script>
+  <link rel="stylesheet" href="./life.css?v=20261019-life-v1">
+  <script src="./life.js?v=20261019-life-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -42,48 +44,33 @@
   </header>
 
   <main class="shell document-shell">
-    <section class="document-intro" aria-label="document summary">
-      <p>Brain PDF bank for documents, text, files, images, and goal-relevant thoughts.</p>
-      <div id="overall-autism-score" class="overall-score" aria-live="polite">
-        <span>overall autism score</span>
-        <strong>calculating</strong>
-      </div>
-      <div id="overall-adhd-score" class="overall-score" aria-live="polite">
-        <span>overall adhd score</span>
-        <strong>calculating</strong>
-      </div>
-      <div id="overall-life-score" class="overall-score life-overall" aria-live="polite">
-        <span>overall disney score</span>
-        <strong>calculating</strong>
-      </div>
-    </section>
+    <section id="life-progress" aria-label="Life progress"><h1>Life progress</h1><p>Loading your history…</p></section><p id="life-message" role="status" aria-live="polite"></p><dialog id="life-editor" aria-label="Progress editor"></dialog>
     <section class="local-intake" aria-label="upload bank">
       <div class="intake-copy">
-        <h2>add to bank</h2>
+        <h2>Save a note or file</h2>
       </div>
       <div class="intake-workspace">
         <div class="intake-input-column">
           <div class="dropzone" data-role="dropzone">
-            <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
+            <textarea id="brain-note" rows="4" placeholder="What do you want to keep? Paste or write a note."></textarea>
             <div class="intake-controls">
               <label class="file-inline">
                 <span>files / images</span>
                 <input id="brain-files" type="file" multiple>
               </label>
-              <button id="brain-save" type="button">save to vault</button>
+              <button id="brain-save" type="button">Save note</button>
             </div>
             <div id="brain-pending" class="pending-list" aria-live="polite"></div>
           </div>
-          <aside id="brain-summary" class="bank-summary" aria-live="polite">
-            <p>Saved notes will appear after sync loads.</p>
-          </aside>
+          
         </div>
-        <section id="brain-score-history" class="score-history score-history-panel" aria-live="polite"></section>
+        
       </div>
       <p id="brain-sync-status" class="sync-status">checking sync</p>
     </section>
 
     <section class="document-bank" aria-label="document bank">
+      <h2>Saved notes &amp; files</h2><label class="note-search">Search notes<input id="brain-search" type="search" placeholder="Find a note"></label><p id="brain-note-count" class="life-muted"></p>
       <div class="vault-toolbar" aria-live="polite">
         <button id="brain-export-start" type="button">export notes</button>
         <div id="brain-export-actions" class="export-actions" hidden>
@@ -94,20 +81,13 @@
         </div>
       </div>
       <div id="brain-vault" class="vault-list" aria-live="polite"></div>
-      <div class="source-documents" aria-label="reference documents">
+      <details class="source-documents" aria-label="reference documents"><summary>Reference documents</summary>
         <article class="source-document">
           <a class="vault-thumb" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf" aria-label="Open autism diagnostic evaluation PDF">
             <img src="./autism-evaluation-page-1.png" alt="">
           </a>
           <span class="vault-main">
             <span class="vault-title">autism evaluation</span>
-            <span class="autism-score">autism score 96/100</span>
-            <span class="autism-score-why">This is the formal diagnostic source, so it anchors the autism side of the bank. It confirms autism clearly without claiming the highest support category.</span>
-            <span class="adhd-score">adhd score 26/100</span>
-            <span class="adhd-score-why">This is mainly an autism diagnostic source. It can still matter as neurodevelopmental context, but it is not the ADHD proof document.</span>
-            <span class="life-score">disney score 88/100</span>
-            <span class="autism-signal life-signal"><strong>"autism diagnostic evaluation"</strong> It gives the career system a formal support context instead of leaving accommodation needs implicit.</span>
-            <span class="life-score-why">This gives the work system formal context for accommodations, communication, and self-understanding. It is not a direct Imagineering move, but it changes how the bank should support work and life.</span>
             <span class="vault-meta">pdf</span>
           </span>
           <span class="vault-actions">
@@ -121,13 +101,6 @@
           </a>
           <span class="vault-main">
             <span class="vault-title">adhd letter</span>
-            <span class="autism-score">autism score 34/100</span>
-            <span class="autism-score-why">This mostly documents ADHD and executive function. It belongs here as neurodivergent context, but it is weaker autism evidence by itself.</span>
-            <span class="adhd-score">adhd score 96/100</span>
-            <span class="adhd-score-why">This is the formal ADHD source, so it anchors the ADHD side of the bank. Later notes still need their own evidence instead of borrowing proof from this letter.</span>
-            <span class="life-score">disney score 86/100</span>
-            <span class="autism-signal life-signal"><strong>"Attention Deficit Hyperactivity Disorder"</strong> It names the executive-function context that can shape the work system around the career goal.</span>
-            <span class="life-score-why">This gives the bank executive-function context that can shape work, money, and daily-life support. It is a foundation document, not a standalone action.</span>
             <span class="vault-meta">1 page</span>
           </span>
           <span class="vault-actions">
@@ -135,21 +108,7 @@
             <a class="source-action" href="./ADHDLetter.pdf" download>download</a>
           </span>
         </article>
-      </div>
-    </section>
-
-    <section class="score-citations" aria-label="references">
-      <h2>references</h2>
-      <ol class="basis-list">
-        <li>Centers for Disease Control and Prevention. <a href="https://www.cdc.gov/autism/about/index.html">Autism Spectrum Disorder</a>. Social communication, restricted or repetitive behavior, attention, movement, and support variation.</li>
-        <li>Centers for Disease Control and Prevention. <a href="https://www.cdc.gov/autism/hcp/diagnosis/index.html">Clinical Testing and Diagnosis for Autism Spectrum Disorder</a>. DSM-5 domains: social communication plus restricted/repetitive behavior, sameness, fixated interests, transitions, and sensory reactivity.</li>
-        <li>National Institute of Mental Health. <a href="https://www.nimh.nih.gov/health/publications/autism-spectrum-disorder">Autism Spectrum Disorder</a>. Adult-readable examples include back-and-forth conversation difficulty, intense interests, transition difficulty, and sensory differences.</li>
-        <li>National Institute for Health and Care Excellence. <a href="https://www.nice.org.uk/guidance/cg142/chapter/recommendations">Autism spectrum disorder in adults: diagnosis and management, CG142</a>. Adult assessment uses clinical judgement, context, functioning, and support needs.</li>
-        <li>Hull L. et al. <a href="https://pubmed.ncbi.nlm.nih.gov/28527095/">Putting on My Best Normal: Social Camouflaging in Adults with Autism Spectrum Conditions</a>. Journal of Autism and Developmental Disorders, 2017.</li>
-        <li>Centers for Disease Control and Prevention. <a href="https://www.cdc.gov/adhd/about/adhd-in-adults.html">ADHD in Adults</a>. Adult ADHD can affect attention, lengthy tasks, organization, behavior control, and internal restlessness.</li>
-        <li>National Institute of Mental Health. <a href="https://www.nimh.nih.gov/health/publications/attention-deficit-hyperactivity-disorder-what-you-need-to-know">Attention-Deficit/Hyperactivity Disorder: What You Need to Know</a>. Adult ADHD can involve inattention, restlessness, impulsivity, frustration tolerance, stress tolerance, and mood changes.</li>
-        <li>National Institute for Health and Care Excellence. <a href="https://www.nice.org.uk/guidance/ng87">Attention deficit hyperactivity disorder: diagnosis and management, NG87</a>. Adult ADHD recognition, diagnosis, management, and care quality.</li>
-      </ol>
+      </details>
     </section>
   </main>
 </body>

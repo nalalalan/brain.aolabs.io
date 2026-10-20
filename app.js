@@ -95,6 +95,9 @@ dropzone?.addEventListener("paste", (event) => {
   if (files.length) stageFiles(files);
 });
 
+renderVault.limit = 20;
+renderVault.generation = 0;
+document.getElementById('brain-search')?.addEventListener('input', () => { renderVault.limit = 20; renderVault(); });
 renderSyncStatus();
 renderPending();
 renderOverallLifeScore();
@@ -170,63 +173,10 @@ function scheduleTextPdf() {
 }
 
 function convertTextToPendingPdf() {
-  const text = noteInput?.value || "";
-  const sourceText = textPdfSource(text);
-  if (!sourceText) {
-    pendingTextPdf = null;
-    renderPending();
-    return;
-  }
-  const createdAt = new Date().toISOString();
-  const name = `brain-text-${stampForName(createdAt)}.pdf`;
-  const autism = analyzeAutismText(sourceText);
-  const adhd = analyzeAdhdText(sourceText);
-  const lifeLeverage = analyzeLifeLeverageText(sourceText);
-  const highlights = { autism: autism.highlightText, adhd: adhd.highlightText };
-  const result = createTextPdf(sourceText, createdAt, highlights);
-  const previewDataUrl = createTextPreviewDataUrl(sourceText, createdAt, highlights);
-  pendingTextPdf = {
-    id: `text-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name,
-    mime: "application/pdf",
-    size: result.blob.size,
-    createdAt,
-    sourceCreatedAt: createdAt,
-    kind: "generated pdf",
-    pages: result.pages,
-    previewDataUrl,
-    autismScore: autism.score,
-    autismScoreExplanation: autism.explanation,
-    autismHighlightText: autism.highlightText,
-    autismHighlightExplanation: autism.highlightExplanation,
-    autismScoreSource: autism.scoreSource || "heuristic",
-    autismScoreModel: autism.scoreModel || "browser heuristic",
-    autismScoreConfidence: autism.scoreConfidence || "low",
-    autismScoreWarning: autism.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
-    autismTextChars: autism.textChars || sourceText.length,
-    adhdScore: adhd.score,
-    adhdScoreExplanation: adhd.explanation,
-    adhdHighlightText: adhd.highlightText,
-    adhdHighlightExplanation: adhd.highlightExplanation,
-    adhdScoreSource: adhd.scoreSource || "heuristic",
-    adhdScoreModel: adhd.scoreModel || "browser heuristic",
-    adhdScoreConfidence: adhd.scoreConfidence || "low",
-    adhdScoreWarning: adhd.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
-    adhdTextChars: adhd.textChars || sourceText.length,
-    lifeLeverageScore: lifeLeverage.score,
-    lifeLeverageExplanation: lifeLeverage.explanation,
-    lifeLeverageHighlightText: lifeLeverage.highlightText,
-    lifeLeverageHighlightExplanation: lifeLeverage.highlightExplanation,
-    lifeLeverageScoreSource: lifeLeverage.scoreSource || "heuristic",
-    lifeLeverageScoreModel: lifeLeverage.scoreModel || "browser heuristic",
-    lifeLeverageScoreConfidence: lifeLeverage.scoreConfidence || "low",
-    lifeLeverageScoreWarning: lifeLeverage.scoreWarning || "preview only; saved score is re-analyzed when sync is connected",
-    lifeLeverageTextChars: lifeLeverage.textChars || sourceText.length,
-    generatedNoteLayoutVersion,
-    analysisQualityVersion,
-    sourceText,
-    blob: result.blob,
-  };
+  const sourceText = (noteInput?.value || "").trim();
+  if (!sourceText) { pendingTextPdf = null; renderPending(); return; }
+  const createdAt = new Date().toISOString(), result = createTextPdf(sourceText, createdAt, {});
+  pendingTextPdf = { id: `text-${Date.now()}`, name: `brain-text-${stampForName(createdAt)}.pdf`, mime: 'application/pdf', size: result.blob.size, createdAt, sourceCreatedAt: createdAt, kind: 'generated pdf', pages: result.pages, previewDataUrl: createTextPreviewDataUrl(sourceText, createdAt, {}), sourceText, generatedNoteLayoutVersion, blob: result.blob };
   renderPending();
 }
 
@@ -236,51 +186,28 @@ function stageFiles(files) {
 }
 
 async function savePending() {
-  const textFile = pendingTextPdf;
-  const files = [...pendingFiles];
+  if (saveButton.disabled) return;
+  clearTimeout(textTimer); convertTextToPendingPdf();
+  const textFile = pendingTextPdf, files = [...pendingFiles];
   if (!textFile && !files.length) return;
-  setSaveBusy(true, "analyzing");
-  const nextRecords = [];
+  setSaveBusy(true, 'Saving…');
+  const keep = record => { state = sortRecords([record, ...state.filter(i => i.id !== record.id)]); persistState(); };
   try {
-    if (textFile) {
-      nextRecords.push(await saveFileLike(await withAiAnalysis(textFile, textFile.sourceText || "")));
-      pendingTextPdf = null;
-      if (noteInput) noteInput.value = "";
-    }
+    if (textFile) { keep(await saveFileLike(textFile)); pendingTextPdf = null; noteInput.value = ''; }
     for (const file of files) {
-      const readableText = await readableUploadText(file);
-      const analysis = await analyzeRecordText({
-        name: file.name || "uploaded file",
-        mime: file.type || "application/octet-stream",
-        kind: file.type?.startsWith("image/") ? "image" : "file",
-        text: readableText,
-      });
-      nextRecords.push(await saveFileLike({
-        id: `file-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        name: file.name || "uploaded file",
-        mime: file.type || "application/octet-stream",
-        size: file.size || 0,
-        createdAt: new Date().toISOString(),
-        sourceCreatedAt: file.lastModified ? new Date(file.lastModified).toISOString() : "",
-        kind: file.type?.startsWith("image/") ? "image" : "file",
-        ...analysisRecordFields(analysis, readableText.length || 0),
-        blob: file,
-      }));
+      const sourceText = await readableUploadText(file);
+      keep(await saveFileLike({ id: `file-${Date.now()}-${Math.random().toString(16).slice(2)}`, name: file.name || 'uploaded file', mime: file.type || 'application/octet-stream', size: file.size, createdAt: new Date().toISOString(), sourceCreatedAt: file.lastModified ? new Date(file.lastModified).toISOString() : '', kind: file.type?.startsWith('image/') ? 'image' : 'file', sourceText, blob: file }));
+      pendingFiles = pendingFiles.filter(f => f !== file);
     }
-    pendingFiles = [];
-    state = sortRecords([...nextRecords, ...state.filter((item) => !nextRecords.some((next) => next.id === item.id))]);
-    persistState();
-  } finally {
-    setSaveBusy(false);
-    renderPending();
-    renderVault();
-  }
+    renderSyncStatus();
+  } catch (e) { syncStatus.textContent = 'Could not finish saving: ' + e.message + '. Unsaved items remain here.'; }
+  finally { setSaveBusy(false); renderPending(); renderVault(); }
 }
 
 function setSaveBusy(isBusy, label = "") {
   if (!saveButton) return;
   saveButton.disabled = isBusy;
-  saveButton.textContent = isBusy ? label : "save to vault";
+  saveButton.textContent = isBusy ? label : "Save note";
 }
 
 async function withAiAnalysis(file, text) {
@@ -330,48 +257,8 @@ async function saveFileLike(file) {
 }
 
 async function uploadToSync(file) {
-  const dataUrl = await blobToDataUrl(file.blob);
-  const response = await postJson(`${sync.base}/api/files`, {
-    name: file.name,
-    mime: file.mime,
-    dataUrl,
-    size: file.size,
-    kind: file.kind || "file",
-    pages: file.pages || 0,
-    sourceCreatedAt: file.sourceCreatedAt || "",
-    createdAt: file.createdAt || "",
-    previewDataUrl: file.previewDataUrl || "",
-    autismScore: autismScoreForRecord(file),
-    autismScoreExplanation: autismExplanationForRecord(file),
-    autismHighlightText: autismHighlightTextForRecord(file),
-    autismHighlightExplanation: autismHighlightExplanationForRecord(file),
-    autismScoreSource: autismScoreSourceForRecord(file),
-    autismScoreModel: autismScoreModelForRecord(file),
-    autismScoreConfidence: autismScoreConfidenceForRecord(file),
-    autismScoreWarning: autismScoreWarningForRecord(file),
-    autismTextChars: autismTextCharsForRecord(file),
-    adhdScore: adhdScoreForRecord(file),
-    adhdScoreExplanation: adhdExplanationForRecord(file),
-    adhdHighlightText: adhdHighlightTextForRecord(file),
-    adhdHighlightExplanation: adhdHighlightExplanationForRecord(file),
-    adhdScoreSource: adhdScoreSourceForRecord(file),
-    adhdScoreModel: adhdScoreModelForRecord(file),
-    adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
-    adhdScoreWarning: adhdScoreWarningForRecord(file),
-    adhdTextChars: adhdTextCharsForRecord(file),
-    lifeLeverageScore: lifeLeverageScoreForRecord(file),
-    lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
-    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(file),
-    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(file),
-    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
-    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
-    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
-    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(file),
-    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(file),
-    sourceText: textPdfSource(file.sourceText || ""),
-    generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
-    analysisQualityVersion: file.analysisQualityVersion || "",
-  });
+  const { blob, ...record } = file;
+  const response = await postJson(`${sync.base}/api/files`, { ...record, dataUrl: await blobToDataUrl(blob) });
   return normalizeSyncFile(response.file);
 }
 
@@ -417,49 +304,8 @@ async function rebuildSyncGeneratedNote(file, rebuilt) {
 }
 
 function fileRecordFromPending(file, kind, source) {
-  return {
-    id: file.id,
-    type: "file",
-    name: file.name,
-    mime: file.mime,
-    size: file.size,
-    createdAt: file.createdAt,
-    sourceCreatedAt: file.sourceCreatedAt,
-    kind,
-    source,
-    pages: file.pages || 0,
-    previewDataUrl: file.previewDataUrl || "",
-    autismScore: autismScoreForRecord(file),
-    autismScoreExplanation: autismExplanationForRecord(file),
-    autismHighlightText: autismHighlightTextForRecord(file),
-    autismHighlightExplanation: autismHighlightExplanationForRecord(file),
-    autismScoreSource: autismScoreSourceForRecord(file),
-    autismScoreModel: autismScoreModelForRecord(file),
-    autismScoreConfidence: autismScoreConfidenceForRecord(file),
-    autismScoreWarning: autismScoreWarningForRecord(file),
-    autismTextChars: autismTextCharsForRecord(file),
-    adhdScore: adhdScoreForRecord(file),
-    adhdScoreExplanation: adhdExplanationForRecord(file),
-    adhdHighlightText: adhdHighlightTextForRecord(file),
-    adhdHighlightExplanation: adhdHighlightExplanationForRecord(file),
-    adhdScoreSource: adhdScoreSourceForRecord(file),
-    adhdScoreModel: adhdScoreModelForRecord(file),
-    adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
-    adhdScoreWarning: adhdScoreWarningForRecord(file),
-    adhdTextChars: adhdTextCharsForRecord(file),
-    lifeLeverageScore: lifeLeverageScoreForRecord(file),
-    lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
-    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(file),
-    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(file),
-    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
-    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
-    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
-    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(file),
-    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(file),
-    sourceText: textPdfSource(file.sourceText || ""),
-    generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
-    analysisQualityVersion: file.analysisQualityVersion || "",
-  };
+  const { blob, ...record } = file;
+  return { ...record, type: 'file', kind, source };
 }
 
 function renderPending() {
@@ -493,25 +339,17 @@ function pendingAction(text, action) {
 
 async function renderVault() {
   if (!vaultList) return;
-  renderOverallLifeScore();
-  renderOverallScore();
-  renderOverallAdhdScore();
-  renderBankSummary();
-  renderScoreHistory();
-  syncExportSelection();
-  renderExportToolbar();
-  revokeOpenUrls();
-  vaultList.replaceChildren();
-  if (!state.length) {
-    const empty = document.createElement("p");
-    empty.className = "vault-empty";
-    empty.textContent = "No generated notes yet.";
-    vaultList.append(empty);
-    return;
-  }
-  for (const item of sortRecords(state)) {
-    vaultList.append(await createVaultItem(item));
-  }
+  syncExportSelection(); renderExportToolbar();
+  const generation = ++renderVault.generation;
+  const query = (document.getElementById('brain-search')?.value || '').toLowerCase();
+  const rows = sortRecords(state).filter(i => !query || [i.name, i.sourceText].join(' ').toLowerCase().includes(query));
+  const fragment = document.createDocumentFragment();
+  for (const item of rows.slice(0, renderVault.limit)) fragment.append(await createVaultItem(item));
+  if (generation !== renderVault.generation) return;
+  vaultList.replaceChildren(fragment);
+  if (!rows.length) { const p = document.createElement('p'); p.textContent = query ? 'No matching notes.' : 'No saved notes yet.'; vaultList.append(p); }
+  if (rows.length > renderVault.limit) vaultList.append(actionButton(`Show more (${rows.length - renderVault.limit} remaining)`, () => { renderVault.limit += 20; renderVault(); }));
+  document.getElementById('brain-note-count').textContent = `${rows.length} saved ${rows.length === 1 ? 'item' : 'items'}`;
 }
 
 function renderOverallLifeScore() {
@@ -1076,173 +914,29 @@ function generatedScoreWeight(item) {
 }
 
 async function createVaultItem(item) {
-  const row = document.createElement("article");
-  row.className = "vault-item";
-  const exportable = isExportableNote(item);
-  const exportKey = exportRecordKey(item);
-  if (exportMode && exportable) {
-    row.classList.add("export-selectable");
-    if (selectedExportIds.has(exportKey)) row.classList.add("is-selected");
-  } else if (exportMode) {
-    row.classList.add("export-unavailable");
+  const row = document.createElement('article'); row.className = 'vault-item';
+  const main = document.createElement('div'); main.className = 'vault-main';
+  const title = document.createElement('h3'); title.textContent = item.name || 'Saved file';
+  const meta = document.createElement('p'); meta.className = 'vault-meta';
+  meta.textContent = [displayDate(item.sourceCreatedAt || item.createdAt), item.kind || 'file', item.source === 'sync' ? 'Saved online' : 'On this device'].join(' · ');
+  main.append(title, meta);
+  if (item.sourceText) {
+    const details = document.createElement('details'), summary = document.createElement('summary'), full = document.createElement('p');
+    summary.textContent = item.sourceText.replace(/\s+/g, ' ').slice(0, 180) + (item.sourceText.length > 180 ? '…' : '');
+    full.textContent = item.sourceText; full.className = 'note-full'; details.append(summary, full); main.append(details);
   }
-
-  if (exportMode && exportable) {
-    const pick = document.createElement("label");
-    pick.className = "export-pick";
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = selectedExportIds.has(exportKey);
-    checkbox.addEventListener("change", () => {
-      if (checkbox.checked) {
-        selectedExportIds.add(exportKey);
-        row.classList.add("is-selected");
-      } else {
-        selectedExportIds.delete(exportKey);
-        row.classList.remove("is-selected");
-      }
-      renderExportToolbar();
-    });
-    const pickText = document.createElement("span");
-    pickText.textContent = "select";
-    pick.append(checkbox, pickText);
-    row.append(pick);
+  if (exportMode && isExportableNote(item)) {
+    const label = document.createElement('label'), input = document.createElement('input'); input.type = 'checkbox'; input.checked = selectedExportIds.has(exportRecordKey(item));
+    input.addEventListener('change', () => { if(input.checked) selectedExportIds.add(exportRecordKey(item)); else selectedExportIds.delete(exportRecordKey(item)); renderExportToolbar(); });
+    label.append(input, ' Select for export'); main.prepend(label);
   }
-
-  const thumb = document.createElement("div");
-  thumb.className = "vault-thumb";
-  if (item.source === "sync" && item.hasPreview) {
-    const img = document.createElement("img");
-    img.src = syncFileUrl(item.id, "preview");
-    img.alt = "";
-    thumb.append(img);
-  } else if (item.previewDataUrl) {
-    const img = document.createElement("img");
-    img.src = item.previewDataUrl;
-    img.alt = "";
-    thumb.append(img);
-  } else if (item.kind === "image") {
-    const blob = item.source === "sync" ? null : await getBlob(item.id);
-    if (blob) {
-      const img = document.createElement("img");
-      const url = URL.createObjectURL(blob);
-      openUrls.push(url);
-      img.src = url;
-      img.alt = "";
-      thumb.append(img);
-    } else if (item.source === "sync") {
-      const img = document.createElement("img");
-      img.src = syncFileUrl(item.id, "view");
-      img.alt = "";
-      thumb.append(img);
-    } else {
-      thumb.textContent = "img";
-    }
-  } else {
-    thumb.textContent = item.kind === "generated pdf" ? "pdf" : extensionLabel(item.name);
+  const actions = document.createElement('div'); actions.className = 'vault-actions';
+  actions.append(actionButton('Open', () => openRecord(item)), actionButton('Download', () => downloadRecord(item)));
+  if (item.source === 'sync' && item.sourceText) {
+    actions.append(actionButton('Record a step', () => window.BrainLife.recordFromNote(item)), actionButton('Find possible steps', () => window.BrainLife.suggest(item)));
   }
-
-  const main = document.createElement("div");
-  main.className = "vault-main";
-  const title = document.createElement("p");
-  title.className = "vault-title";
-  title.textContent = item.name || "saved file";
-  const itemSeed = item.id || item.name || item.createdAt || "";
-  const cardSourceText = await cardSourceTextForRecord(item);
-  const adhd = await adhdAnalysisForRecord(item);
-  const leverage = lifeLeverageAnalysisForRecord(item);
-  const signal = autismHighlightForRecord(item);
-  const score = document.createElement("p");
-  score.className = "autism-score";
-  score.textContent = `autism score ${autismScoreForRecord(item)}/100`;
-  const scoreWhy = document.createElement("p");
-  scoreWhy.className = "autism-score-why autism-signal";
-  const autismExplanation = autismExplanationForRecord(item);
-  const autismCardOptions = {
-    highlightText: signal.text,
-    highlightExplanation: signal.explanation,
-    sourceText: cardSourceText,
-    score: autismScoreForRecord(item),
-    trait: "autism",
-    seedText: itemSeed,
-  };
-  scoreWhy.title = [signal.text, signal.explanation, autismExplanation].filter(Boolean).join(" ");
-  const adhdScore = document.createElement("p");
-  adhdScore.className = "adhd-score";
-  adhdScore.textContent = `adhd score ${adhd.score}/100`;
-  const adhdWhy = document.createElement("p");
-  adhdWhy.className = "adhd-score-why autism-signal adhd-signal";
-  const adhdExplanation = adhd.explanation;
-  const adhdCardOptions = {
-    highlightText: adhd.highlightText,
-    highlightExplanation: adhd.highlightExplanation,
-    sourceText: cardSourceText,
-    score: adhd.score,
-    trait: "adhd",
-    seedText: itemSeed,
-  };
-  const pairedAnalysis = pairedCardAnalysisText(
-    cardAnalysisExplanation(autismExplanation, autismCardOptions),
-    cardAnalysisExplanation(adhdExplanation, adhdCardOptions),
-    autismCardOptions,
-    adhdCardOptions
-  );
-  writeScoreExplanation(scoreWhy, signal.text, pairedAnalysis.autism);
-  writeScoreExplanation(adhdWhy, adhd.highlightText, pairedAnalysis.adhd);
-  adhdWhy.title = [adhd.highlightText, adhd.highlightExplanation, adhdExplanation].filter(Boolean).join(" ");
-  const lifeScore = document.createElement("p");
-  lifeScore.className = "life-score";
-  lifeScore.textContent = `disney score ${leverage.score}/100`;
-  const lifeWhy = document.createElement("p");
-  lifeWhy.className = "life-score-why autism-signal life-signal";
-  const lifeExplanation = lifeLeverageCardAnalysis(leverage.explanation, {
-    score: leverage.score,
-    highlightText: leverage.highlightText,
-    highlightExplanation: leverage.highlightExplanation,
-    sourceText: cardSourceText,
-    seedText: itemSeed,
-  });
-  writeScoreExplanation(lifeWhy, leverage.highlightText, lifeExplanation);
-  lifeWhy.title = [leverage.highlightText, leverage.highlightExplanation, leverage.explanation].filter(Boolean).join(" ");
-  const meta = document.createElement("p");
-  meta.className = "vault-meta";
-  meta.textContent = [
-    item.source === "sync" ? "synced" : "device",
-    item.kind || "file",
-    item.pages ? `${item.pages} pages` : "",
-    formatBytes(item.size || 0),
-    displayDate(item.createdAt),
-    leverage.scoreSource === "heuristic" ? "disney fallback" : "",
-    autismScoreSourceForRecord(item) === "heuristic" ? "fallback score" : "",
-    adhd.scoreSource === "heuristic" ? "adhd fallback" : "",
-  ].filter(Boolean).join(" - ");
-  main.append(title, score);
-  const appendedWhy = new Set();
-  const appendScoreWhy = (element) => {
-    const key = comparableAnalysisText(element.textContent);
-    if (!key || appendedWhy.has(key)) return;
-    appendedWhy.add(key);
-    main.append(element);
-  };
-  appendScoreWhy(scoreWhy);
-  main.append(adhdScore);
-  appendScoreWhy(adhdWhy);
-  main.append(lifeScore);
-  appendScoreWhy(lifeWhy);
-  main.append(meta);
-
-  const actions = document.createElement("div");
-  actions.className = "vault-actions";
-  actions.append(
-    actionButton("open", () => openRecord(item)),
-    actionButton("download", () => downloadRecord(item)),
-    actionButton("delete", () => deleteRecord(item), "danger")
-  );
-
-  row.append(thumb, main, actions);
-  renderOverallLifeScore();
-  renderOverallAdhdScore();
-  return row;
+  actions.append(actionButton('Delete note', () => deleteRecord(item), 'danger'));
+  row.append(main, actions); return row;
 }
 
 function writeScoreExplanation(element, highlightText, explanation) {
@@ -1419,6 +1113,7 @@ async function downloadRecord(item) {
 }
 
 async function deleteRecord(item) {
+  if (!confirm('Delete this saved note and its file? This cannot be undone.')) return;
   if (item.source === "sync" && sync.status === "connected") {
     const ok = await deleteSyncFile(item.id).catch(() => false);
     if (!ok) return;
@@ -1473,139 +1168,12 @@ async function refreshSyncFiles() {
   state = sortRecords([...synced, ...localOnly]);
   persistState();
   renderVault();
-  void rebuildOutdatedGeneratedNotes();
+
 }
 
-function normalizeSyncFile(file) {
-  const normalized = {
-    id: file.id,
-    type: "file",
-    name: file.name,
-    mime: file.mime,
-    size: file.size || 0,
-    createdAt: file.createdAt,
-    sourceCreatedAt: file.sourceCreatedAt || "",
-    kind: file.kind || "file",
-    pages: file.pages || 0,
-    hasPreview: Boolean(file.hasPreview),
-    previewMime: file.previewMime || "",
-    autismScore: autismScoreForRecord(file),
-    autismScoreExplanation: autismExplanationForRecord(file),
-    autismHighlightText: autismHighlightTextForRecord(file),
-    autismHighlightExplanation: autismHighlightExplanationForRecord(file),
-    autismScoreSource: autismScoreSourceForRecord(file),
-    autismScoreModel: autismScoreModelForRecord(file),
-    autismScoreConfidence: autismScoreConfidenceForRecord(file),
-    autismScoreWarning: autismScoreWarningForRecord(file),
-    autismTextChars: autismTextCharsForRecord(file),
-    sourceText: textPdfSource(file.sourceText || ""),
-    generatedNoteLayoutVersion: file.generatedNoteLayoutVersion || "",
-    analysisQualityVersion: file.analysisQualityVersion || "",
-    lifeLeverageHighlightStored: Boolean(file.lifeLeverageHighlightText && file.lifeLeverageHighlightExplanation),
-    source: "sync",
-  };
-  const needsPdfAdhdAnalysis = isGeneratedPdf(normalized)
-    && !file.adhdScoreExplanation
-    && !file.adhdHighlightText
-    && !file.sourceText;
-  if (!needsPdfAdhdAnalysis) {
-    Object.assign(normalized, {
-      adhdScore: adhdScoreForRecord(file),
-      adhdScoreExplanation: adhdExplanationForRecord(file),
-      adhdHighlightText: adhdHighlightTextForRecord(file),
-      adhdHighlightExplanation: adhdHighlightExplanationForRecord(file),
-      adhdScoreSource: adhdScoreSourceForRecord(file),
-      adhdScoreModel: adhdScoreModelForRecord(file),
-      adhdScoreConfidence: adhdScoreConfidenceForRecord(file),
-      adhdScoreWarning: adhdScoreWarningForRecord(file),
-      adhdTextChars: adhdTextCharsForRecord(file),
-    });
-  }
-  Object.assign(normalized, {
-    lifeLeverageScore: lifeLeverageScoreForRecord(file),
-    lifeLeverageExplanation: lifeLeverageExplanationForRecord(file),
-    lifeLeverageHighlightText: lifeLeverageHighlightTextForRecord(file),
-    lifeLeverageHighlightExplanation: lifeLeverageHighlightExplanationForRecord(file),
-    lifeLeverageScoreSource: lifeLeverageScoreSourceForRecord(file),
-    lifeLeverageScoreModel: lifeLeverageScoreModelForRecord(file),
-    lifeLeverageScoreConfidence: lifeLeverageScoreConfidenceForRecord(file),
-    lifeLeverageScoreWarning: lifeLeverageScoreWarningForRecord(file),
-    lifeLeverageTextChars: lifeLeverageTextCharsForRecord(file),
-  });
-  return normalized;
-}
+function normalizeSyncFile(file) { return { ...file, type: 'file', source: 'sync' }; }
 
-async function rebuildOutdatedGeneratedNotes() {
-  if (sync.status !== "connected") return;
-  const outdated = state.filter((item) => item.source === "sync"
-    && isGeneratedPdf(item)
-    && item.mime === "application/pdf"
-    && (
-      item.generatedNoteLayoutVersion !== generatedNoteLayoutVersion
-      || item.analysisQualityVersion !== analysisQualityVersion
-      || item.autismScoreSource !== "ai"
-      || item.adhdScoreSource !== "ai"
-      || item.lifeLeverageScoreSource !== "ai"
-      || hasStoredScoreAnalysisIssue(item)
-      || item.lifeLeverageScore === undefined
-      || item.lifeLeverageScore === null
-      || item.lifeLeverageScore === ""
-      || item.lifeLeverageHighlightStored === false
-      || !item.lifeLeverageHighlightText
-      || !item.lifeLeverageHighlightExplanation
-    ));
-  if (!outdated.length) return;
-  for (const item of outdated) {
-    if (sync.status !== "connected") break;
-    const sourceText = textPdfSource(item.sourceText || await pdfTextForRecord(item));
-    if (!sourceText) continue;
-    let updated = item;
-    if (
-      item.analysisQualityVersion !== analysisQualityVersion
-      || item.autismScoreSource !== "ai"
-      || item.adhdScoreSource !== "ai"
-      || item.lifeLeverageScoreSource !== "ai"
-      || hasStoredScoreAnalysisIssue(item)
-      || item.lifeLeverageScore === undefined
-      || item.lifeLeverageScore === null
-      || item.lifeLeverageScore === ""
-      || item.lifeLeverageHighlightStored === false
-      || !item.lifeLeverageHighlightText
-      || !item.lifeLeverageHighlightExplanation
-    ) {
-      try {
-        const analysis = await analyzeRecordText({
-          name: item.name,
-          mime: item.mime,
-          kind: item.kind,
-          text: sourceText,
-        });
-        if (
-          analysis?.autism?.scoreSource !== "ai"
-          || analysis?.adhd?.scoreSource !== "ai"
-          || analysis?.lifeLeverage?.scoreSource !== "ai"
-        ) {
-          continue;
-        }
-        updated = {
-          ...item,
-          ...analysisRecordFields(analysis, sourceText.length, { ...item, sourceText }),
-        };
-      } catch {
-        continue;
-      }
-    }
-    const rebuilt = rebuildGeneratedPdf({ ...updated, generatedNoteLayoutVersion }, sourceText);
-    try {
-      const synced = await rebuildSyncGeneratedNote(item, rebuilt);
-      state = sortRecords([synced, ...state.filter((record) => record.id !== item.id)]);
-      persistState();
-      renderVault();
-    } catch {
-      break;
-    }
-  }
-}
+async function rebuildOutdatedGeneratedNotes() { /* Retired: saved source files are immutable. */ }
 
 function hasStoredScoreAnalysisIssue(item) {
   const fields = [
