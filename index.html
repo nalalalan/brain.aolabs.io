@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>brain.aolabs.io</title>
-  <meta name="description" content="Brain PDF bank with meaningful steps, daily ease, and enjoyment." />
+  <meta name="description" content="Brain PDF bank with clarity, agency, and life fit scores." />
   <link rel="canonical" href="https://aolabs.io/brain/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="AO Labs">
   <meta property="og:title" content="brain">
-  <meta property="og:description" content="Saved notes and evidence of life progress.">
+  <meta property="og:description" content="Saved notes with highlighted evidence and scores over time.">
   <meta property="og:url" content="https://aolabs.io/brain/">
   <meta property="og:image" content="https://aolabs.io/brain/life-preview.png">
   <meta property="og:image:secure_url" content="https://aolabs.io/brain/life-preview.png">
@@ -19,16 +19,16 @@
   <meta property="og:image:alt" content="brain preview card.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="brain">
-  <meta name="twitter:description" content="Saved notes and evidence of life progress.">
+  <meta name="twitter:description" content="Saved notes with highlighted evidence and scores over time.">
   <meta name="twitter:image" content="https://aolabs.io/brain/life-preview.png">
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20261019-original-format">
-  <script src="./config.js?v=20261019-original-format"></script>
-  <script src="./app.js?v=20261019-original-format" defer></script>
-  <link rel="stylesheet" href="./life.css?v=20261019-original-format">
-  <script src="./life.js?v=20261019-original-format" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261019-score-v1">
+  <script src="./config.js?v=20261019-score-v1"></script>
+  <script src="./app.js?v=20261019-score-v1" defer></script>
+  <link rel="stylesheet" href="./scores.css?v=20261019-score-v1">
+  <script src="./scores.js?v=20261019-score-v1" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -46,16 +46,16 @@
   <main class="shell document-shell">
     <section class="document-intro" aria-label="document summary">
       <p>Brain PDF bank for documents, text, files, images, and goal-relevant thoughts.</p>
-      <div id="life-count" class="overall-score" aria-live="polite">
-        <span>meaningful steps this week</span>
+      <div id="score-clarity" class="overall-score" aria-live="polite">
+        <span>clarity</span>
         <strong>loading</strong>
       </div>
-      <div id="life-ease" class="overall-score" aria-live="polite">
-        <span>daily ease</span>
+      <div id="score-agency" class="overall-score" aria-live="polite">
+        <span>agency</span>
         <strong>loading</strong>
       </div>
-      <div id="life-enjoyment" class="overall-score life-overall" aria-live="polite">
-        <span>enjoyment</span>
+      <div id="score-fit" class="overall-score life-overall" aria-live="polite">
+        <span>life fit</span>
         <strong>loading</strong>
       </div>
     </section>
@@ -76,13 +76,13 @@
             </div>
             <div id="brain-pending" class="pending-list" aria-live="polite"></div>
           </div>
-          <aside id="life-summary" class="bank-summary" aria-live="polite">
-            <p>Your recorded changes will appear here.</p>
+          <aside id="score-summary" class="bank-summary" aria-live="polite">
+            <p>Your note scores will appear here.</p>
           </aside>
         </div>
-        <section id="life-progress" class="score-history score-history-panel" aria-live="polite"></section>
+        <section id="brain-progress-history" class="score-history score-history-panel" aria-live="polite"></section>
       </div>
-      <p id="life-message" role="status" aria-live="polite"></p><dialog id="life-editor" aria-label="Progress editor"></dialog>
+      
       <p id="brain-sync-status" class="sync-status">checking sync</p>
     </section>
 

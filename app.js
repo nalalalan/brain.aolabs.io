@@ -61,6 +61,9 @@ const notePreviewLayout = Object.freeze({
   leading: 16,
 });
 const traitHighlightStyle = Object.freeze({
+  clarity: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
+  agency: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
+  fit: { canvas: "#7a4a16", pdf: "0.48 0.29 0.09 rg" },
   autism: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
   adhd: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
   text: { canvas: "#1e2724", pdf: "0.12 0.15 0.14 rg" },
@@ -191,7 +194,7 @@ async function savePending() {
   const textFile = pendingTextPdf, files = [...pendingFiles];
   if (!textFile && !files.length) return;
   setSaveBusy(true, 'Saving…');
-  const keep = record => { state = sortRecords([record, ...state.filter(i => i.id !== record.id)]); persistState(); };
+  const keep = record => { state = sortRecords([record, ...state.filter(i => i.id !== record.id)]); persistState(); if(record.source === 'sync' && record.sourceText) void window.BrainScores?.analyze(record); };
   try {
     if (textFile) { keep(await saveFileLike(textFile)); pendingTextPdf = null; noteInput.value = ''; }
     for (const file of files) {
@@ -426,30 +429,30 @@ function buildScoreHistoryPlot(rows) {
   title.className = "score-history-title";
   title.textContent = "score trends";
   const series = [
-    { key: "autism", label: "autism", colorClass: "autism-series", value: autismScoreForRecord },
-    { key: "adhd", label: "adhd", colorClass: "adhd-series", value: adhdScoreForRecord },
-    { key: "disney", label: "disney", colorClass: "life-series", value: lifeLeverageScoreForRecord },
+    { key: "clarity", label: "clarity", colorClass: "autism-series", value: item => window.BrainScores.score(item,"clarity") },
+    { key: "agency", label: "agency", colorClass: "adhd-series", value: item => window.BrainScores.score(item,"agency") },
+    { key: "fit", label: "life fit", colorClass: "life-series", value: item => window.BrainScores.score(item,"fit") },
   ].map((seriesItem) => {
     const observations = rows.map((item) => ({
       time: scoreHistoryTime(item),
-      value: clampAutismScore(seriesItem.value(item)),
-    }));
+      value: seriesItem.value(item),
+    })).filter(point => Number.isFinite(point.value));
     return { ...seriesItem, observations, trend: scoreSeriesTrend(observations) };
   });
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", scoreHistoryAriaLabel(rows, series));
+  svg.setAttribute("aria-label", `Clarity, agency and life fit scores over time for ${rows.length} distinct notes. Solid lines connect note scores; dashed lines show trends.`);
   svg.setAttribute("preserveAspectRatio", "none");
 
-  const margin = { top: 16, right: 68, bottom: 28, left: 30 };
+  const margin = { top: 16, right: 112, bottom: 28, left: 30 };
   const width = 560 - margin.left - margin.right;
   const height = 210 - margin.top - margin.bottom;
   const firstTime = scoreHistoryTime(rows[0]);
   const lastTime = scoreHistoryTime(rows[rows.length - 1]);
   const timeSpan = Math.max(1, lastTime - firstTime);
   const x = (time) => margin.left + (timeSpan === 1 ? width / 2 : ((time - firstTime) / timeSpan) * width);
-  const y = (value) => margin.top + ((100 - clampAutismScore(value)) / 100) * height;
+  const y = (value) => margin.top + ((100 - Math.max(0, Math.min(100, value))) / 100) * height;
   const append = (tagName, attributes = {}, text = "") => {
     const node = document.createElementNS(namespace, tagName);
     Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, String(value)));
@@ -478,7 +481,7 @@ function buildScoreHistoryPlot(rows) {
       const item = rows[index];
       const dot = append("circle", { cx: x(point.time), cy: y(point.value), r: 2.15, class: `score-series-point score-observation-point ${seriesItem.colorClass}` });
       const pointTitle = document.createElementNS(namespace, "title");
-      pointTitle.textContent = `${displayHistoryDate(item.sourceCreatedAt || item.createdAt)}: ${seriesItem.label} ${point.value}/100`;
+      pointTitle.textContent = `${displayHistoryDate(point.time)}: ${seriesItem.label} ${point.value}/100`;
       dot.append(pointTitle);
     });
     const trendStart = scoreTrendValueAt(seriesItem.trend, firstTime);
@@ -917,7 +920,8 @@ async function createVaultItem(item) {
   const row = document.createElement('article'); row.className = 'vault-item';
   const thumb = document.createElement("div");
   thumb.className = "vault-thumb";
-  if (item.source === "sync" && item.hasPreview) {
+  const scoredPreview = window.BrainScores?.preview(item);
+  if (scoredPreview) { const img = document.createElement("img"); img.src = scoredPreview; img.alt = "Note with highlighted score evidence"; thumb.append(img); } else if (item.source === "sync" && item.hasPreview) {
     const img = document.createElement("img");
     img.src = syncFileUrl(item.id, "preview");
     img.alt = ""; img.loading = "lazy";
@@ -955,7 +959,7 @@ async function createVaultItem(item) {
   main.append(title, meta);
   if (item.sourceText) {
     const details = document.createElement('details'), summary = document.createElement('summary'), full = document.createElement('p');
-    summary.textContent = item.sourceText.replace(/\s+/g, ' ').slice(0, 180) + (item.sourceText.length > 180 ? '…' : '');
+    summary.textContent = 'Read original text';
     full.textContent = item.sourceText; full.className = 'note-full'; details.append(summary, full); main.append(details);
   }
   if (exportMode && isExportableNote(item)) {
@@ -965,13 +969,8 @@ async function createVaultItem(item) {
   }
   const actions = document.createElement('div'); actions.className = 'vault-actions';
   actions.append(actionButton('Open', () => openRecord(item)), actionButton('Download', () => downloadRecord(item)));
-  if (item.source === 'sync' && item.sourceText) {
-    actions.append(actionButton('Record a step', () => window.BrainLife.recordFromNote(item)), actionButton('Find possible steps', () => window.BrainLife.suggest(item)));
-  }
   actions.append(actionButton('Delete note', () => deleteRecord(item), 'danger'));
-  for (const step of window.BrainLife?.stepsFor(item.id) || []) {
-    const progress = document.createElement('p'); progress.className = 'note-progress'; progress.textContent = 'What changed: ' + step.evidence; main.append(progress);
-  }
+  window.BrainScores?.append(main,item);
   row.append(thumb, main, actions); return row;
 }
 
@@ -1204,7 +1203,7 @@ async function refreshSyncFiles() {
   state = sortRecords([...synced, ...localOnly]);
   persistState();
   renderVault();
-
+  window.BrainScores?.refresh();
 }
 
 function normalizeSyncFile(file) { return { ...file, type: 'file', source: 'sync' }; }
@@ -1587,34 +1586,16 @@ function sourceRangeSegments(source, start, end, ranges) {
 }
 
 function normalizeTraitHighlights(input) {
-  if (typeof input === "string") return { autism: input, adhd: "" };
-  return {
-    autism: String(input?.autism || ""),
-    adhd: String(input?.adhd || ""),
-  };
+  return Object.fromEntries(['clarity','agency','fit'].map(key => [key, String(input?.[key] || '')]));
 }
 
 function traitFlavorRanges(text, highlights) {
-  const normalized = normalizeTraitHighlights(highlights);
-  const ranges = [];
-  for (const range of autismFlavorRanges(text, normalized.autism)) {
-    if (range && range.end > range.start && !rangeOverlapsAny(range, ranges)) {
-      ranges.push({ ...range, kind: "autism" });
-    }
+  const ranges=[];
+  for (const [kind, quote] of Object.entries(normalizeTraitHighlights(highlights))) {
+    const phrase=textPdfSource(quote); const start=phrase ? text.indexOf(phrase) : -1;
+    if(start>=0){const range={start,end:start+phrase.length,kind};if(!rangeOverlapsAny(range,ranges))ranges.push(range);}
   }
-  let adhdAdded = false;
-  for (const range of adhdFlavorRanges(text, normalized.adhd)) {
-    if (range && range.end > range.start && !rangeOverlapsAny(range, ranges)) {
-      ranges.push({ ...range, kind: "adhd" });
-      adhdAdded = true;
-      break;
-    }
-  }
-  if (!adhdAdded && normalized.adhd) {
-    const alternate = alternateAdhdRangeAvoiding(text, ranges);
-    if (alternate) ranges.push({ ...alternate, kind: "adhd" });
-  }
-  return ranges.sort((a, b) => a.start - b.start);
+  return ranges.sort((a,b)=>a.start-b.start);
 }
 
 function rangeOverlapsAny(candidate, ranges) {

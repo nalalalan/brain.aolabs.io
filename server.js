@@ -1171,6 +1171,7 @@ function sendStatic(req, res, pathname) {
 }
 
 const life = require("./life-store")(storageRoot, readIndex);
+const noteScores = require("./note-score-store")(storageRoot, readIndex);
 
 const server = http.createServer(async (req, res) => {
   setCors(res);
@@ -1183,12 +1184,13 @@ const server = http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+    if (await noteScores.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (await life.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (req.method === 'POST' && (requestUrl.pathname === '/api/analyze' || /^\/api\/files\/[^/]+\/(rebuild|analysis)$/.test(requestUrl.pathname))) {
       sendJson(res, 410, { error: 'Trait scoring has been retired. Original notes are preserved.' }); return;
     }
     if (requestUrl.pathname === "/api/health" && req.method === "GET") {
-      sendJson(res, 200, { ok: true, app: "brain", lifeProgress: "20261019-v1", storage: storageRoot, ai: Boolean(process.env.OPENAI_API_KEY), aiModel: openAiModel });
+      sendJson(res, 200, { ok: true, app: "brain", lifeProgress: "20261019-v1", noteScores: "20261019-v1", storage: storageRoot, ai: Boolean(process.env.OPENAI_API_KEY), aiModel: openAiModel });
       return;
     }
 
