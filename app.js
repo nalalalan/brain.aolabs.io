@@ -484,10 +484,11 @@ function buildScoreHistoryPlot(rows) {
       pointTitle.textContent = `${displayHistoryDate(point.time)}: ${seriesItem.label} ${point.value}/100`;
       dot.append(pointTitle);
     });
-    const trendStart = scoreTrendValueAt(seriesItem.trend, firstTime);
+    const trendFirstTime=seriesItem.observations[0]?.time;
+    const trendStart = scoreTrendValueAt(seriesItem.trend, trendFirstTime);
     const trendEnd = scoreTrendValueAt(seriesItem.trend, lastTime);
     if (Number.isFinite(trendStart) && Number.isFinite(trendEnd)) {
-      const trendPath = append("path", { d: `M${x(firstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(lastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
+      const trendPath = append("path", { d: `M${x(trendFirstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(lastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
       const trendTitle = document.createElementNS(namespace, "title");
       trendTitle.textContent = `${seriesItem.label} trend ${formatScoreTrend(seriesItem.trend)}`;
       trendPath.append(trendTitle);
