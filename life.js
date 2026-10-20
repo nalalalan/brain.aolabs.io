@@ -105,47 +105,50 @@
   }
   function render() {
     root.replaceChildren();
-    const header = el('div', undefined, 'life-heading'); header.append(el('h1', 'Life progress'), button('Record a step', () => showStep(), 'primary')); root.append(header);
-    const nav = el('div', undefined, 'life-week');
-    const prev = button('←', () => { selectedWeek = shift(selectedWeek, -7); render(); }); prev.setAttribute('aria-label', 'Previous week');
-    const next = button('→', () => { selectedWeek = shift(selectedWeek, 7); render(); }); next.setAttribute('aria-label', 'Next week'); next.disabled = selectedWeek >= monday(day());
-    nav.append(prev, el('span', `Week of ${label(selectedWeek)}`), next);
-    if (selectedWeek !== monday(day())) nav.append(button('This week', () => { selectedWeek = monday(day()); render(); })); root.append(nav);
     const weekSteps = data.steps.filter(s => s.date >= selectedWeek && s.date < shift(selectedWeek, 7));
     const checkin = data.checkins.find(c => c.week === selectedWeek);
-    const metrics = el('div', undefined, 'life-metrics');
-    for (const [name, value, detail] of [
-      ['Meaningful steps', String(weekSteps.length), weekSteps.length ? 'Recorded this week' : 'None recorded this week. Not a judgment of the week.'],
-      ['Daily ease', checkin?.ease || 'Not recorded', 'Compared with the previous week'],
-      ['Enjoyment', checkin?.enjoyment || 'Not recorded', 'Compared with the previous week']]) {
-      const metric = el('div', undefined, 'life-metric'); metric.append(el('h2', name), el('strong', value), el('p', detail, 'life-muted')); metrics.append(metric);
+    for (const [id, title, value, detail] of [
+      ['life-count', 'meaningful steps this week', String(weekSteps.length), 'recorded changes, not a rating'],
+      ['life-ease', 'daily ease', checkin?.ease || 'Not recorded', 'your comparison with last week'],
+      ['life-enjoyment', 'enjoyment', checkin?.enjoyment || 'Not recorded', 'your comparison with last week']]) {
+      const badge = document.getElementById(id); badge.replaceChildren(el('span', title), el('strong', value), el('em', detail));
     }
-    root.append(metrics, button(checkin ? 'Edit weekly check-in' : 'Weekly check-in', showCheckin));
-    if (checkin?.note) root.append(el('p', checkin.note, 'checkin-note'));
-    const weekList = el('div', undefined, 'week-steps');
-    for (const step of weekSteps.sort((a, b) => b.date.localeCompare(a.date))) weekList.append(stepRow(step)); root.append(weekList);
-    if (data.suggestions.length) {
-      const pending = el('details', undefined, 'life-details'); pending.append(el('summary', `${data.suggestions.length} possible step${data.suggestions.length === 1 ? '' : 's'} to review`));
-      for (const s of data.suggestions) pending.append(stepRow(s, true)); root.append(pending);
-    }
-    const history = el('section', undefined, 'life-history'); history.append(el('h2', 'Then → now'));
-    const earlier = data.steps.filter(s => !weekSteps.includes(s)).sort((a,b) => b.date.localeCompare(a.date));
-    if (!data.steps.length) history.append(el('p', 'Your changes will stay here, even through difficult weeks. Record a step or find one in a saved note.', 'life-muted'));
-    const show = earlier.slice(0, 3); for (const s of show) history.append(stepRow(s));
-    if (earlier.length > 3) { const more = el('details', undefined, 'life-details'); more.append(el('summary', `View ${earlier.length - 3} earlier steps`)); for (const s of earlier.slice(3)) more.append(stepRow(s)); history.append(more); }
-    const past = data.checkins.filter(c => c.week !== selectedWeek).sort((a,b) => b.week.localeCompare(a.week));
-    if (past.length) {
-      const details = el('details', undefined, 'life-details'); details.append(el('summary', 'Past weekly check-ins'));
-      for (const c of past) { const p = el('p', `${label(c.week)} · Daily ease: ${c.ease} · Enjoyment: ${c.enjoyment}${c.note ? ' — ' + c.note : ''}`); p.append(' ', button('Open week', () => { selectedWeek = c.week; render(); })); details.append(p); } history.append(details);
-    }
-    if (earlier.length || !data.steps.length || past.length) root.append(history);
+    const nav = el('div', undefined, 'life-week');
+    const prev = button('←', () => { selectedWeek = shift(selectedWeek,-7); render(); }); prev.setAttribute('aria-label','Previous week');
+    const next = button('→', () => { selectedWeek = shift(selectedWeek,7); render(); }); next.setAttribute('aria-label','Next week'); next.disabled=selectedWeek >= monday(day());
+    nav.append(prev, el('span','Week of '+label(selectedWeek)), next);
+    if(selectedWeek!==monday(day())) nav.append(button('This week',()=>{selectedWeek=monday(day());render();}));
+    root.append(el('p','meaningful steps over time','score-history-title'), nav, progressPlot());
+    const summary=document.getElementById('life-summary'); summary.replaceChildren();
+    const latest=[...data.steps].sort((a,b)=>b.date.localeCompare(a.date));
+    summary.append(el('p', latest.length ? 'Recent changes: '+latest.slice(0,3).map(s=>s.title).join('; ')+'.' : 'Your saved notes stay here. Record a meaningful step when something changes.', 'summary-main'));
+    const actions=el('div',undefined,'life-actions'); actions.append(button('Record a step',()=>showStep()),button(checkin?'Edit weekly check-in':'Weekly check-in',showCheckin));summary.append(actions);
+    if(checkin?.note)summary.append(el('p',checkin.note));
+    const history=el('details',undefined,'life-details'); history.append(el('summary','Then → now · '+data.steps.length+' recorded changes'));
+    for(const step of latest)history.append(stepRow(step)); summary.append(history);
+    if(data.suggestions.length){const pending=el('details',undefined,'life-details');pending.open=true;pending.append(el('summary',data.suggestions.length+' possible steps to review — not counted'));for(const step of data.suggestions)pending.append(stepRow(step,true));summary.append(pending);}
+    if(typeof renderVault === 'function') renderVault();
+  }
+  function progressPlot() {
+    const ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 560 210');svg.setAttribute('role','img');
+    const dates=Array.from({length:8},(_,i)=>shift(selectedWeek,(i-7)*7));
+    const counts=dates.map(w=>data.steps.filter(s=>s.date>=w&&s.date<shift(w,7)).length),max=Math.max(2,...counts);
+    svg.setAttribute('aria-label','Recorded meaningful steps by week: '+dates.map((d,i)=>label(d)+': '+counts[i]).join('; '));
+    const append=(tag,attrs,text)=>{const n=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);if(text!==undefined)n.textContent=text;svg.append(n);return n;};
+    const x=i=>38+i*68,y=v=>174-v/max*142;
+    for(const v of [0,Math.ceil(max/2),max]){append('line',{x1:38,y1:y(v),x2:520,y2:y(v),class:'score-grid-line'});append('text',{x:28,y:y(v)+4,'text-anchor':'end',class:'score-axis-label'},v);}
+    append('path',{d:counts.map((v,i)=>(i?'L':'M')+x(i)+' '+y(v)).join(' '),fill:'none',stroke:'#4f817c','stroke-width':2});
+    counts.forEach((v,i)=>{const dot=append('circle',{cx:x(i),cy:y(v),r:4,fill:'#4f817c'});const title=document.createElementNS(ns,'title');title.textContent=label(dates[i])+': '+v+' recorded steps';dot.append(title);});
+    for(const i of [0,3,7])append('text',{x:x(i),y:201,'text-anchor':i===0?'start':i===7?'end':'middle',class:'score-axis-label'},label(dates[i]).replace(', 2026',''));
+    return svg;
   }
   window.BrainLife = {
+    stepsFor(id) { return data?.steps.filter(s=>s.sourceId===id) || []; },
     recordFromNote(item) { showStep({ sourceId: item.source === 'sync' ? item.id : '', date: day(new Date(item.sourceCreatedAt || item.createdAt)), quote: '', evidence: '' }); },
     async suggest(item) {
       if (loading) { message('Still reading the previous note.'); return; }
       loading = true; message('Looking for a completed step in this note…');
-      document.getElementById('life-message').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('life-summary').scrollIntoView({ behavior: 'smooth', block: 'center' });
       try { const before = data?.suggestions.length || 0; await request('/suggest', { sourceId: item.id }); message(data.suggestions.length > before ? 'Possible steps are ready to review above. They are not counted yet.' : 'No new supported steps found. The note stays valuable as a note.'); }
       catch (e) { message(e.message); } finally { loading = false; }
     }

@@ -1,52 +1,25 @@
-.document-shell { max-width: 1080px; }
-h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 650; letter-spacing: -.04em; margin: 0; }
-.life-heading, .life-week, .life-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.life-heading { justify-content: space-between; margin: 8px 0 24px; }
-button, .life-actions a { min-height: 40px; }
-#life-progress button, dialog button { border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--ink); padding: 9px 14px; cursor: pointer; font-size: 14px; }
-#life-progress button.primary, dialog button.primary { background: var(--accent); border-color: var(--accent); color: white; }
-.life-actions a { display: inline-flex; align-items: center; }
-button.primary { background: var(--accent); border-color: var(--accent); color: white; }
-button:disabled { opacity: .5; cursor: default; }
-button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.life-week { margin-bottom: 20px; font-size: 15px; }
-.life-week button { min-width: 40px; }
-.life-metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 16px; }
-.life-metric { padding: 24px 20px; }
-.life-metric:first-child { padding-left: 0; }
-.life-metric + .life-metric { border-left: 1px solid var(--line); }
-.life-metric h2 { font-size: 15px; font-weight: 550; margin: 0 0 12px; }
-.life-metric strong { display: block; font-size: clamp(23px, 3vw, 32px); line-height: 1.2; font-weight: 600; }
-.life-metric:first-child strong { font-size: 44px; }
-.life-muted { color: var(--muted); font-size: 14px; line-height: 1.5; }
-.life-metric p { margin-bottom: 0; max-width: 250px; }
-.life-history { margin-top: 32px; }
-.life-history > h2 { font-size: 22px; }
-.life-step { padding: 18px 0; border-bottom: 1px solid var(--line); }
-.life-step h3 { font-size: 18px; margin: 8px 0; }
-.life-step p { line-height: 1.55; margin: 8px 0; overflow-wrap: anywhere; }
-.life-step .life-actions { margin-top: 12px; }
-.life-before { color: var(--muted); }
-.life-details { margin: 20px 0; }
-summary { cursor: pointer; line-height: 1.55; }
-#life-message { min-height: 1.5em; color: var(--accent); line-height: 1.5; }
-.local-intake { display: block; margin-top: 28px; padding: 24px; border: 1px solid var(--line); border-radius: 14px; box-shadow: none; }
-.intake-workspace { display: block; }
-.intake-copy { margin-bottom: 16px; }
-.intake-copy h2, .document-bank > h2 { font-size: 21px; }
-.intake-copy h2 { text-transform: none; }
-.local-intake .sync-status { position: static; margin: 14px 0 0; font-size: 13px; font-weight: 400; }
-.document-bank { margin-top: 36px; }
-.note-search { display: block; font-size: 14px; }
-.note-search input { display: block; width: 100%; margin-top: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
-.vault-list { display: block; }
-.vault-item { display: block; padding: 20px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
-.vault-main h3 { margin: 0 0 8px; font-size: 15px; overflow-wrap: anywhere; }
-.vault-main summary { font-size: 15px; }
-.vault-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.note-full { white-space: pre-wrap; font-size: 14px; line-height: 1.6; max-height: 400px; overflow: auto; padding: 12px; background: var(--panel); }
-.source-documents { display: block; margin-top: 28px; }
-.source-document { margin-top: 20px; }
+/* Preserve the original page layout. Only progress controls and their editor are added. */
+.life-week,.life-actions { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.life-week { margin: 6px 0 12px; font-size: 12px; }
+#life-progress button,#life-summary button,dialog button { border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);padding:8px 10px;min-height:34px;font:inherit;font-size:12px;cursor:pointer; }
+button:disabled { opacity:.5;cursor:default; }
+dialog button.primary { background:var(--accent);color:white; }
+.life-muted { color:var(--muted);font-size:12px; }
+.life-details { margin:0; }
+summary { cursor:pointer; }
+.life-details > summary { font-size:12px;font-weight:650; }
+.life-step { padding:12px 0;border-bottom:1px solid var(--line); }
+.life-step h3 { font-size:14px;margin:8px 0; }
+.life-step p { margin:6px 0;line-height:1.4; }
+.life-before { color:var(--muted); }
+.life-actions a { font-size:12px; }
+#life-message { margin:0;font-size:12px;color:var(--accent); }
+#life-message:empty { display:none; }
+#brain-search { max-width:200px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px;background:var(--panel); }
+.note-full { white-space:pre-wrap;font-size:13px;line-height:1.4;max-height:400px;overflow:auto; }
+.vault-main details { font-size:13px;line-height:1.4;overflow-wrap:anywhere; }
+.note-progress { font-size:13px;line-height:1.4;color:#274943; }
+button:focus-visible,a:focus-visible,summary:focus-visible { outline:2px solid var(--accent);outline-offset:2px; }
 dialog { width: min(580px, calc(100% - 28px)); max-height: 90dvh; overflow: auto; padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--ink); }
 dialog::backdrop { background: #1e272470; }
 dialog h2 { font-size: 23px; margin-top: 0; }
@@ -54,14 +27,3 @@ dialog label { display: block; font-size: 14px; margin: 16px 0; }
 dialog input, dialog textarea, dialog select { display: block; width: 100%; padding: 10px; margin-top: 6px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font: inherit; }
 dialog textarea { resize: vertical; }
 .form-status { color: #924a35; }
-@media (max-width: 600px) {
- .document-shell { width: calc(100% - 32px); padding-top: 20px; }
- .life-heading { gap: 16px; }
- .life-metrics { grid-template-columns: 1fr; }
- .life-metric, .life-metric:first-child { padding: 16px 0; }
- .life-metric + .life-metric { border-left: 0; border-top: 1px solid var(--line); }
- .life-metric h2 { margin-bottom: 6px; }
- .life-metric p { max-width: none; margin-top: 6px; }
- .local-intake { padding: 16px; }
- .life-actions { gap: 8px; }
-}

@@ -207,7 +207,7 @@ async function savePending() {
 function setSaveBusy(isBusy, label = "") {
   if (!saveButton) return;
   saveButton.disabled = isBusy;
-  saveButton.textContent = isBusy ? label : "Save note";
+  saveButton.textContent = isBusy ? label : "save to vault";
 }
 
 async function withAiAnalysis(file, text) {
@@ -915,8 +915,41 @@ function generatedScoreWeight(item) {
 
 async function createVaultItem(item) {
   const row = document.createElement('article'); row.className = 'vault-item';
+  const thumb = document.createElement("div");
+  thumb.className = "vault-thumb";
+  if (item.source === "sync" && item.hasPreview) {
+    const img = document.createElement("img");
+    img.src = syncFileUrl(item.id, "preview");
+    img.alt = ""; img.loading = "lazy";
+    thumb.append(img);
+  } else if (item.previewDataUrl) {
+    const img = document.createElement("img");
+    img.src = item.previewDataUrl;
+    img.alt = ""; img.loading = "lazy";
+    thumb.append(img);
+  } else if (item.kind === "image") {
+    const blob = item.source === "sync" ? null : await getBlob(item.id);
+    if (blob) {
+      const img = document.createElement("img");
+      const url = URL.createObjectURL(blob);
+      openUrls.push(url);
+      img.src = url;
+      img.alt = ""; img.loading = "lazy";
+      thumb.append(img);
+    } else if (item.source === "sync") {
+      const img = document.createElement("img");
+      img.src = syncFileUrl(item.id, "view");
+      img.alt = ""; img.loading = "lazy";
+      thumb.append(img);
+    } else {
+      thumb.textContent = "img";
+    }
+  } else {
+    thumb.textContent = item.kind === "generated pdf" ? "pdf" : extensionLabel(item.name);
+  }
+
   const main = document.createElement('div'); main.className = 'vault-main';
-  const title = document.createElement('h3'); title.textContent = item.name || 'Saved file';
+  const title = document.createElement('h3'); title.textContent = item.name || 'Saved file'; title.className = 'vault-title';
   const meta = document.createElement('p'); meta.className = 'vault-meta';
   meta.textContent = [displayDate(item.sourceCreatedAt || item.createdAt), item.kind || 'file', item.source === 'sync' ? 'Saved online' : 'On this device'].join(' · ');
   main.append(title, meta);
@@ -936,7 +969,10 @@ async function createVaultItem(item) {
     actions.append(actionButton('Record a step', () => window.BrainLife.recordFromNote(item)), actionButton('Find possible steps', () => window.BrainLife.suggest(item)));
   }
   actions.append(actionButton('Delete note', () => deleteRecord(item), 'danger'));
-  row.append(main, actions); return row;
+  for (const step of window.BrainLife?.stepsFor(item.id) || []) {
+    const progress = document.createElement('p'); progress.className = 'note-progress'; progress.textContent = 'What changed: ' + step.evidence; main.append(progress);
+  }
+  row.append(thumb, main, actions); return row;
 }
 
 function writeScoreExplanation(element, highlightText, explanation) {

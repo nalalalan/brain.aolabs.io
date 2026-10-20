@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>brain.aolabs.io</title>
-  <meta name="description" content="Life progress: meaningful steps, daily ease, enjoyment, and your saved notes." />
+  <meta name="description" content="Brain PDF bank with meaningful steps, daily ease, and enjoyment." />
   <link rel="canonical" href="https://aolabs.io/brain/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="AO Labs">
   <meta property="og:title" content="brain">
-  <meta property="og:description" content="Meaningful steps, daily ease, enjoyment, and your saved notes.">
+  <meta property="og:description" content="Saved notes and evidence of life progress.">
   <meta property="og:url" content="https://aolabs.io/brain/">
   <meta property="og:image" content="https://aolabs.io/brain/life-preview.png">
   <meta property="og:image:secure_url" content="https://aolabs.io/brain/life-preview.png">
@@ -19,16 +19,16 @@
   <meta property="og:image:alt" content="brain preview card.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="brain">
-  <meta name="twitter:description" content="Meaningful steps, daily ease, enjoyment, and your saved notes.">
+  <meta name="twitter:description" content="Saved notes and evidence of life progress.">
   <meta name="twitter:image" content="https://aolabs.io/brain/life-preview.png">
   <meta name="twitter:image:alt" content="brain preview card.">
 <link rel="icon" href="./favicon.svg?v=20260612-hub-mark" type="image/svg+xml">
   <link rel="stylesheet" href="https://aolabs.io/suite-header.css?v=20260516-suite-bloom">
-  <link rel="stylesheet" href="./styles.css?v=20261019-life-v1">
-  <script src="./config.js?v=20261019-life-v1"></script>
-  <script src="./app.js?v=20261019-life-v1" defer></script>
-  <link rel="stylesheet" href="./life.css?v=20261019-life-v1">
-  <script src="./life.js?v=20261019-life-v1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261019-original-format">
+  <script src="./config.js?v=20261019-original-format"></script>
+  <script src="./app.js?v=20261019-original-format" defer></script>
+  <link rel="stylesheet" href="./life.css?v=20261019-original-format">
+  <script src="./life.js?v=20261019-original-format" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -44,34 +44,51 @@
   </header>
 
   <main class="shell document-shell">
-    <section id="life-progress" aria-label="Life progress"><h1>Life progress</h1><p>Loading your history…</p></section><p id="life-message" role="status" aria-live="polite"></p><dialog id="life-editor" aria-label="Progress editor"></dialog>
+    <section class="document-intro" aria-label="document summary">
+      <p>Brain PDF bank for documents, text, files, images, and goal-relevant thoughts.</p>
+      <div id="life-count" class="overall-score" aria-live="polite">
+        <span>meaningful steps this week</span>
+        <strong>loading</strong>
+      </div>
+      <div id="life-ease" class="overall-score" aria-live="polite">
+        <span>daily ease</span>
+        <strong>loading</strong>
+      </div>
+      <div id="life-enjoyment" class="overall-score life-overall" aria-live="polite">
+        <span>enjoyment</span>
+        <strong>loading</strong>
+      </div>
+    </section>
     <section class="local-intake" aria-label="upload bank">
       <div class="intake-copy">
-        <h2>Save a note or file</h2>
+        <h2>add to bank</h2>
       </div>
       <div class="intake-workspace">
         <div class="intake-input-column">
           <div class="dropzone" data-role="dropzone">
-            <textarea id="brain-note" rows="4" placeholder="What do you want to keep? Paste or write a note."></textarea>
+            <textarea id="brain-note" rows="4" placeholder="Paste text to convert into a PDF"></textarea>
             <div class="intake-controls">
               <label class="file-inline">
                 <span>files / images</span>
                 <input id="brain-files" type="file" multiple>
               </label>
-              <button id="brain-save" type="button">Save note</button>
+              <button id="brain-save" type="button">save to vault</button>
             </div>
             <div id="brain-pending" class="pending-list" aria-live="polite"></div>
           </div>
-          
+          <aside id="life-summary" class="bank-summary" aria-live="polite">
+            <p>Your recorded changes will appear here.</p>
+          </aside>
         </div>
-        
+        <section id="life-progress" class="score-history score-history-panel" aria-live="polite"></section>
       </div>
+      <p id="life-message" role="status" aria-live="polite"></p><dialog id="life-editor" aria-label="Progress editor"></dialog>
       <p id="brain-sync-status" class="sync-status">checking sync</p>
     </section>
 
     <section class="document-bank" aria-label="document bank">
-      <h2>Saved notes &amp; files</h2><label class="note-search">Search notes<input id="brain-search" type="search" placeholder="Find a note"></label><p id="brain-note-count" class="life-muted"></p>
       <div class="vault-toolbar" aria-live="polite">
+        <input id="brain-search" type="search" aria-label="Search notes" placeholder="Search notes">
         <button id="brain-export-start" type="button">export notes</button>
         <div id="brain-export-actions" class="export-actions" hidden>
           <button id="brain-export-all" type="button">select all</button>
@@ -80,8 +97,9 @@
           <span id="brain-export-count">0 selected</span>
         </div>
       </div>
+      <span id="brain-note-count" class="life-muted"></span>
       <div id="brain-vault" class="vault-list" aria-live="polite"></div>
-      <details class="source-documents" aria-label="reference documents"><summary>Reference documents</summary>
+      <div class="source-documents" aria-label="reference documents">
         <article class="source-document">
           <a class="vault-thumb" href="./ph-eval-Ala_Pha-by-Kristine_Zytka__PhD__EdS-20May-000948%20%281%29.pdf" aria-label="Open autism diagnostic evaluation PDF">
             <img src="./autism-evaluation-page-1.png" alt="">
@@ -108,9 +126,8 @@
             <a class="source-action" href="./ADHDLetter.pdf" download>download</a>
           </span>
         </article>
-      </details>
+      </div>
     </section>
   </main>
 </body>
 </html>
-
