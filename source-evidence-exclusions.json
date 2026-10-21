@@ -1,0 +1,46 @@
+{
+  "records": [
+    {
+      "sourceId": "a459caed-65bb-4b70-aedf-701575b62b2d",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "accumulation"
+        ]
+      },
+      "reason": "The source describes a promised routine, not a completed routine.",
+      "sourceHash": "cbe3e92f44415d756d4d12fd7a9f6c781e0986c02d5cb1567d5621403d52885e"
+    },
+    {
+      "sourceId": "8ec84eb7-1fae-4725-9db3-7f83f9cef70b",
+      "removedComponents": {
+        "voice": [
+          "expression"
+        ]
+      },
+      "reason": "Delivery of the addressed message is not established by this source.",
+      "sourceHash": "d75cc41302cc8368caf971a231bd7b4f0f8fd4569bd67be051d487c59a171182"
+    },
+    {
+      "sourceId": "09871412-a4cc-4aa4-a1be-7af0582cb043",
+      "removedComponents": {
+        "voice": [
+          "expression",
+          "disagreement",
+          "agency"
+        ],
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ],
+        "insight": [
+          "application"
+        ]
+      },
+      "maxLevel": "everyday",
+      "reason": "Source audit: requests and conceptual feedback do not establish human interaction, performed iteration, completed results or tested application.",
+      "sourceHash": "61d6744f4b9e5a8f9fcdf80be401ea36d5eadd8f794f6536daab0bc139019124"
+    }
+  ]
+}

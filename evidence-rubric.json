@@ -1,27 +1,152 @@
 {
-  "version": "20261021-behavior-evidence-v13",
-  "zero": "Repeated reported difficulty carrying out the defined behaviors. Missing information is not scored as failure, and housing or social status is never a scoring input.",
-  "hundred": "Consistent demonstration of the defined behaviors across recent situations. This is a behavioral target, not a measurement of Moritz Bacher, personality, human worth, or career readiness.",
-  "method": "Each component starts with one positive and one negative balancing observation: 50 with no evidence. Reported demonstrations add 1, mixed attempts add 0.5, and reported difficulties add 0. Only applicable observations count. Repeated quotations count once and each calendar day has at most one unit of weight per component. Use up to 56 days of evidence before that component's last observation, with a 28-day half-life. Component = 100 × (1 + weighted demonstrated total) / (2 + evidence weight). Average the four unrounded components and round once. Silence leaves the estimate unchanged; limited evidence is disclosed separately. This is a transparent journal-based index, not a validated psychological measurement.",
-  "sources": [],
+  "version": "20261021-director-benchmark-v14",
+  "zero": "No demonstrated points toward this benchmark in the available evidence. This is not a judgment of your worth or a claim that you have no ability. Missing components remain unestablished, not failed.",
+  "hundred": "Sustained, independently corroborated research leadership: setting consequential direction, leading people through difficult decisions, delivering original work that others use, and improving the research program through tested understanding. This is an aspirational research-director standard informed by Moritz Bacher’s public work, not a percentage of him or a prediction of employment.",
+  "method": "Scores measure documented performance against a fixed research-leadership benchmark. Everyday demonstrations are worth up to 20 points, applied work with meaningful constraints up to 40, and substantial independent research work up to 60. Independently checked professional outcomes can reach 80; sustained, independently checked research-program leadership can reach 100. A mixed attempt earns half of its level; an observed unsuccessful attempt earns no points for that occasion. Each component uses its highest supported recent scope; easier successes do not lower that level or count as more evidence at that level. Relevant difficulties and mixed attempts can reduce the estimate. It averages the selected observations over up to 56 days with a 28-day half-life, capped at one day of weight per date. The score averages the four components, including zero documented points for unestablished components. Silence carries the previous estimate; repeated passages add nothing. More ordinary successes cannot become director-level evidence. Whole-number points are rubric estimates, not precisely measured ability or percentages of a person.",
+  "sources": [
+    {
+      "title": "Moritz Bacher: robotics research leadership",
+      "url": "https://www.baecher.info/"
+    },
+    {
+      "title": "Moritz Bacher: research contributions and tested systems",
+      "url": "https://www.baecher.info/publications/"
+    }
+  ],
   "metrics": [
-    {"key":"voice","label":"Voice","components":[
-      {"key":"direction","label":"Choosing your direction","criterion":"You name a specific personal priority and distinguish it from a competing demand. A bare wish or an instruction to AI is insufficient.","zero":"Repeatedly unable to choose a priority when a choice is needed.","hundred":"You choose and explain personal priorities in concrete situations."},
-      {"key":"expression","label":"Speaking up","criterion":"You report actually communicating a need, preference or disagreement to another person. Writing it privately or commanding an AI is not interpersonal expression.","zero":"You report leaving important needs unspoken.","hundred":"You communicate important needs clearly when it matters."},
-      {"key":"disagreement","label":"Handling disagreement","criterion":"You report a real disagreement and how you listened, clarified, negotiated, revised or maintained a boundary. Retrospective theories about others do not count as handling the interaction.","zero":"Reported disagreements repeatedly end in unwanted withdrawal or unresolved escalation.","hundred":"You handle disagreement with clear boundaries and engagement with the actual response."},
-      {"key":"agency","label":"Making decisions","criterion":"You report initiating a consequential interaction or acting on a considered choice. Actually steering a meeting toward your chosen topic qualifies. Account for stated boundaries when the note describes them; do not invent a requirement for explicit consent when no boundary conflict is reported. Simply doing a disputed act, ignoring an expressed boundary, a possibility, desired future, or AI request alone is insufficient.","zero":"You report being unable to act on considered choices in relevant situations.","hundred":"You initiate considered decisions and act while respecting stated boundaries."}
-    ]},
-    {"key":"followthrough","label":"Follow-through","components":[
-      {"key":"selection","label":"Choosing the next action","criterion":"You explicitly choose a bounded next action tied to a priority, or report difficulty choosing. Detailed requests to AI without your own chosen action are not execution and are not automatically selection.","zero":"Relevant opportunities repeatedly end without a workable next action.","hundred":"You choose practical next actions that address the actual goal."},
-      {"key":"execution","label":"Doing the work","criterion":"You report personally doing a concrete chosen task or fulfilling a stated commitment, with an identifiable task goal. Mere utterances, gestures, or sending links during an argument are not task execution. Preparing an AI request by supplying screenshots, reference images or specifications is not executing the requested work. Planning, reviewing an AI response, requesting a revision, or hoping for progress alone does not establish doing the task.","zero":"You report repeatedly being unable to start or complete chosen work.","hundred":"You carry out chosen tasks and commitments."},
-      {"key":"recovery","label":"Responding to setbacks","criterion":"You report an actual failed attempt or obstacle, and a subsequent adjustment or reasoned stop. Anticipating a design problem is analysis, not recovering from an experienced failure.","zero":"Actual setbacks repeatedly stop action without an adjustment.","hundred":"You respond to actual setbacks with an adjustment, retry or reasoned stop."},
-      {"key":"accumulation","label":"Producing usable results","criterion":"You report a completed artifact that addresses the chosen task, a learned skill demonstrated in use, or another usable outcome. Supplying screenshots, references or specifications to an AI is request preparation, not a completed project result. Hoping feedback helps, requesting tools, or merely feeling productive is insufficient.","zero":"Reported efforts repeatedly fail to leave a usable result.","hundred":"Your completed work leaves results you can use."}
-    ]},
-    {"key":"insight","label":"Insight","components":[
-      {"key":"patterns","label":"Identifying patterns","criterion":"You connect concrete observations of your own responses across situations, distinguishing observations from hypotheses. Unsupported confident claims about others' motives do not establish a pattern.","zero":"You repeat sweeping explanations despite concrete conflicting observations.","hundred":"You identify specific patterns while keeping interpretations separate from facts."},
-      {"key":"checking","label":"Checking explanations","criterion":"You actually compare an interpretation with specific observations or a plausible alternative grounded in facts. Testing a built device against its intended performance and noticing a real limitation counts as checking, even before its cause is known. Asking a question or using 'maybe' without making a comparison is insufficient.","zero":"You treat an unsupported explanation as certain despite relevant alternatives.","hundred":"You check explanations against specific observations and alternatives."},
-      {"key":"updating","label":"Learning from evidence","criterion":"You identify what you believed, the new observation, and how it changes your understanding. Reassuring reframes, mere mood changes, and unsupported new theories are insufficient.","zero":"You maintain an explanation despite reported contradictory evidence.","hundred":"You revise your understanding when specific evidence warrants it."},
-      {"key":"application","label":"Using what you learn","criterion":"You report a changed action or response that uses a lesson and what happened when you tried it. A requested design feature, future intention, or relief from remembering a thought alone is not tested application.","zero":"You report repeating an ineffective response despite knowing a relevant alternative.","hundred":"You apply learning, observe the result, and adjust where needed."}
-    ]}
+    {
+      "key": "voice",
+      "label": "Voice",
+      "components": [
+        {
+          "key": "direction",
+          "label": "Choosing your direction",
+          "criterion": "You name a specific personal priority and distinguish it from a competing demand. A bare wish or an instruction to AI is insufficient.",
+          "zero": "Repeatedly unable to choose a priority when a choice is needed.",
+          "hundred": "You establish a consequential original research direction, with recorded adoption by a research team."
+        },
+        {
+          "key": "expression",
+          "label": "Speaking up",
+          "criterion": "You report actually communicating a need, preference or disagreement to another person. Writing it privately or commanding an AI is not interpersonal expression.",
+          "zero": "You report leaving important needs unspoken.",
+          "hundred": "You communicate difficult research decisions across collaborators and stakeholders, with corroborated understanding and outcomes."
+        },
+        {
+          "key": "disagreement",
+          "label": "Handling disagreement",
+          "criterion": "You report a real disagreement and how you listened, clarified, negotiated, revised or maintained a boundary. Retrospective theories about others do not count as handling the interaction.",
+          "zero": "Reported disagreements repeatedly end in unwanted withdrawal or unresolved escalation.",
+          "hundred": "You resolve consequential technical disagreement using evidence, negotiate tradeoffs and retain productive collaboration across projects."
+        },
+        {
+          "key": "agency",
+          "label": "Making decisions",
+          "criterion": "You report initiating a consequential interaction or acting on a considered choice. Actually steering a meeting toward your chosen topic qualifies. Account for stated boundaries when the note describes them; do not invent a requirement for explicit consent when no boundary conflict is reported. Simply doing a disputed act, ignoring an expressed boundary, a possibility, desired future, or AI request alone is insufficient.",
+          "zero": "You report being unable to act on considered choices in relevant situations.",
+          "hundred": "You take responsibility for strategic research decisions, coordinate people and resources, and demonstrate sustained outcomes."
+        }
+      ]
+    },
+    {
+      "key": "followthrough",
+      "label": "Follow-through",
+      "components": [
+        {
+          "key": "selection",
+          "label": "Choosing the next action",
+          "criterion": "You explicitly choose a bounded next action tied to a priority, or report difficulty choosing. Detailed requests to AI without your own chosen action are not execution and are not automatically selection.",
+          "zero": "Relevant opportunities repeatedly end without a workable next action.",
+          "hundred": "You prioritize a coherent program of original research and make effective resource tradeoffs across projects."
+        },
+        {
+          "key": "execution",
+          "label": "Doing the work",
+          "criterion": "You report personally doing a concrete chosen task or fulfilling a stated commitment, with an identifiable task goal. Mere utterances, gestures, or sending links during an argument are not task execution. Preparing an AI request by supplying screenshots, reference images or specifications is not executing the requested work. Planning, reviewing an AI response, requesting a revision, or hoping for progress alone does not establish doing the task.",
+          "zero": "You report repeatedly being unable to start or complete chosen work.",
+          "hundred": "You lead repeated delivery of difficult original systems or studies under real constraints, with corroborated personal contribution."
+        },
+        {
+          "key": "recovery",
+          "label": "Responding to setbacks",
+          "criterion": "You report an actual failed attempt or obstacle, and a subsequent adjustment or reasoned stop. Anticipating a design problem is analysis, not recovering from an experienced failure.",
+          "zero": "Actual setbacks repeatedly stop action without an adjustment.",
+          "hundred": "You steer a research program through major failed approaches using tested alternatives and responsible stop decisions."
+        },
+        {
+          "key": "accumulation",
+          "label": "Producing usable results",
+          "criterion": "You report a completed artifact that addresses the chosen task, a learned skill demonstrated in use, or another usable outcome. Supplying screenshots, references or specifications to an AI is request preparation, not a completed project result. Hoping feedback helps, requesting tools, or merely feeling productive is insufficient.",
+          "zero": "Reported efforts repeatedly fail to leave a usable result.",
+          "hundred": "Your program produces validated original results, reusable tools or deployed systems used by others over time."
+        }
+      ]
+    },
+    {
+      "key": "insight",
+      "label": "Insight",
+      "components": [
+        {
+          "key": "patterns",
+          "label": "Identifying patterns",
+          "criterion": "You connect concrete observations of your own responses across situations, distinguishing observations from hypotheses. Unsupported confident claims about others' motives do not establish a pattern.",
+          "zero": "You repeat sweeping explanations despite concrete conflicting observations.",
+          "hundred": "You identify consequential research mechanisms that generalize across multiple independently checked projects."
+        },
+        {
+          "key": "checking",
+          "label": "Checking explanations",
+          "criterion": "You actually compare an interpretation with specific observations or a plausible alternative grounded in facts. Testing a built device against its intended performance and noticing a real limitation counts as checking, even before its cause is known. Asking a question or using 'maybe' without making a comparison is insufficient.",
+          "zero": "You treat an unsupported explanation as certain despite relevant alternatives.",
+          "hundred": "You direct rigorous comparisons, validation and attempts to falsify explanations in consequential research."
+        },
+        {
+          "key": "updating",
+          "label": "Learning from evidence",
+          "criterion": "You identify what you believed, the new observation, and how it changes your understanding. Reassuring reframes, mere mood changes, and unsupported new theories are insufficient.",
+          "zero": "You maintain an explanation despite reported contradictory evidence.",
+          "hundred": "You revise a research program in response to evidence, with independently corroborated improvements in decisions."
+        },
+        {
+          "key": "application",
+          "label": "Using what you learn",
+          "criterion": "You report a changed action or response that uses a lesson and what happened when you tried it. A requested design feature, future intention, or relief from remembering a thought alone is not tested application.",
+          "zero": "You report repeating an ineffective response despite knowing a relevant alternative.",
+          "hundred": "Your tested understanding produces original working methods or systems adopted by others across projects."
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "key": "everyday",
+      "points": 20,
+      "label": "Everyday demonstration",
+      "criterion": "A specific personally relevant choice, action or observed insight in an ordinary situation. Private reflection can support choosing direction or checking an explanation, but cannot prove interpersonal communication or completed work."
+    },
+    {
+      "key": "applied",
+      "points": 40,
+      "label": "Applied under constraints",
+      "criterion": "An actual multi-step task, difficult real interpersonal exchange, or tested adjustment with a concrete consequence. The passage must identify the constraint, your action and what actually happened. A sophisticated plan or longer note is not enough."
+    },
+    {
+      "key": "research",
+      "points": 60,
+      "label": "Independent research work",
+      "criterion": "Your substantive contribution to a real technical or research project, with an observed test, completed deliverable or consequential collaborative decision. Identify what you did and what changed. An AI request, imagined experiment, criticism of a concept, or mere technical terminology does not meet this level."
+    },
+    {
+      "key": "professional",
+      "points": 80,
+      "label": "Independently checked professional result",
+      "criterion": "A substantial original result or consequential research leadership outcome with separately inspected corroboration of your contribution and result. A journal claim alone cannot unlock this level."
+    },
+    {
+      "key": "director",
+      "points": 100,
+      "label": "Sustained research-program leadership",
+      "criterion": "Independently checked evidence of leading a significant research direction across multiple people and projects, handling uncertainty and disagreement, delivering original validated work used by others, and sustaining those outcomes over time. A job title, acceptance, single good result or self-description alone is insufficient."
+    }
   ]
 }

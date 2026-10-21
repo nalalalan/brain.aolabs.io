@@ -1,17 +1,20 @@
 {
-  "version": "20261021-behavior-evidence-v13",
-  "analysisHash": "cdf79bebf7f0280ea408921eaf9789193908be8e551a43e47376027ceea9a8af",
-  "gateHash": "eefa727251f98b6a346405a0b15e9a60dc7256fbe35061d969347444ddfb6b24",
+  "version": "20261021-director-benchmark-v14",
   "status": "pending",
-  "checkedAt": "2026-10-21T08:17:33.330Z",
   "checks": [
-    "eight_original_source_cases",
+    "original_source_cases",
+    "held_out_source_cases",
     "critical_classifications_repeat",
-    "future_adjustments_not_completed_recovery"
+    "director_verification_gate"
   ],
-  "limitations": "Small acceptance set, not empirical validation; ambiguous classifications can vary.",
+  "limitations": "A designed evidence rubric, not empirical validation of personality or career readiness.",
+  "analysisHash": "cf3799ff2ecc1d6612f9cf28a075608e5989cd4d7f390319a4e03099569c5a24",
+  "gateHash": "c673e806c5d8170963c5472996c87f2e693eb87bfca974a8ec12f07a3f20ce4c",
+  "checkedAt": "2026-10-21T15:17:20.065Z",
   "pending": [
-    "Complete archive and source audit after Railway access returns",
-    "Revalidate all cached records under current acceptance checks"
+    "Deploy v14 once Railway accepts builds",
+    "Run17 source cases,6 held-out cases and3 critical repeats",
+    "Reassess every current original source and inspect complete results",
+    "Activate only after source, arithmetic, preservation and rendered checks pass"
   ]
 }
