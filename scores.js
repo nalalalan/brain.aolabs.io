@@ -24,6 +24,8 @@
     const graph=document.getElementById('brain-progress-history');graph.replaceChildren();
     if(rows.length)graph.append(buildScoreHistoryPlot(rows));else graph.append(node('p','Your scores will appear after your notes are read.','score-history-empty'));
     const summary=document.getElementById('score-summary');summary.replaceChildren();
+    const eligible=state.filter(item=>item.sourceText?.trim()),ready=eligible.filter(item=>entries[item.id]).length;
+    if(eligible.length&&ready<eligible.length)summary.append(node('p',ready+' of '+eligible.length+' notes scored. The chart is incomplete.','score-basis'));
     if(last){const text=metrics.map(m=>assessment(last,m.key,false)).filter(Boolean).map(a=>secondPerson(a.value.explanation).split(/(?<=[.!?])\s+/)[0]).join(' ');summary.append(node('p',text,'summary-main'));}
     else summary.append(node('p','Save a note to see your scores and highlighted evidence.'));
     summary.append(node('p','Component estimates from your recent notes. 0 = the defined survival reference; 100 = the Moritz reference. Scores can rise, fall, or stay steady, including beyond either reference.','score-basis'));
