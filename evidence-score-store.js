@@ -26,6 +26,7 @@ function schemaFor(notes,excluded=[]){
 
 const analysisHash=hash(instructions+JSON.stringify(schema)+schemaFor.toString());
 const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'behavior-evidence.js'),'utf8'));
+function sourceExclusions(sources,records){return sources.flatMap(s=>{const r=records[s.id];return r?.sourceHash===hash(s.sourceText)?Object.entries(r.sourceAudit?.removedComponents||{}).flatMap(([metric,components])=>components.map(component=>({sourceId:s.id,metric,component,reason:r.sourceAudit.reason}))):[];});}
 module.exports=function evidenceScores(root,readFiles){
  const file=path.join(root,'.brain-behavior-evidence-v13.json'),activeFile=path.join(root,'.brain-behavior-active.json');
  let writes=Promise.resolve();const pending=new Map();
@@ -47,9 +48,10 @@ module.exports=function evidenceScores(root,readFiles){
   if(!missing.length)return sources.map(s=>data.records[s.id]);
   if(missing.some(s=>s.sourceText.length>180000))throw fail('This source needs a separate long-document review.',422);
   const notes=missing.map(s=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,passages:passages(s.sourceText)}));
-  let candidate=await model({notes}),reviewed=await model({notes,candidate},true),records;const excludedComponents=[];
+  const excludedComponents=sourceExclusions(missing,data.records);
+  let candidate=await model({notes,excludedComponents}),reviewed=await model({notes,candidate,excludedComponents},true),records;
   for(let attempt=0;attempt<3;attempt++){
-   try{records=missing.map(s=>{try{const item=reviewed.entries?.find(e=>e.sourceId===s.id);if(!item)throw fail('Missing source assessment.',502);return {sourceId:s.id,sourceHash:hash(s.sourceText),version:rubric.version,analysisHash,createdAt:new Date().toISOString(),model:process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4',reviewed:true,rejectedComponents:excludedComponents.filter(e=>e.sourceId===s.id),values:validateResult(resolveItem(item,s),s)};}catch(error){error.sourceId=s.id;throw error;}});break;}
+   try{records=missing.map(s=>{try{const item=reviewed.entries?.find(e=>e.sourceId===s.id);if(!item)throw fail('Missing source assessment.',502);return {sourceId:s.id,sourceHash:hash(s.sourceText),version:rubric.version,analysisHash,createdAt:new Date().toISOString(),model:process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4',reviewed:true,sourceAudit:data.records[s.id]?.sourceHash===hash(s.sourceText)?data.records[s.id].sourceAudit:undefined,rejectedComponents:excludedComponents.filter(e=>e.sourceId===s.id),values:validateResult(resolveItem(item,s),s)};}catch(error){error.sourceId=s.id;throw error;}});break;}
    catch(error){if(attempt===2)throw error;if(error.metric&&error.component)excludedComponents.push({sourceId:error.sourceId,metric:error.metric,component:error.component,reason:error.message});reviewed=await model({notes,candidate:reviewed,excludedComponents,correction:error.message},true);}
   }
   await save(records);return records;
@@ -91,3 +93,4 @@ module.exports=function evidenceScores(root,readFiles){
  return {handle};
 };
 module.exports.resolveItem=resolveItem;
+module.exports.sourceExclusions=sourceExclusions;

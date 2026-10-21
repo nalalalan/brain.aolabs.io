@@ -26,9 +26,16 @@ function rejection(quote,key,component){const source={id:'q',sourceText:quote},v
 rejection('i would like a dial that changes the amount of compression.','insight','application');
 rejection('i guess remembering that i can leave helps my anxiety.','insight','application');
 rejection('i hope my thoughts help move the project along.','followthrough','accumulation');
+rejection('Sending a message each day is something I can guarantee without failure.','followthrough','execution');
+rejection('Sending a message each day is something I can guarantee without failure.','voice','agency');
 rejection('After that setback, I will try a different plan next week.','followthrough','recovery');
 rejection("now i've done it, and i probably won't do it again because it seems like it will result in a conflict.",'followthrough','recovery');
 const {resolveItem}=require('../evidence-score-store');
+const {sourceExclusions}=require('../evidence-score-store');
+const auditedSource={id:'audited',sourceText:'A draft message with no delivery report.'};
+const auditedRecords={audited:{sourceHash:hash(auditedSource.sourceText),sourceAudit:{removedComponents:{voice:['expression']},reason:'Delivery unconfirmed.'}}};
+assert.equal(sourceExclusions([auditedSource],auditedRecords)[0].component,'expression','A source audit survives reassessment of unchanged text.');
+assert.deepEqual(sourceExclusions([{...auditedSource,sourceText:'I sent the message and received a reply.'}],auditedRecords),[],'Changed source evidence receives a fresh assessment.');
 const passageSource={id:'passages',sourceText:'I printed the parts and assembled the device.\nIt produced the dome when I turned the dial. I want faster travel next.'};
 const passageCandidate={sourceId:'passages',values:Object.fromEntries(rubric.metrics.map(m=>[m.key,{quoteId:'s1',explanation:neutral()[m.key].explanation,observations:[]}]))};
 passageCandidate.values.followthrough.observations=[{component:'execution',outcome:'demonstrated',timeframe:'current',quoteIds:['s1','s2'],fact:'You report assembling and testing the physical device yourself.',limit:'The requested speed improvement is not reported as completed.'}];
