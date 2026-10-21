@@ -1,7 +1,7 @@
 {
-  "version": "20261021-component-reference-v11",
+  "version": "20261021-insight-reference-v12",
   "zero": "A defined fictional man living rough: immediate survival dominates, plans repeatedly break down, personal direction is difficult to sustain under pressure, and practical and social support is unreliable. This is a constructed reference, not a claim about homeless people generally or anyone's worth.",
-  "hundred": "An inferred Moritz Bächer professional reference: durable self-chosen direction, clear communication and agency, practical iteration to deployed results, and dependable collaborators and resources. This benchmark is informed by public work, not a measured personality or knowledge of his private life.",
+  "hundred": "An inferred Moritz Bächer professional reference: durable self-chosen direction, clear communication and agency, practical iteration to deployed results, and evidence-based understanding that improves decisions. This benchmark is informed by public work, not a measured personality, knowledge of his private life, or a percentage of career readiness.",
   "sources": [
     {
       "title": "Moritz Bächer: role and research direction",
@@ -78,32 +78,32 @@
       ]
     },
     {
-      "key": "support",
-      "label": "Support",
+      "key": "insight",
+      "label": "Insight",
       "components": [
         {
-          "key": "stability",
-          "label": "Practical stability",
-          "zero": "Rest, space, transport, communication or essential tools cannot reliably be counted on.",
-          "hundred": "Practical conditions are dependable enough to plan and work around."
+          "key": "patterns",
+          "label": "Recognizing patterns",
+          "zero": "Experiences remain disconnected or become sweeping conclusions without a specific recurring mechanism.",
+          "hundred": "You repeatedly identify specific triggers, responses and consequences across situations, including your own role."
         },
         {
-          "key": "help",
-          "label": "Useful help",
-          "zero": "Help is intermittent, misses the actual problem or requires repeated explanation without resolution.",
-          "hundred": "Relevant people or tools are accessible and their help produces useful results."
+          "key": "checking",
+          "label": "Checking assumptions",
+          "zero": "A first interpretation is treated as fact without checking observations or alternatives.",
+          "hundred": "You distinguish observations from guesses, consider plausible alternatives and check explanations against evidence."
         },
         {
-          "key": "respect",
-          "label": "Autonomy and respect",
-          "zero": "Help is unpredictable, controlling or conditional on surrendering important preferences.",
-          "hundred": "You can request help, disagree and set boundaries while retaining useful support."
+          "key": "updating",
+          "label": "Revising understanding",
+          "zero": "The same explanation repeats despite contradictory facts, or changes merely to escape discomfort.",
+          "hundred": "New evidence leads you to revise explanations while retaining what still fits, including mixed motives and uncertainty."
         },
         {
-          "key": "continuity",
-          "label": "Continuity",
-          "zero": "One unavailable person or failed arrangement can leave you without an alternative.",
-          "hundred": "Durable relationships and alternatives let you recover when one source of help fails."
+          "key": "application",
+          "label": "Applying what you learn",
+          "zero": "Reflection repeats without changing a response, testing an idea or producing a useful decision.",
+          "hundred": "You use understanding to try better responses, check what happens and transfer useful learning across situations."
         }
       ]
     }

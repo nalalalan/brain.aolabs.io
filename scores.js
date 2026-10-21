@@ -1,5 +1,5 @@
 (() => {
-  const base=window.BRAIN_API_BASE.replace(/\/$/,''), metrics=[{key:'voice',label:'Voice',cls:'autism'},{key:'followthrough',label:'Follow-through',cls:'adhd'},{key:'support',label:'Support',cls:'life'}];
+  const base=window.BRAIN_API_BASE.replace(/\/$/,''), metrics=[{key:'voice',label:'Voice',cls:'autism'},{key:'followthrough',label:'Follow-through',cls:'adhd'},{key:'insight',label:'Insight',cls:'life'}];
   let entries={},rubric=null; const busy=new Set(), errors=new Map(), previews=new Map();
   const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
   const dateOf=item=>Date.parse(item.sourceCreatedAt||item.createdAt||0);

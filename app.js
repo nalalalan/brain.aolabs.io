@@ -63,7 +63,7 @@ const notePreviewLayout = Object.freeze({
 const traitHighlightStyle = Object.freeze({
   voice: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
   followthrough: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
-  support: { canvas: "#7a4a16", pdf: "0.48 0.29 0.09 rg" },
+  insight: { canvas: "#7a4a16", pdf: "0.48 0.29 0.09 rg" },
   autism: { canvas: "#8f3d4b", pdf: "0.56 0.24 0.29 rg" },
   adhd: { canvas: "#214f8f", pdf: "0.13 0.31 0.56 rg" },
   text: { canvas: "#1e2724", pdf: "0.12 0.15 0.14 rg" },
@@ -431,7 +431,7 @@ function buildScoreHistoryPlot(rows) {
   const series = [
     { key: "voice", label: "voice", colorClass: "autism-series", value: item => window.BrainScores.score(item,"voice") },
     { key: "followthrough", label: "follow-through", colorClass: "adhd-series", value: item => window.BrainScores.score(item,"followthrough") },
-    { key: "support", label: "support", colorClass: "life-series", value: item => window.BrainScores.score(item,"support") },
+    { key: "insight", label: "insight", colorClass: "life-series", value: item => window.BrainScores.score(item,"insight") },
   ].map((seriesItem) => {
     const observations = rows.map((item) => ({
       item,
@@ -444,7 +444,7 @@ function buildScoreHistoryPlot(rows) {
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines show estimates, including provisional and carried scores. Dashed lines fit all daily average assessments with four established components, with equal weight per day; provisional and carried scores are excluded from the fit.`);
+  svg.setAttribute("aria-label", `Voice, Follow-through and Insight scores over time for ${rows.length} distinct notes. Solid lines show estimates, including provisional and carried scores. Dashed lines fit all daily average assessments with four established components, with equal weight per day; provisional and carried scores are excluded from the fit.`);
   svg.setAttribute("preserveAspectRatio", "none");
 
   const margin = { top: 16, right: 112, bottom: 28, left: 30 };
@@ -1574,7 +1574,7 @@ function sourceRangeSegments(source, start, end, ranges) {
 }
 
 function normalizeTraitHighlights(input) {
-  return Object.fromEntries(['voice','followthrough','support'].map(key => [key, String(input?.[key] || '')]));
+  return Object.fromEntries(['voice','followthrough','insight'].map(key => [key, String(input?.[key] || '')]));
 }
 
 function traitFlavorRanges(text, highlights) {
