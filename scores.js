@@ -33,6 +33,7 @@
   window.BrainScores={
     refresh,analyze,
     score(item,key){return assessment(item,key,false)?.value.score??NaN;},
+    observedScore(item,key){return entries[item.id]?.values[key]?.score??NaN;},
     preview(item){const entry=entries[item.id];if(!entry||!item.sourceText)return '';const key=entry.sourceHash+entry.createdAt;if(!previews.has(key))previews.set(key,createTextPreviewDataUrl(item.sourceText,item.sourceCreatedAt||item.createdAt,Object.fromEntries(metrics.map(m=>[m.key,entry.values[m.key].quote]))));return previews.get(key);},
     append(main,item){const entry=entries[item.id];if(entry){for(const m of metrics){const assessed=assessment(item,m.key),value=assessed?.value;const score=node('p',m.label.toLowerCase()+' '+(value?value.score+'/100':'Awaiting first assessment'),m.cls+'-score');const explanation=node('p',undefined,m.cls+'-score-why score-excerpt');
       if(assessed?.carried)explanation.append(node('span',(assessed.later?'First assessed ':'From your ')+shortDate(assessed.source)+' note: '));

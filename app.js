@@ -436,13 +436,14 @@ function buildScoreHistoryPlot(rows) {
     const observations = rows.map((item) => ({
       time: scoreHistoryTime(item),
       value: seriesItem.value(item),
+      observed: Number.isFinite(window.BrainScores.observedScore(item,seriesItem.key)),
     })).filter(point => Number.isFinite(point.value));
     return { ...seriesItem, observations, trend: scoreSeriesTrend(observations) };
   });
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines show the evidenced score carried forward; dashed lines connect the first and latest evidenced score.`);
+  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines show scores carried forward. Dashed lines fit all daily average assessments, with equal weight per day; carried scores are not counted as new assessments.`);
   svg.setAttribute("preserveAspectRatio", "none");
 
   const margin = { top: 16, right: 112, bottom: 28, left: 30 };
@@ -484,11 +485,12 @@ function buildScoreHistoryPlot(rows) {
       pointTitle.textContent = `${displayHistoryDate(point.time)}: ${seriesItem.label} ${point.value}/100`;
       dot.append(pointTitle);
     });
-    const trendFirstTime=seriesItem.observations[0]?.time;
+    const trendFirstTime=seriesItem.trend.points[0]?.time;
+    const trendLastTime=seriesItem.trend.points.at(-1)?.time;
     const trendStart = scoreTrendValueAt(seriesItem.trend, trendFirstTime);
-    const trendEnd = scoreTrendValueAt(seriesItem.trend, lastTime);
+    const trendEnd = scoreTrendValueAt(seriesItem.trend, trendLastTime);
     if (Number.isFinite(trendStart) && Number.isFinite(trendEnd)) {
-      const trendPath = append("path", { d: `M${x(trendFirstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(lastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
+      const trendPath = append("path", { d: `M${x(trendFirstTime).toFixed(2)} ${y(trendStart).toFixed(2)} L${x(trendLastTime).toFixed(2)} ${y(trendEnd).toFixed(2)}`, class: `score-trend-path ${seriesItem.colorClass}` });
       const trendTitle = document.createElementNS(namespace, "title");
       trendTitle.textContent = `${seriesItem.label} trend ${formatScoreTrend(seriesItem.trend)}`;
       trendPath.append(trendTitle);
@@ -517,11 +519,17 @@ function buildScoreHistoryPlot(rows) {
 }
 
 function scoreSeriesTrend(observations) {
-  const points=observations.filter(p=>Number.isFinite(p.time)&&Number.isFinite(p.value)).sort((a,b)=>a.time-b.time);
-  if(points.length<2)return {rate:NaN,intercept:NaN,origin:NaN,points};
-  const origin=points[0].time,duration=(points.at(-1).time-origin)/86400000;
-  const rate=duration>0?(points.at(-1).value-points[0].value)/duration:0;
-  return {rate,intercept:points[0].value,origin,points};
+  const points=observations.filter(p=>p.observed!==false&&Number.isFinite(p.time)&&Number.isFinite(p.value)).sort((a,b)=>a.time-b.time);
+  const days=new Map();
+  for(const point of points){const day=new Date(point.time).toLocaleDateString('en-CA',{timeZone:'America/New_York'});const bucket=days.get(day)||[];bucket.push(point);days.set(day,bucket);}
+  const daily=[...days.values()].map(bucket=>({time:bucket.reduce((sum,p)=>sum+p.time,0)/bucket.length,value:bucket.reduce((sum,p)=>sum+p.value,0)/bucket.length}));
+  if(daily.length<2)return {rate:NaN,intercept:NaN,origin:NaN,points};
+  const origin=points[0].time;
+  const xs=daily.map(p=>(p.time-origin)/86400000);
+  const meanX=xs.reduce((sum,x)=>sum+x,0)/xs.length,meanY=daily.reduce((sum,p)=>sum+p.value,0)/daily.length;
+  const variance=xs.reduce((sum,x)=>sum+(x-meanX)**2,0);
+  const rate=xs.reduce((sum,x,i)=>sum+(x-meanX)*(daily[i].value-meanY),0)/variance;
+  return {rate,intercept:meanY-rate*meanX,origin,points};
 }
 
 function scoreTrendValueAt(trend, time) {
@@ -538,8 +546,9 @@ function medianNumber(values) {
 
 function formatScoreTrend(trend) {
   if (!Number.isFinite(trend?.rate)) return "needs more evidence";
-  const change=trend.rate*(trend.points.at(-1).time-trend.origin)/86400000;
-  return `${change>0?"+":""}${change.toFixed(1)} pts over period`;
+  const change=scoreTrendValueAt(trend,trend.points.at(-1).time)-scoreTrendValueAt(trend,trend.origin);
+  const rounded=Math.round(change*10)/10;
+  return `${rounded>0?"+":""}${rounded.toFixed(1)} pts trend`;
 }
 function formatScoreTrendEndpoint(seriesItem) {
   return `${seriesItem.label} ${formatScoreTrend(seriesItem.trend).replace(' over period',' change')}`;
