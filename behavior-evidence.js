@@ -59,6 +59,7 @@ function validateResult(item,source){
   if(/\b(?:mastery|near[- ]top|exceptional|world[- ]class|professional[- ]level|high[- ]grade|extremely strong|your latest .* remains|no new evidence)\b/i.test(explanation))throw fail('Analysis must describe behavior without unsupported ability claims.');
   const used=new Set(),observations=[];
   for(const o of v.observations){
+   try{
    if(!m.components.some(c=>c.key===o.component)||used.has(o.component)||!(o.outcome in outcomes)||!['current','historical'].includes(o.timeframe))throw fail('Invalid or repeated observation.');used.add(o.component);
    o.quote=normalize(o.quote);o.fact=normalize(o.fact);o.limit=normalize(o.limit);
    if(!o.quote||!text.includes(o.quote)||o.quote.length>1200||!o.fact||!o.limit)throw fail('A behavior needs an exact passage, bounded fact and limitation.');
@@ -70,6 +71,7 @@ function validateResult(item,source){
    if(m.key==='followthrough'&&o.component==='accumulation'&&/i hope.*(?:move|guide|help).*project/i.test(o.quote))throw fail('Hoping feedback helps is not a completed result.');
    if(m.key==='followthrough'&&o.component==='recovery'&&/\b(?:i|we)\s+(?:(?:probably|likely)\s+)?(?:will|won['’]?t|would|wouldn['’]?t|am going to|are going to)\b|\bi['’]ll\b/i.test(o.quote)&&!/\b(?:i|we)\s+(?:(?:have|had|already|actually|then|just)\s+)*(?:stopped|changed|tried|tested|adjusted|restarted|retried|revised)\b/i.test(o.quote))throw fail('A stated future adjustment is not a reported recovery action; omit this observation unless the note supplies an actual subsequent adjustment.');
    observations.push(o);
+   }catch(error){error.metric=m.key;error.component=o.component;throw error;}
   }
   values[m.key]={quote,explanation,observations};
  }
