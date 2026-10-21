@@ -9,9 +9,8 @@
 #brain-search { max-width:200px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px;background:var(--panel); }
 summary { cursor:pointer; }
 .score-analysis { display:grid;gap:10px; }
-.score-metric { display:grid;grid-template-rows:24px minmax(0,1fr) 18px;gap:6px;height:210px;align-items:start; }
-.score-metric .score-excerpt { height:100%;overflow:auto;text-align:left; }
-.score-metric:has(.score-details[open]) { height:auto;min-height:210px;grid-template-rows:24px auto auto; }
+.score-metric { display:grid;grid-template-rows:auto auto auto;gap:6px;align-items:start;align-content:start; }
+.score-metric .score-excerpt { overflow:visible;text-align:left; }
 .score-details { color:var(--muted);font-size:11px!important;line-height:1.35; }
 .score-details p { margin:5px 0; }
 .score-details a,.score-guide a { color:inherit;text-decoration:underline; }
