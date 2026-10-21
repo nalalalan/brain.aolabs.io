@@ -50,9 +50,9 @@ module.exports=function noteScores(root,readFiles){
     const quote=shortQuote(value.quoteExcerpt,passage),components={};let observed=false;
     for(const component of metric.components){
      const update=value.components[component.key];if(!update||!Object.hasOwn(update,'score'))throw fail('Incomplete component assessment.',502);
-     const evidence=indexed.get(source.id)[update.quoteId]||'';
-     if(update.score===null||(key==='followthrough'&&isRequest(evidence))){components[component.key]=previous[key]?.components?.[component.key]||{score:null,quote:'',sourceId:null};continue;}
-     if(!Number.isInteger(update.score)||!evidence)throw fail('A component needs a numeric estimate and exact source evidence.',502);
+     const evidence=indexed.get(source.id)[update.quoteId]||'',retained=previous[key]?.components?.[component.key];
+     if(update.score===null||(key==='followthrough'&&isRequest(evidence))||(!evidence&&Number.isFinite(update.score)&&update.score===retained?.score)){components[component.key]=retained||{score:null,quote:'',sourceId:null};continue;}
+     if(!Number.isInteger(update.score)||!evidence){const error=fail('A component needs a numeric estimate and exact source evidence.',502);error.sourceId=source.id;error.repairHint=key+' '+component.key+': '+(!Number.isInteger(update.score)?'score must be an integer or null':'quoteId '+update.quoteId+' is not a passage from the current note. To keep the earlier component, return score:null; a changed value requires a valid current passage');throw error;}
      if(key==='followthrough'){
       const allowed=['actual_action','completed_outcome','repeated_pattern','practical_difficulty',...(component.key==='selection'?['personal_decision']:[])];
       if(!allowed.includes(update.basis)||(component.key!=='selection'&&update.basis!=='practical_difficulty'&&isOnlyProspective(evidence))){const error=fail('Follow-through needs completed or ongoing action, not a proposed action.',502);error.sourceId=source.id;error.repairHint='Follow-through '+component.key+' at passage '+update.quoteId+' was rejected: '+(!allowed.includes(update.basis)?'basis '+update.basis+' is not allowed; use one of '+allowed.join(', '):'the selected passage describes only a future or hypothetical action');throw error;}
