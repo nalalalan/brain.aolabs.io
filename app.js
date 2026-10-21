@@ -434,6 +434,7 @@ function buildScoreHistoryPlot(rows) {
     { key: "support", label: "support", colorClass: "life-series", value: item => window.BrainScores.score(item,"support") },
   ].map((seriesItem) => {
     const observations = rows.map((item) => ({
+      item,
       time: scoreHistoryTime(item),
       value: seriesItem.value(item),
       observed: Number.isFinite(window.BrainScores.observedScore(item,seriesItem.key)),
@@ -481,7 +482,7 @@ function buildScoreHistoryPlot(rows) {
     const pathData = seriesItem.observations.map((point, index) => `${index === 0 ? "M" : "L"}${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`).join(" ");
     append("path", { d: pathData, class: `score-series-path score-observation-path ${seriesItem.colorClass}` });
     seriesItem.observations.forEach((point, index) => {
-      const item = rows[index];
+      const item = point.item;
       const dot = append("circle", { cx: x(point.time), cy: y(point.value), r: 2.15, class: `score-series-point score-observation-point ${seriesItem.colorClass}` });
       const pointTitle = document.createElementNS(namespace, "title");
       const coverage=window.BrainScores.coverage?.(item,seriesItem.key);
