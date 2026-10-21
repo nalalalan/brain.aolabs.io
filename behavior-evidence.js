@@ -61,7 +61,7 @@ function validateResult(item,source){
   for(const o of v.observations){
    if(!m.components.some(c=>c.key===o.component)||used.has(o.component)||!(o.outcome in outcomes)||!['current','historical'].includes(o.timeframe))throw fail('Invalid or repeated observation.');used.add(o.component);
    o.quote=normalize(o.quote);o.fact=normalize(o.fact);o.limit=normalize(o.limit);
-   if(!o.quote||!text.includes(o.quote)||o.quote.length>900||!o.fact||!o.limit)throw fail('A behavior needs an exact passage, bounded fact and limitation.');
+   if(!o.quote||!text.includes(o.quote)||o.quote.length>1200||!o.fact||!o.limit)throw fail('A behavior needs an exact passage, bounded fact and limitation.');
    if(text.split(/\s+/).length>20&&o.quote.split(/\s+/).length<6)throw fail('Use at least six exact words of context for each observation, not an ambiguous fragment.');
    // These are necessary exclusion checks, not a substitute for the separate source review.
    const onlyWish=/^(?:i|we)\s+(?:would like|want|hope|wish|could|should|might|am going to|will)\b/i.test(o.quote)&&!/[.!?]\s+(?:i|we)\s+(?:did|made|built|tried|tested|finished|told|said|asked|used|changed)\b/i.test(o.quote);

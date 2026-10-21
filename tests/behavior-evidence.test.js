@@ -28,5 +28,12 @@ rejection('i guess remembering that i can leave helps my anxiety.','insight','ap
 rejection('i hope my thoughts help move the project along.','followthrough','accumulation');
 rejection('After that setback, I will try a different plan next week.','followthrough','recovery');
 rejection("now i've done it, and i probably won't do it again because it seems like it will result in a conflict.",'followthrough','recovery');
+const {resolveItem}=require('../evidence-score-store');
+const passageSource={id:'passages',sourceText:'I printed the parts and assembled the device.\nIt produced the dome when I turned the dial. I want faster travel next.'};
+const passageCandidate={sourceId:'passages',values:Object.fromEntries(rubric.metrics.map(m=>[m.key,{quoteId:'s1',explanation:neutral()[m.key].explanation,observations:[]}]))};
+passageCandidate.values.followthrough.observations=[{component:'execution',outcome:'demonstrated',timeframe:'current',quoteIds:['s1','s2'],fact:'You report assembling and testing the physical device yourself.',limit:'The requested speed improvement is not reported as completed.'}];
+assert.equal(resolveItem(passageCandidate,passageSource).values.followthrough.observations[0].quote,'I printed the parts and assembled the device. It produced the dome when I turned the dial.');
+passageCandidate.values.followthrough.observations[0].quoteIds=['s1','s3'];assert.throws(()=>resolveItem(passageCandidate,passageSource),'Nonadjacent excerpts cannot become a fabricated contiguous quote.');
+passageCandidate.values.followthrough.observations[0].quoteIds=['s999'];assert.throws(()=>resolveItem(passageCandidate,passageSource),'Invented passage IDs are rejected.');
 console.log('PASS: transparent arithmetic, continuous aggregates, setbacks, daily caps, duplicate and future invariance, neutral uncertainty, known invalid evidence exclusions.');
 
