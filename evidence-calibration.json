@@ -1,17 +1,1 @@
-{
-  "analysisHash": "6adea6d42621d0813dd92389bcd0d44b464de12670e4e40d62a09806471ee200",
-  "limitations": "Small source-reviewed acceptance set; model classifications remain interpretive and scores are not empirically validated measures of ability.",
-  "version": "20261021-behavior-evidence-v13",
-  "checks": [
-    "relief_is_not_tested_application",
-    "hoping_or_preparing_requests_is_not_a_usable_outcome",
-    "requested_feature_is_not_applied_learning",
-    "actual_build_and_test_recognized",
-    "actual_meeting_expression_and_agency_recognized",
-    "critical_classifications_repeat",
-    "duplicate_and_future_invariance",
-    "setbacks_and_neutral_uncertainty"
-  ],
-  "status": "passed",
-  "checkedAt": "2026-10-21T07:15:56.7431034+00:00"
-}
+{"version":"20261021-behavior-evidence-v13","analysisHash":"cdf79bebf7f0280ea408921eaf9789193908be8e551a43e47376027ceea9a8af","gateHash":"4ae1253b154e86e7f21b762575db99437957afc8893b6e19af18f1b66cc88824","status":"passed","checkedAt":"2026-10-21T07:40:02.134Z","checks":["eight_original_source_cases","critical_classifications_repeat","future_adjustments_not_completed_recovery"],"limitations":"Small acceptance set, not empirical validation; ambiguous classifications can vary."}
