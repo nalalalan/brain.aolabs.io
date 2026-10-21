@@ -1,0 +1,111 @@
+{
+  "version": "20261021-component-reference-v10",
+  "zero": "A defined fictional man living rough: immediate survival dominates, plans repeatedly break down, personal direction is difficult to sustain under pressure, and practical and social support is unreliable. This is a constructed reference, not a claim about homeless people generally or anyone's worth.",
+  "hundred": "An inferred Moritz Bächer professional reference: durable self-chosen direction, clear communication and agency, practical iteration to deployed results, and dependable collaborators and resources. This benchmark is informed by public work, not a measured personality or knowledge of his private life.",
+  "sources": [
+    {
+      "title": "Moritz Bächer: role and research direction",
+      "url": "https://www.baecher.info/"
+    },
+    {
+      "title": "Moritz's interview: direction, collaboration and delivery",
+      "url": "https://mickeyvisit.com/disney-changes-character-meet-news-march-16-2026/"
+    },
+    {
+      "title": "Olaf: design, testing and practical constraints",
+      "url": "https://arxiv.org/abs/2512.16705"
+    }
+  ],
+  "metrics": [
+    {
+      "key": "voice",
+      "label": "Voice",
+      "components": [
+        {
+          "key": "direction",
+          "label": "Knowing what you want",
+          "zero": "Priorities react to pressure; your preference is hard to distinguish from avoiding conflict.",
+          "hundred": "You name a durable direction and purpose, distinguishing essential goals from negotiable details."
+        },
+        {
+          "key": "expression",
+          "label": "Expressing it",
+          "zero": "Important needs remain unspoken, emerge only after frustration builds, or do not become a clear request.",
+          "hundred": "You explain the problem, preference and needed decision clearly to different people."
+        },
+        {
+          "key": "disagreement",
+          "label": "Handling disagreement",
+          "zero": "Challenges lead to withdrawal, abandonment or repetition without resolving the discussion.",
+          "hundred": "You consider criticism, defend a reasoned position, revise when warranted and negotiate alternatives."
+        },
+        {
+          "key": "agency",
+          "label": "Exercising agency",
+          "zero": "You mainly wait for permission or react to other people's agendas.",
+          "hundred": "You initiate consequential conversations, put decisions on the agenda and take responsibility for choices."
+        }
+      ]
+    },
+    {
+      "key": "followthrough",
+      "label": "Follow-through",
+      "components": [
+        {
+          "key": "selection",
+          "label": "Choosing work",
+          "zero": "Competing intentions leave the next action unclear or repeatedly changing.",
+          "hundred": "You choose manageable priorities and actions that advance them or resolve relevant uncertainty."
+        },
+        {
+          "key": "execution",
+          "label": "Executing",
+          "zero": "Starts depend on urgency or brief motivation and often do not reach completion.",
+          "hundred": "You repeatedly prepare, act, check and complete meaningful work."
+        },
+        {
+          "key": "recovery",
+          "label": "Responding to failure",
+          "zero": "A failed attempt often ends the effort or causes an unrelated restart.",
+          "hundred": "You identify the problem, make a relevant adjustment and retry, or deliberately stop for a reason."
+        },
+        {
+          "key": "accumulation",
+          "label": "Accumulating results",
+          "zero": "Effort is lost, forgotten or restarted, leaving little usable afterward.",
+          "hundred": "Results, skills and tools make later work easier and remain useful through difficult days."
+        }
+      ]
+    },
+    {
+      "key": "support",
+      "label": "Support",
+      "components": [
+        {
+          "key": "stability",
+          "label": "Practical stability",
+          "zero": "Rest, space, transport, communication or essential tools cannot reliably be counted on.",
+          "hundred": "Practical conditions are dependable enough to plan and work around."
+        },
+        {
+          "key": "help",
+          "label": "Useful help",
+          "zero": "Help is intermittent, misses the actual problem or requires repeated explanation without resolution.",
+          "hundred": "Relevant people or tools are accessible and their help produces useful results."
+        },
+        {
+          "key": "respect",
+          "label": "Autonomy and respect",
+          "zero": "Help is unpredictable, controlling or conditional on surrendering important preferences.",
+          "hundred": "You can request help, disagree and set boundaries while retaining useful support."
+        },
+        {
+          "key": "continuity",
+          "label": "Continuity",
+          "zero": "One unavailable person or failed arrangement can leave you without an alternative.",
+          "hundred": "Durable relationships and alternatives let you recover when one source of help fails."
+        }
+      ]
+    }
+  ]
+}

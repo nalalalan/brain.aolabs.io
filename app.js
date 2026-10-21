@@ -453,7 +453,9 @@ function buildScoreHistoryPlot(rows) {
   const lastTime = scoreHistoryTime(rows[rows.length - 1]);
   const timeSpan = Math.max(1, lastTime - firstTime);
   const x = (time) => margin.left + (timeSpan === 1 ? width / 2 : ((time - firstTime) / timeSpan) * width);
-  const y = (value) => margin.top + ((100 - Math.max(0, Math.min(100, value))) / 100) * height;
+  const extentValues=series.flatMap(s=>[...s.observations.map(p=>p.value),scoreTrendValueAt(s.trend,s.trend.points[0]?.time),scoreTrendValueAt(s.trend,s.trend.points.at(-1)?.time)]).filter(Number.isFinite);
+  const axisMin=Math.floor(Math.min(0,...extentValues)/25)*25,axisMax=Math.ceil(Math.max(100,...extentValues)/25)*25;
+  const y = (value) => margin.top + ((axisMax-value)/(axisMax-axisMin))*height;
   const append = (tagName, attributes = {}, text = "") => {
     const node = document.createElementNS(namespace, tagName);
     Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, String(value)));
@@ -462,7 +464,7 @@ function buildScoreHistoryPlot(rows) {
     return node;
   };
 
-  [0, 50, 100].forEach((value) => {
+  [...new Set([axisMin,0,50,100,axisMax])].sort((a,b)=>a-b).forEach((value) => {
     const lineY = y(value);
     append("line", { x1: margin.left, y1: lineY, x2: margin.left + width, y2: lineY, class: "score-grid-line" });
     append("text", { x: margin.left - 7, y: lineY + 4, class: "score-axis-label", "text-anchor": "end" }, String(value));
@@ -534,7 +536,7 @@ function scoreSeriesTrend(observations) {
 
 function scoreTrendValueAt(trend, time) {
   if (!Number.isFinite(trend?.rate) || !Number.isFinite(trend?.intercept) || !Number.isFinite(trend?.origin)) return NaN;
-  return Math.max(0, Math.min(100, trend.intercept + trend.rate * ((time - trend.origin) / 86400000)));
+  return trend.intercept + trend.rate * ((time - trend.origin) / 86400000);
 }
 
 function medianNumber(values) {

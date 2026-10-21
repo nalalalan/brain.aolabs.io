@@ -8,3 +8,17 @@
 .vault-main details { font-size:12px;overflow-wrap:anywhere; }
 #brain-search { max-width:200px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px;background:var(--panel); }
 summary { cursor:pointer; }
+.score-analysis { display:grid;gap:10px; }
+.score-metric { display:grid;grid-template-rows:24px minmax(0,1fr) 18px;gap:6px;height:210px;align-items:start; }
+.score-metric .score-excerpt { height:100%;overflow:auto;text-align:left; }
+.score-metric:has(.score-details[open]) { height:auto;min-height:210px;grid-template-rows:24px auto auto; }
+.score-details { color:var(--muted);font-size:11px!important;line-height:1.35; }
+.score-details p { margin:5px 0; }
+.score-details a,.score-guide a { color:inherit;text-decoration:underline; }
+.score-guide { font-size:11px;line-height:1.4; }
+.score-guide p { margin:7px 0; }
+.score-guide>a { display:block;margin-top:6px; }
+.vault-main:has(.score-analysis) { align-content:start; }
+@media (min-width:721px) and (max-width:860px) {
+  .intake-workspace { grid-template-columns:minmax(0,1fr); }
+}

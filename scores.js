@@ -1,11 +1,12 @@
 (() => {
   const base=window.BRAIN_API_BASE.replace(/\/$/,''), metrics=[{key:'voice',label:'Voice',cls:'autism'},{key:'followthrough',label:'Follow-through',cls:'adhd'},{key:'support',label:'Support',cls:'life'}];
-  let entries={}; const busy=new Set(), errors=new Map(), previews=new Map();
+  let entries={},rubric=null; const busy=new Set(), errors=new Map(), previews=new Map();
   const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
   const dateOf=item=>Date.parse(item.sourceCreatedAt||item.createdAt||0);
   function observations(){const seen=new Set();return [...state].sort((a,b)=>dateOf(a)-dateOf(b)||a.id.localeCompare(b.id)).filter(item=>{const e=entries[item.id];if(!e||seen.has(e.sourceHash))return false;seen.add(e.sourceHash);return true;});}
   function before(a,b){return dateOf(a)<dateOf(b)||(dateOf(a)===dateOf(b)&&a.id.localeCompare(b.id)<=0);}
   function assessment(item,key,allowLater=true){
+    const own=entries[item.id]?.values[key];if(Number.isFinite(own?.score))return {source:item,value:own,later:false,carried:false};
     const rows=observations(),prior=rows.filter(r=>before(r,item));
     const source=[...prior].reverse().find(r=>Number.isFinite(entries[r.id]?.values[key]?.score))||(allowLater?rows.find(r=>Number.isFinite(entries[r.id]?.values[key]?.score)):null);
     return source?{source,value:entries[source.id].values[key],later:!before(source,item),carried:source.id!==item.id}:null;
@@ -25,24 +26,28 @@
     const summary=document.getElementById('score-summary');summary.replaceChildren();
     if(last){const text=metrics.map(m=>assessment(last,m.key,false)).filter(Boolean).map(a=>secondPerson(a.value.explanation).split(/(?<=[.!?])\s+/)[0]).join(' ');summary.append(node('p',text,'summary-main'));}
     else summary.append(node('p','Save a note to see your scores and highlighted evidence.'));
-    summary.append(node('p','Estimates from your recent notes. Scores can rise, fall, or stay steady; earlier achievements remain part of the context.','score-basis'));
+    summary.append(node('p','Component estimates from your recent notes. 0 = the defined survival reference; 100 = the Moritz reference. Scores can rise, fall, or stay steady, including beyond either reference.','score-basis'));
+    if(rubric){const guide=node('details',undefined,'score-guide');guide.append(node('summary','Score references'));guide.append(node('p','0 — '+rubric.zero),node('p','100 — '+rubric.hundred));for(const metric of rubric.metrics){guide.append(node('strong',metric.label));for(const c of metric.components)guide.append(node('p',c.label+': 0 — '+c.zero+' 100 — '+c.hundred));}for(const source of rubric.sources){const a=node('a',source.title);a.href=source.url;a.target='_blank';a.rel='noopener';guide.append(a);}summary.append(guide);}
     if(typeof renderVault==='function')renderVault();
   }
-  async function load(){try{const response=await fetch(base+'/api/note-scores',{cache:'no-store'});if(!response.ok)throw Error('Scores could not load.');entries=Object.fromEntries(Object.entries((await response.json()).entries).filter(([,entry])=>metrics.every(m=>entry.values?.[m.key])));refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
+  async function load(){try{const response=await fetch(base+'/api/note-scores',{cache:'no-store'});if(!response.ok)throw Error('Scores could not load.');const data=await response.json();rubric=data.rubric;entries=Object.fromEntries(Object.entries(data.entries).filter(([,entry])=>metrics.every(m=>entry.values?.[m.key])));refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
   async function analyze(item){if(busy.has(item.id))return;busy.add(item.id);errors.delete(item.id);renderVault();try{const r=await fetch(base+'/api/note-scores/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sourceId:item.id})});const result=await r.json();if(!r.ok)throw Error(result.error||'Could not score this note.');entries[item.id]=result.entry;refresh();}catch(e){errors.set(item.id,e.message);}finally{busy.delete(item.id);renderVault();}}
   window.BrainScores={
     refresh,analyze,
     score(item,key){return assessment(item,key,false)?.value.score??NaN;},
-    observedScore(item,key){return entries[item.id]?.values[key]?.score??NaN;},
+    observedScore(item,key){const value=entries[item.id]?.values[key];return value?.observed===false?NaN:value?.score??NaN;},
     preview(item){const entry=entries[item.id];if(!entry||!item.sourceText)return '';const key=entry.sourceHash+entry.createdAt;if(!previews.has(key))previews.set(key,createTextPreviewDataUrl(item.sourceText,item.sourceCreatedAt||item.createdAt,Object.fromEntries(metrics.map(m=>[m.key,entry.values[m.key].quote]))));return previews.get(key);},
-    append(main,item){const entry=entries[item.id];if(entry){for(const m of metrics){const assessed=assessment(item,m.key),value=assessed?.value;const score=node('p',m.label.toLowerCase()+' '+(value?value.score+'/100':'Awaiting first assessment'),m.cls+'-score');const explanation=node('p',undefined,m.cls+'-score-why score-excerpt');
-      if(assessed?.carried)explanation.append(node('span',(assessed.later?'First assessed ':'From your ')+shortDate(assessed.source)+' note: '));
-      if(value?.quote)explanation.append(node('mark','“'+value.quote+'”',m.key),' ');
-      const copy=!assessed?'Your score will appear after the first relevant assessment.':assessed.later?'Your first available estimate is from this later note; it is not a rating of this earlier entry.':assessed.carried?'Your latest '+m.label.toLowerCase()+' estimate remains '+value.score+'/100, based on that note.':secondPerson(value.explanation);
-      explanation.append(document.createTextNode(copy));main.append(score,explanation);
-      const reference=assessed?.carried?assessed.source.id:value?.comparisonSourceId;
-      if(reference){const link=node('a',assessed?.carried?'Score source':'Earlier comparison','vault-meta');link.href=base+'/api/files/'+encodeURIComponent(reference)+'/view';link.target='_blank';link.rel='noopener';main.append(link);}
-    }if(entry.analyzedChars<entry.sourceChars)main.append(node('p','Based on the first '+entry.analyzedChars.toLocaleString()+' characters.','vault-meta'));}
+    append(main,item){const entry=entries[item.id];if(entry){const analysis=node('div',undefined,'score-analysis');for(const m of metrics){const assessed=assessment(item,m.key),value=entry.values[m.key];const section=node('section',undefined,'score-metric');const score=node('p',m.label.toLowerCase()+' '+(assessed?assessed.value.score+'/100':'Awaiting first assessment'),m.cls+'-score');const explanation=node('p',undefined,m.cls+'-score-why score-excerpt');
+      if(value.quote)explanation.append(node('mark','“'+value.quote+'”',m.key),' ');
+      explanation.append(document.createTextNode(secondPerson(value.explanation)));
+      const detail=node('details',undefined,'score-details');detail.append(node('summary','Score details'));
+      if(assessed?.later)detail.append(node('p','First estimated '+shortDate(assessed.source)+'. This later reference is not a historical assessment of this note.'));
+      const componentDefinitions=rubric?.metrics.find(r=>r.key===m.key)?.components||[];
+      for(const c of componentDefinitions){const component=value.components?.[c.key],row=node('p',c.label+': '+(Number.isFinite(component?.score)?component.score:'not yet established'));if(component?.sourceId){const link=node('a',' · '+(component.sourceId===item.id?'this note':shortDate({createdAt:component.date})));link.href=base+'/api/files/'+encodeURIComponent(component.sourceId)+'/view';link.target='_blank';link.rel='noopener';row.append(link);}detail.append(row);}
+      detail.append(node('p',value.coverage===4?'Equal-weight average of all four components.':'Provisional average: '+value.coverage+' of four components established; unknown components are not scored as zero.'));
+      if(value.comparisonSourceId){const link=node('a','Earlier comparison');link.href=base+'/api/files/'+encodeURIComponent(value.comparisonSourceId)+'/view';link.target='_blank';link.rel='noopener';detail.append(link);}
+      section.append(score,explanation,detail);analysis.append(section);
+    }main.append(analysis);if(entry.analyzedChars<entry.sourceChars)main.append(node('p','Based on the first '+entry.analyzedChars.toLocaleString()+' characters.','vault-meta'));}
       else if(item.sourceText){const p=node('p',busy.has(item.id)?'Reading and scoring this note…':errors.get(item.id)||'Not scored yet.','vault-meta');main.append(p);if(!busy.has(item.id)&&item.source==='sync')main.append(actionButton(errors.has(item.id)?'Retry scores':'Read and score',()=>analyze(item)));}
       if(item.sourceText?.length===20000&&item.analysisQualityVersion)main.append(node('p','Based on saved text; this older entry may continue in the original PDF.','vault-meta'));
     }
