@@ -18,6 +18,9 @@
     return String(text||'').replace(/\bHe\b/g,'You').replace(/\bhe\b/g,'you').replace(/\bHis\b/g,'Your').replace(/\bhis\b/g,'your').replace(/\bhimself\b/g,'yourself').replace(/\bhim\b/g,'you').replace(/\b(you(?:\s+(?:actually|again|already|briefly|clearly|directly|explicitly|honestly|not|only|openly|personally|still|successfully))*)\s+(\w+)/gi,(all,subject,verb)=>subject+' '+(verbs[verb.toLowerCase()]||verb));
   }
   function shortDate(item){return new Date(dateOf(item)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/New_York'});}
+  function evidencePassage(source,quote){
+    if(!quote)return '';const parts=[];for(const segment of String(source||'').slice(0,60000).split(/(?<=[.!?])\s+|\n+/)){let part='';for(const word of segment.replace(/\s+/g,' ').trim().split(' ')){if(part.length+word.length>550&&part){parts.push(part);part='';}part+=(part?' ':'')+word;}if(part)parts.push(part);}return parts.find(part=>part.includes(quote))||quote;
+  }
   function refresh(){
     const rows=observations(),last=rows.at(-1),end=last?dateOf(last):0;
     for(const m of metrics){const badge=document.getElementById('score-'+m.key);if(!badge)continue;const current=last?assessment(last,m.key,false):null;const old=[...rows].reverse().find(r=>dateOf(r)<=end-28*86400000&&Number.isFinite(entries[r.id]?.values[m.key]?.score));let detail='latest estimate';if(current&&old){const delta=current.value.score-entries[old.id].values[m.key].score;detail+=' · '+(delta>0?'+':'')+delta+' vs 4 weeks ago';}badge.replaceChildren(node('span',m.label.toLowerCase()),node('strong',current?current.value.score+'/100':'Awaiting assessment'),node('em',detail));}
@@ -39,7 +42,7 @@
     score(item,key){return assessment(item,key,false)?.value.score??NaN;},
     observedScore(item,key){const value=entries[item.id]?.values[key];return value?.observed===false||(Number.isInteger(value?.coverage)&&value.coverage<4)?NaN:value?.score??NaN;},
     coverage(item,key){return entries[item.id]?.values[key]?.coverage;},
-    preview(item){const entry=entries[item.id];if(!entry||!item.sourceText)return '';const key=entry.sourceHash+entry.createdAt;if(!previews.has(key))previews.set(key,createTextPreviewDataUrl(item.sourceText,item.sourceCreatedAt||item.createdAt,Object.fromEntries(metrics.map(m=>[m.key,entry.values[m.key].quote]))));return previews.get(key);},
+    preview(item){const entry=entries[item.id];if(!entry||!item.sourceText)return '';const key=entry.sourceHash+entry.createdAt;if(!previews.has(key))previews.set(key,createTextPreviewDataUrl(item.sourceText,item.sourceCreatedAt||item.createdAt,Object.fromEntries(metrics.map(m=>[m.key,evidencePassage(item.sourceText,entry.values[m.key].quote)]))));return previews.get(key);},
     append(main,item){const entry=entries[item.id];if(entry){const analysis=node('div',undefined,'score-analysis');for(const m of metrics){const assessed=assessment(item,m.key),value=entry.values[m.key],detailValue=assessed?.later?assessed.value:value;const section=node('section',undefined,'score-metric');const score=node('p',m.label.toLowerCase()+(assessed?.later?' reference':'')+' '+(assessed?assessed.value.score+'/100':'Awaiting first assessment'),m.cls+'-score');const explanation=node('p',undefined,m.cls+'-score-why score-excerpt');
       if(value.quote)explanation.append(node('mark','“'+value.quote+'”',m.key),' ');
       explanation.append(document.createTextNode(secondPerson(value.explanation)));

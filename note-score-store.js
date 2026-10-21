@@ -45,7 +45,8 @@ module.exports=function noteScores(root,readFiles){
     const {key}=metric,value=item.values?.[key];if(!value?.components)throw fail('Incomplete component assessment.',502);
     const explanation=normalize(value.explanation),wordCount=explanation.split(' ').length;
     if(wordCount<24||wordCount>52||explanation.length>420||/your latest.*estimate remains|based on that note|no new evidence/i.test(explanation))throw fail('A score needs a specific, concise explanation.',502);
-    const passage=indexed.get(source.id)[value.quoteId]||'';if(!passage)throw fail('A score needs an exact current-note passage.',502);
+    const currentPassages=indexed.get(source.id),excerpt=normalize(value.quoteExcerpt);
+    const passage=currentPassages[value.quoteId]||(excerpt?Object.values(currentPassages).find(p=>p.includes(excerpt)):null)||Object.values(value.components).filter(c=>c?.score!==null).map(c=>currentPassages[c?.quoteId]).find(Boolean)||Object.values(currentPassages)[0]||'';if(!passage)throw fail('A score needs an exact current-note passage.',502);
     const quote=shortQuote(value.quoteExcerpt,passage),components={};let observed=false;
     for(const component of metric.components){
      const update=value.components[component.key];if(!update||!Object.hasOwn(update,'score'))throw fail('Incomplete component assessment.',502);
