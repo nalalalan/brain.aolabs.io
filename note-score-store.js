@@ -22,9 +22,9 @@ module.exports=function noteScores(root,readFiles){
  const valid=(e,s,ctx)=>e&&e.version===version&&e.rubricHash===rubricHash&&e.sourceHash===hash(s.sourceText)&&e.historyHash===ctx.get(s.id);
  function passages(source){const result=[];for(const segment of source.slice(0,60000).split(/(?<=[.!?])\s+|\n+/)){let part='';for(const word of normalize(segment).split(' ')){if(part.length+word.length>550&&part){result.push(part);part='';}part+=(part?' ':'')+word;}if(part)result.push(part);}return Object.fromEntries(result.map((t,i)=>['s'+(i+1),t]));}
  const isRequest=q=>/^(?:(?:so|and|also|then|please|ok|okay)[,\s]+)*(?:add|update|include|make|create|generate|change|fix|remove|replace|rewrite|revise|build|implement|show|find|use|put|give|check|ensure)\b/i.test(q)||/\b(?:can|could|would|will) you\b|\bi (?:want|need|would like) you to\b/i.test(q);
- const isOnlyProspective=q=>/\b(?:i(?:'m| am) going to|i(?:'ll| will)|i (?:plan|want|intend|hope) to|i (?:could|would|should))\b/i.test(q)&&!/\b(?:i|we)\s+(?:(?:have|had|already|actually)\s+)*(?:did|made|built|finished|completed|tested|tried|used|started|measured|called|sent|wrote|printed|assembled|learned|saved|repaired|have been|am working|are working)\b/i.test(q);
+ const isOnlyProspective=q=>/\b(?:i(?:'m| am) going to|i(?:'ll| will)|i (?:plan|want|intend|hope) to|i (?:could|would|should))\b/i.test(q)&&!/\b(?:i|we)\s+(?:(?:have|had|already|actually)\s+)*(?:did|made|built|finished|completed|tested|tried|used|started|measured|called|sent|wrote|printed|assembled|learned|saved|repaired|ate|slept|played|drank|practiced|have been)\b/i.test(q)&&!/\b(?:i|we)(?:'m|'re|\s+(?:am|are))\s+(?:(?:actually|currently|still|already|also)\s+)*(?!going to|planning|hoping|intending)\w+ing\b/i.test(q);
  function shortQuote(value,passage){const requested=normalize(value);if(requested&&passage.includes(requested)&&requested.length<=110&&requested.split(' ').length<=16)return requested;let words=passage.split(' ').slice(0,16);while(words.join(' ').length>110)words.pop();return words.join(' ');}
- async function analyzeBatch(batch,files,ctx){
+ async function analyzeBatch(batch,files,ctx,repairHint=''){
   const data=await read(),all=ordered(files),before=all.slice(0,all.findIndex(s=>s.id===batch[0].id));
   if(before.some(s=>!valid(data.entries[s.id],s,ctx)))throw fail('Earlier notes need chronological analysis first.',409);
   const history=before.map(s=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,values:data.entries[s.id].values})),latest=history.at(-1)?.values||{},cutoff=dateOf(batch[0])-28*86400000;
@@ -32,7 +32,7 @@ module.exports=function noteScores(root,readFiles){
   const indexed=new Map(batch.map(s=>[s.id,passages(s.sourceText)])),apiKey=process.env.OPENAI_API_KEY;
   if(!apiKey)throw fail('Scoring is unavailable. Your note is saved.',503);
   const model=process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4';
-  const input=JSON.stringify({latestComponentState:latest,recentEvidence:recent,allowedEarlierSourceIds:history.map(e=>e.sourceId),notes:batch.map((s,i)=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,sequence:i+1,allowedEarlierBatchSources:batch.slice(0,i).map(p=>p.id),passages:indexed.get(s.id)}))})+'\nAssess notes in order. Ignore later notes when assessing earlier ones. Return JSON with one entry per note. Every metric needs a fresh 32-44 word explanation, including unchanged scores.';
+  const input=JSON.stringify({latestComponentState:latest,recentEvidence:recent,allowedEarlierSourceIds:history.map(e=>e.sourceId),notes:batch.map((s,i)=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,sequence:i+1,allowedEarlierBatchSources:batch.slice(0,i).map(p=>p.id),passages:indexed.get(s.id)}))})+'\nAssess notes in order. Ignore later notes when assessing earlier ones. Return JSON with one entry per note. Every metric needs a fresh 32-44 word explanation, including unchanged scores.'+(repairHint?'\nCorrection needed: '+repairHint+' Use an exact passage showing what actually happened or return null for an unsupported component. Make the explanation match the accepted evidence.':'');
   const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:AbortSignal.timeout(180000),headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model,store:false,reasoning:{effort:'low'},max_output_tokens:Math.min(24000,3000*batch.length),instructions,input,text:{format:{type:'json_object'}}})});
   if(!response.ok){const error=await response.json().catch(()=>({}));const detail={status:response.status,code:error.error?.code||null,param:error.error?.param||null};console.error('Score provider response',JSON.stringify(detail));throw fail('Could not score this note right now ('+response.status+(detail.code?' / '+detail.code:'')+'). Your original is saved.',[400,401,403,404,429].includes(response.status)?503:502);}
   const body=await response.json(),output=body.output?.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('')||'';
@@ -54,7 +54,7 @@ module.exports=function noteScores(root,readFiles){
      if(!Number.isInteger(update.score)||!evidence)throw fail('A component needs a numeric estimate and exact source evidence.',502);
      if(key==='followthrough'){
       const allowed=['actual_action','completed_outcome','repeated_pattern','practical_difficulty',...(component.key==='selection'?['personal_decision']:[])];
-      if(!allowed.includes(update.basis)||(component.key!=='selection'&&update.basis!=='practical_difficulty'&&isOnlyProspective(evidence)))throw fail('Follow-through needs completed or ongoing action, not a proposed action.',502);
+      if(!allowed.includes(update.basis)||(component.key!=='selection'&&update.basis!=='practical_difficulty'&&isOnlyProspective(evidence))){const error=fail('Follow-through needs completed or ongoing action, not a proposed action.',502);error.sourceId=source.id;error.repairHint='Follow-through '+component.key+' at passage '+update.quoteId+' was rejected: '+(!allowed.includes(update.basis)?'basis '+update.basis+' is not allowed; use one of '+allowed.join(', '):'the selected passage describes only a future or hypothetical action');throw error;}
      }
      components[component.key]={score:update.score,quote:evidence,sourceId:source.id,date:source.sourceCreatedAt||source.createdAt,...(key==='followthrough'?{basis:update.basis}:{})};observed=true;
     }
@@ -86,7 +86,7 @@ module.exports=function noteScores(root,readFiles){
       const batch=missing.slice(i,i+8),oldEntries=new Map(batch.map(s=>[s.id,data.entries[s.id]?.createdAt]));
       try{await analyzeBatch(batch,all,ctx);}catch(error){
        if(error.status!==502)throw error;
-       for(const item of batch){const current=await read(),entry=current.entries[item.id];if(!valid(entry,item,ctx)||(payload.reanalyze&&entry?.createdAt===oldEntries.get(item.id)))await analyzeBatch([item],all,ctx);}
+       for(const item of batch){const current=await read(),entry=current.entries[item.id];if(!valid(entry,item,ctx)||(payload.reanalyze&&entry?.createdAt===oldEntries.get(item.id)))await analyzeBatch([item],all,ctx,error.sourceId&&error.sourceId!==item.id?'':error.repairHint||error.message);}
       }
      }
      data=await read();return data.entries[source.id];
