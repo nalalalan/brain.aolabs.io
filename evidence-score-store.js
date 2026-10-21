@@ -13,13 +13,14 @@ Every observation needs a contiguous EXACT quote from the current note, at least
 Each of Voice, Follow-through and Insight needs a quote (6-18 exact consecutive words, <=180 characters) and TWO specific sentences of analysis, 28-44 words and <=420 characters total. Address the writer as you/your. Explain what the note establishes and the meaningful limitation; if a component is not observed, discuss the actual situation without inventing accomplishment or announcing 'no new evidence'. No numerical score, generic boilerplate, labels, markdown, diagnosis, or grand professional framing. Private reflection can be useful without meeting a behavior criterion. Avoid repetitive openings. Keep all observations grounded in this note. Return entries for all requested source IDs.`;
 
 const analysisHash=hash(instructions+JSON.stringify(schema));
+const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'behavior-evidence.js'),'utf8'));
 module.exports=function evidenceScores(root,readFiles){
  const file=path.join(root,'.brain-behavior-evidence-v13.json'),activeFile=path.join(root,'.brain-behavior-active.json');
  let writes=Promise.resolve();const pending=new Map();
  const fail=(message,status=400)=>Object.assign(new Error(message),{status});
  async function read(){try{return JSON.parse(await fs.readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;return {records:{}};}}
  async function active(){try{return JSON.parse(await fs.readFile(activeFile,'utf8')).version===rubric.version;}catch{return false;}}
- const valid=(r,s)=>r?.version===rubric.version&&r.analysisHash===analysisHash&&r.sourceHash===hash(s.sourceText)&&r.reviewed===true;
+ const valid=(r,s)=>{if(!(r?.version===rubric.version&&r.analysisHash===analysisHash&&r.sourceHash===hash(s.sourceText)&&r.reviewed===true))return false;try{validateResult(r,s);return true;}catch{return false;}};
  const series=(files,records)=>buildSeries(files,Object.fromEntries(ordered(files).filter(s=>valid(records[s.id],s)).map(s=>[s.id,records[s.id]])));
  async function save(records){const task=writes.then(async()=>{const data=await read();for(const r of records)data.records[r.sourceId]=r;const temp=file+'.'+crypto.randomUUID()+'.tmp';await fs.mkdir(root,{recursive:true});await fs.writeFile(temp,JSON.stringify(data));await fs.rename(temp,file);return records;});writes=task.catch(()=>{});return task;}
  async function model(input,review=false){
@@ -46,7 +47,7 @@ module.exports=function evidenceScores(root,readFiles){
   const isActive=await active();
   if(url.pathname==='/api/note-scores/candidates'&&req.method==='GET'){
    const [data,files]=await Promise.all([read(),readFiles()]);const eligible=ordered(files),ready=eligible.filter(s=>valid(data.records[s.id],s));
-   send(200,{active:isActive,analysisHash,eligible:eligible.length,ready:ready.length,missing:eligible.filter(s=>!valid(data.records[s.id],s)).map(s=>s.id),...series(files,data.records)});return true;
+   send(200,{active:isActive,analysisHash,gateHash,eligible:eligible.length,ready:ready.length,missing:eligible.filter(s=>!valid(data.records[s.id],s)).map(s=>s.id),...series(files,data.records)});return true;
   }
   if(url.pathname==='/api/note-scores/prepare'&&req.method==='POST'){
    const payload=await readJson(req),files=await readFiles(),ids=[...new Set(payload.sourceIds||[])];
@@ -59,7 +60,7 @@ module.exports=function evidenceScores(root,readFiles){
    const [data,files]=await Promise.all([read(),readFiles()]);const all=ordered(files);
    if(all.some(s=>!valid(data.records[s.id],s)))throw fail('Every saved note needs current reviewed evidence before publication.',409);
    const calibration=JSON.parse(await fs.readFile(path.join(__dirname,'evidence-calibration.json'),'utf8'));
-   if(calibration.version!==rubric.version||calibration.analysisHash!==analysisHash||calibration.status!=='passed')throw fail('The current calibration cases must pass before publication.',409);
+   if(calibration.version!==rubric.version||calibration.analysisHash!==analysisHash||calibration.gateHash!==gateHash||calibration.status!=='passed')throw fail('The current calibration cases and acceptance checks must pass before publication.',409);
    const temp=activeFile+'.tmp';await fs.writeFile(temp,JSON.stringify({version:rubric.version,activatedAt:new Date().toISOString(),count:all.length}));await fs.rename(temp,activeFile);
    send(200,{active:true,count:all.length,version:rubric.version});return true;
   }
