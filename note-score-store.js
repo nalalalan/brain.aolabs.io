@@ -33,10 +33,10 @@ module.exports=function noteScores(root,readFiles){
   if(!apiKey)throw fail('Scoring is unavailable. Your note is saved.',503);
   const model=process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4';
   const input=JSON.stringify({latestComponentState:latest,recentEvidence:recent,allowedEarlierSourceIds:history.map(e=>e.sourceId),notes:batch.map((s,i)=>({sourceId:s.id,date:s.sourceCreatedAt||s.createdAt,sequence:i+1,allowedEarlierBatchSources:batch.slice(0,i).map(p=>p.id),passages:indexed.get(s.id)}))})+'\nAssess notes in order. Ignore later notes when assessing earlier ones. Return JSON with one entry per note. Every metric needs a fresh 32-44 word explanation, including unchanged scores.'+(repairHint?'\nCorrection needed: '+repairHint+' Use an exact passage showing what actually happened or return null for an unsupported component. Make the explanation match the accepted evidence.':'');
-  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:AbortSignal.timeout(180000),headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model,store:false,reasoning:{effort:'low'},max_output_tokens:Math.min(24000,3000*batch.length),instructions,input,text:{format:{type:'json_object'}}})});
+  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:AbortSignal.timeout(180000),headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model,store:false,reasoning:{effort:'low'},max_output_tokens:Math.min(32000,8000*batch.length),instructions,input,text:{format:{type:'json_object'}}})});
   if(!response.ok){const error=await response.json().catch(()=>({}));const detail={status:response.status,code:error.error?.code||null,param:error.error?.param||null};console.error('Score provider response',JSON.stringify(detail));throw fail('Could not score this note right now ('+response.status+(detail.code?' / '+detail.code:'')+'). Your original is saved.',[400,401,403,404,429].includes(response.status)?503:502);}
   const body=await response.json(),output=body.output?.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('')||'';
-  let parsed;try{parsed=JSON.parse(output);}catch{throw fail('Scoring returned incomplete text. Please retry.',502);}
+  let parsed;try{parsed=JSON.parse(output);}catch{console.error('Incomplete score response',JSON.stringify({status:body.status,reason:body.incomplete_details?.reason,contentTypes:body.output?.flatMap(o=>o.content||[]).map(c=>c.type),usage:body.usage}));throw fail('Scoring returned incomplete text. Please retry.',502);}
   const results=parsed.entries||[];let last;
   for(const source of batch){
    const item=results.find(e=>e.sourceId===source.id);if(!item)throw fail('Incomplete chronological score response.',502);
@@ -85,7 +85,7 @@ module.exports=function noteScores(root,readFiles){
      for(let i=0;i<missing.length;i+=8){
       const batch=missing.slice(i,i+8),oldEntries=new Map(batch.map(s=>[s.id,data.entries[s.id]?.createdAt]));
       try{await analyzeBatch(batch,all,ctx);}catch(error){
-       if(error.status!==502)throw error;
+       if(error.status!==502&&!['TimeoutError','AbortError'].includes(error.name))throw error;
        for(const item of batch){const current=await read(),entry=current.entries[item.id];if(!valid(entry,item,ctx)||(payload.reanalyze&&entry?.createdAt===oldEntries.get(item.id)))await analyzeBatch([item],all,ctx,error.sourceId&&error.sourceId!==item.id?'':error.repairHint||error.message);}
       }
      }
