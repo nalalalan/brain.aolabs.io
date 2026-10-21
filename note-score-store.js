@@ -97,7 +97,8 @@ module.exports=function noteScores(root,readFiles){
    const payload=await readJson(req),files=await readFiles(),source=files.find(s=>s.id===payload.sourceId);if(!source)throw fail('Source note not found.',404);if(!source.sourceText?.trim())throw fail('No saved readable text.',422);
    if(!pending.has(source.id)){
     const task=analysisQueue.then(async()=>{
-     const all=ordered(await readFiles()),ctx=contexts(all),start=all.findIndex(s=>s.id===source.id),end=payload.reanalyze?all.length-1:start;
+     const all=ordered(await readFiles()),ctx=contexts(all),start=all.findIndex(s=>s.id===source.id),end=payload.reanalyze?(payload.throughSourceId?all.findIndex(s=>s.id===payload.throughSourceId):all.length-1):start;
+     if(end<start)throw fail('The reanalysis end must be the same note or a later note.',400);
      let data=await read();const missing=all.slice(0,end+1).filter((s,i)=>(payload.reanalyze&&i>=start)||!valid(data.entries[s.id],s,ctx));
      for(let i=0;i<missing.length;i+=8){
       const batch=missing.slice(i,i+8),oldEntries=new Map(batch.map(s=>[s.id,data.entries[s.id]?.createdAt]));
