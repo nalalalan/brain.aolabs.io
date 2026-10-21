@@ -26,5 +26,6 @@ function rejection(quote,key,component){const source={id:'q',sourceText:quote},v
 rejection('i would like a dial that changes the amount of compression.','insight','application');
 rejection('i guess remembering that i can leave helps my anxiety.','insight','application');
 rejection('i hope my thoughts help move the project along.','followthrough','accumulation');
+rejection('After that setback, I will try a different plan next week.','followthrough','recovery');
 console.log('PASS: transparent arithmetic, continuous aggregates, setbacks, daily caps, duplicate and future invariance, neutral uncertainty, known invalid evidence exclusions.');
 

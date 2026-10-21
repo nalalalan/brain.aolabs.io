@@ -68,6 +68,7 @@ function validateResult(item,source){
    if(o.outcome==='demonstrated'&&((m.key==='followthrough'&&o.component!=='selection')||(m.key==='insight'&&o.component==='application'))&&onlyWish)throw fail('A wish or intended action cannot establish a completed behavior.');
    if(m.key==='insight'&&o.component==='application'&&/remembering.*helps.*anxiety|these thoughts make me feel/i.test(o.quote))throw fail('Reported relief alone is not tested application.');
    if(m.key==='followthrough'&&o.component==='accumulation'&&/i hope.*(?:move|guide|help).*project/i.test(o.quote))throw fail('Hoping feedback helps is not a completed result.');
+   if(m.key==='followthrough'&&o.component==='recovery'&&/\b(?:i|we)\s+(?:will|would|am going to|are going to)\b|\bi['’]ll\b/i.test(o.quote)&&!/\b(?:i|we)\s+(?:(?:have|had|already|actually|then|just)\s+)*(?:stopped|changed|tried|tested|adjusted|restarted|retried|revised)\b/i.test(o.quote))throw fail('A stated future adjustment is not a reported recovery action; omit this observation unless the note supplies an actual subsequent adjustment.');
    observations.push(o);
   }
   values[m.key]={quote,explanation,observations};
