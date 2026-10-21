@@ -443,7 +443,7 @@ function buildScoreHistoryPlot(rows) {
   const svg = document.createElementNS(namespace, "svg");
   svg.setAttribute("viewBox", "0 0 560 210");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines show scores carried forward. Dashed lines fit all daily average assessments, with equal weight per day; carried scores are not counted as new assessments.`);
+  svg.setAttribute("aria-label", `Voice, Follow-through and Support scores over time for ${rows.length} distinct notes. Solid lines show estimates, including provisional and carried scores. Dashed lines fit all daily average assessments with four established components, with equal weight per day; provisional and carried scores are excluded from the fit.`);
   svg.setAttribute("preserveAspectRatio", "none");
 
   const margin = { top: 16, right: 112, bottom: 28, left: 30 };
@@ -484,7 +484,8 @@ function buildScoreHistoryPlot(rows) {
       const item = rows[index];
       const dot = append("circle", { cx: x(point.time), cy: y(point.value), r: 2.15, class: `score-series-point score-observation-point ${seriesItem.colorClass}` });
       const pointTitle = document.createElementNS(namespace, "title");
-      pointTitle.textContent = `${displayHistoryDate(point.time)}: ${seriesItem.label} ${point.value}/100`;
+      const coverage=window.BrainScores.coverage?.(item,seriesItem.key);
+      pointTitle.textContent = `${displayHistoryDate(point.time)}: ${seriesItem.label} ${point.value}/100${Number.isInteger(coverage)&&coverage<4?' — provisional, '+coverage+' of 4 components':''}`;
       dot.append(pointTitle);
     });
     const trendFirstTime=seriesItem.trend.points[0]?.time;

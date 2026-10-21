@@ -27,7 +27,7 @@
     if(last){const text=metrics.map(m=>assessment(last,m.key,false)).filter(Boolean).map(a=>secondPerson(a.value.explanation).split(/(?<=[.!?])\s+/)[0]).join(' ');summary.append(node('p',text,'summary-main'));}
     else summary.append(node('p','Save a note to see your scores and highlighted evidence.'));
     summary.append(node('p','Component estimates from your recent notes. 0 = the defined survival reference; 100 = the Moritz reference. Scores can rise, fall, or stay steady, including beyond either reference.','score-basis'));
-    if(rubric){const guide=node('details',undefined,'score-guide');guide.append(node('summary','Score references'));guide.append(node('p','0 — '+rubric.zero),node('p','100 — '+rubric.hundred));for(const metric of rubric.metrics){guide.append(node('strong',metric.label));for(const c of metric.components)guide.append(node('p',c.label+': 0 — '+c.zero+' 100 — '+c.hundred));}for(const source of rubric.sources){const a=node('a',source.title);a.href=source.url;a.target='_blank';a.rel='noopener';guide.append(a);}summary.append(guide);}
+    if(rubric){const guide=node('details',undefined,'score-guide');guide.append(node('summary','Score references'));guide.append(node('p','Each score averages four components. A partial average is provisional. The dashed trend uses only assessments with all four components established, with equal weight per day; carried scores are excluded.'));guide.append(node('p','0 — '+rubric.zero),node('p','100 — '+rubric.hundred));for(const metric of rubric.metrics){guide.append(node('strong',metric.label));for(const c of metric.components)guide.append(node('p',c.label+': 0 — '+c.zero+' 100 — '+c.hundred));}for(const source of rubric.sources){const a=node('a',source.title);a.href=source.url;a.target='_blank';a.rel='noopener';guide.append(a);}summary.append(guide);}
     if(typeof renderVault==='function')renderVault();
   }
   async function load(){try{const response=await fetch(base+'/api/note-scores',{cache:'no-store'});if(!response.ok)throw Error('Scores could not load.');const data=await response.json();rubric=data.rubric;entries=Object.fromEntries(Object.entries(data.entries).filter(([,entry])=>metrics.every(m=>entry.values?.[m.key])));refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
@@ -35,7 +35,8 @@
   window.BrainScores={
     refresh,analyze,
     score(item,key){return assessment(item,key,false)?.value.score??NaN;},
-    observedScore(item,key){const value=entries[item.id]?.values[key];return value?.observed===false?NaN:value?.score??NaN;},
+    observedScore(item,key){const value=entries[item.id]?.values[key];return value?.observed===false||(Number.isInteger(value?.coverage)&&value.coverage<4)?NaN:value?.score??NaN;},
+    coverage(item,key){return entries[item.id]?.values[key]?.coverage;},
     preview(item){const entry=entries[item.id];if(!entry||!item.sourceText)return '';const key=entry.sourceHash+entry.createdAt;if(!previews.has(key))previews.set(key,createTextPreviewDataUrl(item.sourceText,item.sourceCreatedAt||item.createdAt,Object.fromEntries(metrics.map(m=>[m.key,entry.values[m.key].quote]))));return previews.get(key);},
     append(main,item){const entry=entries[item.id];if(entry){const analysis=node('div',undefined,'score-analysis');for(const m of metrics){const assessed=assessment(item,m.key),value=entry.values[m.key];const section=node('section',undefined,'score-metric');const score=node('p',m.label.toLowerCase()+' '+(assessed?assessed.value.score+'/100':'Awaiting first assessment'),m.cls+'-score');const explanation=node('p',undefined,m.cls+'-score-why score-excerpt');
       if(value.quote)explanation.append(node('mark','“'+value.quote+'”',m.key),' ');
