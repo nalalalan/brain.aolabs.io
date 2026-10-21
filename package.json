@@ -5,7 +5,8 @@
   "description": "Brain PDF bank for documents, text, files, and images.",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node --test tests/*.test.js"
   },
   "engines": {
     "node": ">=20"

@@ -1172,6 +1172,7 @@ function sendStatic(req, res, pathname) {
 
 const life = require("./life-store")(storageRoot, readIndex);
 const noteScores = require("./note-score-store")(storageRoot, readIndex);
+const evidenceScores = require("./evidence-score-store")(storageRoot, readIndex);
 
 const server = http.createServer(async (req, res) => {
   setCors(res);
@@ -1184,6 +1185,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+    if (await evidenceScores.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (await noteScores.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (await life.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (req.method === 'POST' && (requestUrl.pathname === '/api/analyze' || /^\/api\/files\/[^/]+\/(rebuild|analysis)$/.test(requestUrl.pathname))) {
