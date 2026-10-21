@@ -9,7 +9,7 @@
   ],
   "limitations": "A designed evidence rubric, not empirical validation of personality or career readiness.",
   "analysisHash": "cf3799ff2ecc1d6612f9cf28a075608e5989cd4d7f390319a4e03099569c5a24",
-  "gateHash": "c673e806c5d8170963c5472996c87f2e693eb87bfca974a8ec12f07a3f20ce4c",
+  "gateHash": "677fe0db563602a507e5f10fa697f60947a93c7c5b36ea3f1d2a6f466bee058b",
   "checkedAt": "2026-10-21T15:17:20.065Z",
   "pending": [
     "Deploy v14 once Railway accepts builds",

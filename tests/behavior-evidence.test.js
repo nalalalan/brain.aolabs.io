@@ -68,3 +68,6 @@ console.log('PASS: ordinary successes stay ordinary; substantial research differ
 const {schemaFor}=require('../evidence-score-store');
 const ordinarySchema=schemaFor([{sourceId:'unverified',sourceHash:'unknown',passages:{s1:'An impressive claim.'}}]);
 for(const v of Object.values(ordinarySchema.properties.entries.items.anyOf[0].properties.values.properties))assert.deepEqual(v.properties.observations.items.properties.level.enum,['everyday','applied','research'],'Model output cannot even select professional/director without independent approval.');
+
+assert.equal(componentEstimate(Array.from({length:6},(_,i)=>({...event('demonstrated',i),level:'director'}))).score,100,'Floating point arithmetic must preserve an exactly satisfied director benchmark.');
+assert(componentEstimate([...Array.from({length:6},(_,i)=>({...event('demonstrated',i),level:'director'})),{...event('mixed',6),level:'director'}]).score<100,'A partial outcome must not round into100.');

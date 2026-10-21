@@ -35,7 +35,8 @@ function componentEstimate(observations){
   weight+=w;demonstrated+=w*bucket.reduce((s,o)=>s+outcomes[o.outcome],0)/bucket.length;
   weightedPoints+=w*bucket.reduce((sum,o)=>sum+levels[o.level]*outcomes[o.outcome],0)/bucket.length;
  }
- const raw=Math.min(100,weightedPoints/weight);
+ const allTop=[...days.values()].flat().every(o=>o.level==='director'&&o.outcome==='demonstrated');
+ const raw=allTop?100:Math.min(99.999999,weightedPoints/weight);
  const representative=[...recent].reverse().find(o=>levels[o.level]===scope&&o.outcome!=='difficulty')||last;
  return {score:pointsRound(raw),raw,scope,weightedPoints:+weightedPoints.toFixed(4),days:days.size,weight:+weight.toFixed(4),demonstrated:+demonstrated.toFixed(4),quote:representative.quote,fact:representative.fact,limit:representative.limit,sourceId:representative.sourceId,date:representative.date,observations:[...days.values()].flat().map(o=>({sourceId:o.sourceId,date:o.date,outcome:o.outcome,level:o.level,scopeReason:o.scopeReason,points:levels[o.level]*outcomes[o.outcome]}))};
 }
