@@ -1,0 +1,72 @@
+'use strict';
+const {normalize,hash,dateOf,ordered,verifiedScope,pointsRound}=require('./behavior-evidence');
+const rubric=require('./ability-rubric.json');
+const audits=require('./ability-evidence-exclusions.json').records;
+const levels=Object.fromEntries(rubric.levels.map(l=>[l.key,l.points]));
+const dayOf=t=>new Date(t).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+const fail=message=>Object.assign(new Error(message),{status:502});
+function componentEstimate(observations){
+ if(!observations.length)return {score:null,raw:null,days:0,weight:0,weightedPoints:0,observations:[],sourceId:null};
+ const last=observations.at(-1),recent=observations.filter(o=>o.time>=last.time-56*86400000),seen=new Set(),days=new Map();
+ for(const o of recent){const fingerprint=normalize(o.quote).toLowerCase();if(seen.has(fingerprint))continue;seen.add(fingerprint);const day=dayOf(o.time),bucket=days.get(day)||[];bucket.push(o);days.set(day,bucket);}
+ let weight=0,weightedPoints=0;
+ for(const bucket of days.values()){
+  const time=Math.max(...bucket.map(o=>o.time)),w=2**(-(last.time-time)/(28*86400000));
+  const quality=o=>o.certainty==='clear'?1:0.5,q=bucket.reduce((s,o)=>s+quality(o),0);
+  const daily=bucket.reduce((s,o)=>s+levels[o.level]*quality(o),0)/q;
+  const evidenceWeight=w*Math.max(...bucket.map(quality));weight+=evidenceWeight;weightedPoints+=daily*evidenceWeight;
+ }
+ const allTop=recent.every(o=>o.level==='benchmark'),raw=allTop?100:Math.min(99.999999,weightedPoints/weight);
+ const representative=[...recent].sort((a,b)=>Math.abs(levels[a.level]-raw)-Math.abs(levels[b.level]-raw)||b.time-a.time)[0];
+ return {score:pointsRound(raw),raw,days:days.size,weight:+weight.toFixed(4),weightedPoints:+weightedPoints.toFixed(4),quote:representative.quote,fact:representative.fact,limit:representative.limit,sourceId:representative.sourceId,date:representative.date,observations:[...days.values()].flat().map(o=>({sourceId:o.sourceId,date:o.date,outcome:o.evidenceType,level:o.level,points:levels[o.level],certainty:o.certainty,scopeReason:o.reason}))};
+}
+function buildSeries(files,records){
+ const entries={},streams=Object.fromEntries(rubric.metrics.map(m=>[m.key,Object.fromEntries(m.components.map(c=>[c.key,[]]))])),seenSources=new Set(),prefix=[];
+ for(const source of ordered(files)){
+  const sourceHash=hash(source.sourceText),record=records[source.id],historyHash=hash(JSON.stringify(prefix));prefix.push([source.id,sourceHash]);
+  if(!record||record.sourceHash!==sourceHash||record.version!==rubric.version||record.reviewed!==true)continue;
+  const duplicate=seenSources.has(sourceHash);seenSources.add(sourceHash);const values={};
+  for(const metric of rubric.metrics){
+   const evidence=record.values[metric.key],accepted=duplicate?[]:evidence.observations.filter(o=>o.timeframe==='current'&&!streams[metric.key][o.component].some(old=>normalize(old.quote).toLowerCase()===normalize(o.quote).toLowerCase()));
+   for(const o of accepted)streams[metric.key][o.component].push({...o,sourceId:source.id,date:source.sourceCreatedAt||source.createdAt,time:dateOf(source)});
+   const components=Object.fromEntries(metric.components.map(c=>[c.key,componentEstimate(streams[metric.key][c.key])]));
+   const known=Object.values(components).filter(c=>Number.isFinite(c.raw)),coverage=known.length,minDays=known.length?Math.min(...known.map(c=>c.days)):0;
+   const days=new Set(known.flatMap(c=>c.observations.map(o=>dayOf(Date.parse(o.date))))).size;
+   const raw=coverage?known.reduce((s,c)=>s+c.raw,0)/coverage:null;
+   const score=raw===null?null:raw===100&&coverage<4?99:pointsRound(raw);
+   values[metric.key]={score,components,coverage,observed:accepted.length>0,confidence:coverage<4||minDays<3?'limited':minDays<7?'developing':'broader',evidenceDays:days,quote:evidence.quote,explanation:evidence.explanation,comparisonSourceId:null,observations:evidence.observations,change:'assessment'};
+  }
+  entries[source.id]={sourceId:source.id,sourceHash,historyHash,version:rubric.version,rubricHash:hash(JSON.stringify(rubric)),createdAt:record.createdAt,sourceChars:source.sourceText.length,analyzedChars:source.sourceText.length,model:record.model,reviewed:true,values};
+ }
+ return {version:rubric.version,metrics:rubric.metrics,rubric,entries};
+}
+function validateResult(item,source,register){
+ if(item.sourceId!==source.id)throw fail('Evidence source mismatch.');
+ const text=normalize(source.sourceText),audit=audits.find(a=>a.sourceId===source.id&&a.sourceHash===hash(source.sourceText)),values={};
+ for(const m of rubric.metrics){
+  const v=item.values?.[m.key];if(!v||!Array.isArray(v.observations))throw fail('Missing ability evidence.');
+  const quote=normalize(v.quote),explanation=normalize(v.explanation),words=explanation.split(/\s+/).length;
+  if(!quote||!text.includes(quote)||quote.length>180)throw fail('Highlight must be an exact short source quotation.');
+  if(words<22||words>55||explanation.length>460||! /\byou(?:r)?\b/i.test(explanation))throw fail('Analysis must address you in 22-55 concise words.');
+  if(/\b(?:homeless|IQ|diagnos\w*|percent(?:age)? of|world[- ]class|your latest .* remains|no new evidence)\b/i.test(explanation))throw fail('Explain the specific ability evidence without social ranking, diagnosis or boilerplate.');
+  const used=new Set(),observations=[];
+  for(const original of v.observations){const o={...original};try{
+   if(!m.components.some(c=>c.key===o.component)||used.has(o.component))throw fail('Invalid or repeated component.');used.add(o.component);
+   if(!(o.level in levels)||!['current','historical'].includes(o.timeframe)||!['direct_writing','reported_action','reported_difficulty'].includes(o.evidenceType)||!['clear','limited'].includes(o.certainty))throw fail('Invalid ability evidence fields.');
+   for(const k of ['quote','fact','limit','reason'])o[k]=normalize(o[k]);
+   if(!o.quote||!text.includes(o.quote)||o.quote.length>1200||!o.fact||!o.limit||o.reason.split(/\s+/).length<6)throw fail('Evidence requires an exact passage, bounded fact, limitation and rating reason.');
+   if(text.split(/\s+/).length>20&&o.quote.split(/\s+/).length<6)throw fail('Use at least six exact source words of context.');
+   if(audit?.removedComponents?.[m.key]?.includes(o.component))throw fail(audit.reason);
+   if(o.level==='benchmark'&&!verifiedScope(source,m.key,o.component,'director',register))throw fail('100 requires independently corroborated sustained research leadership for this exact component.');
+   if(m.key==='followthrough'&&o.component!=='selection'&&o.evidenceType==='direct_writing')throw fail('Writing a request or plan cannot establish completed execution, recovery or results.');
+   if(o.level==='struggling'&&o.evidenceType!=='reported_difficulty')throw fail('Zero requires concrete difficulty, not missing evidence or uncertainty.');
+   const future=/^(?:i|we)\s+(?:would like|want|hope|wish|could|should|might|am going to|will)\b/i.test(o.quote);
+   const actual=/[.!?]\s+(?:i|we)\s+(?:did|made|built|tried|tested|finished|told|said|asked|used|changed)\b/i.test(o.quote);
+   if(m.key==='followthrough'&&o.component!=='selection'&&future&&!actual)throw fail('An intended action cannot establish completed follow-through.');
+   observations.push(o);
+  }catch(e){e.metric=m.key;e.component=o.component;throw e;}}
+  values[m.key]={quote,explanation,observations};
+ }
+ return values;
+}
+module.exports={rubric,normalize,hash,dateOf,ordered,buildSeries,componentEstimate,validateResult,pointsRound};
