@@ -63,6 +63,8 @@ function validateResult(item,source,register){
    const future=/^(?:i|we)\s+(?:would like|want|hope|wish|could|should|might|am going to|will)\b/i.test(o.quote);
    const actual=/[.!?]\s+(?:i|we)\s+(?:did|made|built|tried|tested|finished|told|said|asked|used|changed)\b/i.test(o.quote);
    if(m.key==='followthrough'&&o.component!=='selection'&&future&&!actual)throw fail('An intended action cannot establish completed follow-through.');
+   const reportedDone=/\bi\s+(?:(?:have|had|already|actually|then|just)\s+)*(?:sent|texted|messaged|did|completed|maintained|kept|carried out)\b|\bi\s+(?:send|text|message)\b[^.!?]*\bevery day\b/i.test(o.quote);
+   if(m.key==='followthrough'&&o.component!=='selection'&&o.evidenceType==='reported_action'&&/\b(?:guarantee|promise|swear)\b/i.test(o.quote)&&!reportedDone)throw fail('A promise or guarantee does not establish that a routine was actually carried out. Select explicit performed action or omit it.');
    observations.push(o);
   }catch(e){e.metric=m.key;e.component=o.component;throw e;}}
   values[m.key]={quote,explanation,observations};

@@ -41,3 +41,11 @@ test('clear direct reasoning can be credited without claiming physical implement
  const record=makeRecord(source,{insight:[{...observation,component:'application'}],voice:[observation]});
  assert.equal(validateResult(record,source).insight.observations[0].evidenceType,'direct_writing');
 });
+test('a guarantee is not a performed routine, while an explicit completed routine remains creditable',()=>{
+ const planned={...source,sourceText:'Every single day without failure. I can swear on that.'};
+ const r=makeRecord(planned,{followthrough:[{...observation,component:'execution',evidenceType:'reported_action',quote:planned.sourceText}]});
+ assert.throws(()=>validateResult(r,planned),/promise or guarantee/);
+ const done={...source,sourceText:'I sent one message every day this week. I kept the promise through the trip.'};
+ const actual=makeRecord(done,{followthrough:[{...observation,component:'execution',evidenceType:'reported_action',quote:done.sourceText}]});
+ assert.equal(validateResult(actual,done).followthrough.observations.length,1);
+});

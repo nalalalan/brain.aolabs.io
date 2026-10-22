@@ -1,1 +1,153 @@
-{"records":[]}
+{
+  "records": [
+    {
+      "sourceId": "69145650-ce2f-4c56-91c2-5f82e7bb8fd7",
+      "sourceHash": "7d4136695dcc2bb70e273a5b74ab4f26f523b0f34fc378cd82d5c40661437c15",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "c0795dc2-9ad4-4e22-9db0-d2f0b4b97e7d",
+      "sourceHash": "3a867c3ec257e248d351380e0808bdc1df2e0537ee7afe5d4ce835ea7fc466e1",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "f1aeeafe-30ba-4fe3-9a94-67472d5b197f",
+      "sourceHash": "2259eb01eec918dda3c14180fe5f0af1a11f01725066df850f206500e1b999f6",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "c76c2432-619b-4185-81a1-5704ca7b5d97",
+      "sourceHash": "0320ecebaedc49a93f086cc06d30990d594e281e3201c8582bc6beba45513519",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "19406cbc-e56c-47f6-b1e9-f7313afcd952",
+      "sourceHash": "6d991bcda2217c279a7badecfc12852a79b29b4615638fd69c0949850d010cb5",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "86ff5483-fd41-490e-b548-ea77575236a9",
+      "sourceHash": "5124b49c148a8fe0febff56451066e96420ac8cfbd43c1a28d9d4efe39fb7896",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "b7c7254b-ec01-4e97-8d23-9f340a1e6163",
+      "sourceHash": "792ba77e639c5f8a7053c42a7d96ac6729a02b6570e918b8ba46d1680ef47b42",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "a459caed-65bb-4b70-aedf-701575b62b2d",
+      "sourceHash": "cbe3e92f44415d756d4d12fd7a9f6c781e0986c02d5cb1567d5621403d52885e",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "09871412-a4cc-4aa4-a1be-7af0582cb043",
+      "sourceHash": "61d6744f4b9e5a8f9fcdf80be401ea36d5eadd8f794f6536daab0bc139019124",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "90a87ac5-3650-4e12-862c-53789087dc84",
+      "sourceHash": "b280358b05fbe57cf15a8613aa64de3fc537e3114935fe8f8861515fc32c5297",
+      "removedComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "fc1ea378-a7cc-4a12-94a5-d45074a7bb04",
+      "sourceHash": "12503cfc82a5a0a2e082b8566b6ca9782e06ed69dc6ea4a2546a70fdebd9ca82",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "36eeda33-21d3-4bb3-a65f-0b6254f7c7ed",
+      "sourceHash": "b27d53c95356a0df2d3e26577b2101659382ea51ce2d31d6fb5f303c34502018",
+      "removedComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "c4ed226e-04d6-4332-8de6-4e66913c05ef",
+      "sourceHash": "f184071822738135815531c0b0a1776059cfdab5fb45da80ca107302668b7c0b",
+      "removedComponents": {
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ]
+      },
+      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    }
+  ]
+}
