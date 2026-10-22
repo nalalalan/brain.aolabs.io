@@ -48,7 +48,9 @@ function validateResult(item,source,register){
   const quote=normalize(v.quote),explanation=normalize(v.explanation),words=explanation.split(/\s+/).length;
   if(!quote||!text.includes(quote)||quote.length>180)throw fail('Highlight must be an exact short source quotation.');
   if(words<22||words>55||explanation.length>460||! /\byou(?:r)?\b/i.test(explanation))throw fail('Analysis must address you in 22-55 concise words.');
-  if(/\b(?:homeless|IQ|diagnos\w*|percent(?:age)? of|world[- ]class|your latest .* remains|no new evidence)\b/i.test(explanation))throw fail('Explain the specific ability evidence without social ranking, diagnosis or boilerplate.');
+  const prohibited=explanation.match(/\b(?:homeless|IQ|percent(?:age)? of|world[- ]class|your latest .* remains|no new evidence)\b/i);
+  const clinicalDiagnosis=/\bdiagnos\w*\b[^.!?]{0,60}\b(?:autis\w*|ADHD|psychiatric|mental|disorder|clinical)\b|\b(?:autis\w*|ADHD|psychiatric|mental|disorder|clinical)\b[^.!?]{0,60}\bdiagnos\w*\b/i.test(explanation);
+  if(prohibited||clinicalDiagnosis)throw fail('Explain the specific ability evidence without social ranking, clinical diagnosis or boilerplate'+(prohibited?' (rejected wording: '+prohibited[0]+')':'')+'. Technical diagnosis of a mechanism or figure problem is allowed.');
   const used=new Set(),observations=[];
   for(const original of v.observations){const o={...original};try{
    if(!m.components.some(c=>c.key===o.component)||used.has(o.component))throw fail('Invalid or repeated component.');used.add(o.component);
