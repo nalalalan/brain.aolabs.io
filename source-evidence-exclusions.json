@@ -41,6 +41,41 @@
       "maxLevel": "everyday",
       "reason": "Source audit: requests and conceptual feedback do not establish human interaction, performed iteration, completed results or tested application.",
       "sourceHash": "61d6744f4b9e5a8f9fcdf80be401ea36d5eadd8f794f6536daab0bc139019124"
+    },
+    {
+      "sourceId": "b7c7254b-ec01-4e97-8d23-9f340a1e6163",
+      "sourceHash": "792ba77e639c5f8a7053c42a7d96ac6729a02b6570e918b8ba46d1680ef47b42",
+      "removedComponents": {
+        "voice": [
+          "direction",
+          "expression",
+          "disagreement",
+          "agency"
+        ],
+        "followthrough": [
+          "selection",
+          "execution",
+          "recovery",
+          "accumulation"
+        ],
+        "insight": [
+          "patterns",
+          "checking",
+          "updating",
+          "application"
+        ]
+      },
+      "reason": "This source claims typing speed and frequent AI use without an identifiable completed task, demonstrated skill outcome, or checked advantage."
+    },
+    {
+      "sourceId": "19406cbc-e56c-47f6-b1e9-f7313afcd952",
+      "sourceHash": "6d991bcda2217c279a7badecfc12852a79b29b4615638fd69c0949850d010cb5",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "The source proposes stopping pictures/videos and explaining instead; it does not report actually carrying out that adjustment."
     }
   ]
 }
