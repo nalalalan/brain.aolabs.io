@@ -4,11 +4,11 @@
       "sourceId": "c0795dc2-9ad4-4e22-9db0-d2f0b4b97e7d",
       "sourceHash": "3a867c3ec257e248d351380e0808bdc1df2e0537ee7afe5d4ce835ea7fc466e1",
       "removedComponents": {
-        "followthrough": ["accumulation"],
+        "followthrough": ["execution", "recovery", "accumulation"],
         "insight": ["patterns"]
       },
       "maxLevel": "everyday",
-      "reason": "The source provides conceptual feedback and hopes it will guide later work. Feedback is not a completed project result. Anticipated friction and assembly costs are predictions, not observed recurring outcomes; neither these nor declining a proposed print establish a higher-scope result."
+      "reason": "The source provides conceptual AI feedback and hopes it will guide later work. Continuing to give that feedback does not establish performed project work, recovery, or an accumulated result. Anticipated friction and assembly costs are predictions, not observed recurring outcomes; neither these nor declining a proposed print establish a higher-scope result."
     },
     {
       "sourceId": "a459caed-65bb-4b70-aedf-701575b62b2d",
