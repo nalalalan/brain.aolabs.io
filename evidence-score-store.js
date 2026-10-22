@@ -62,6 +62,10 @@ module.exports=function evidenceScores(root,readFiles){
  async function handle(req,url,readJson,send){
   if(!url.pathname.startsWith('/api/note-scores'))return false;
   const isActive=await active();
+  if(url.pathname==='/api/note-scores/status'&&req.method==='GET'){
+   const available=isActive&&Boolean(process.env.OPENAI_API_KEY);
+   send(200,{version:rubric.version,active:isActive,available,pending:pending.size,message:available?'':isActive?'Scoring is unavailable. Your note is saved.':'Scoring is paused. Your note is saved.'});return true;
+  }
   if(url.pathname==='/api/note-scores/candidates'&&req.method==='GET'){
    const [data,files]=await Promise.all([read(),readFiles()]);const eligible=ordered(files),ready=eligible.filter(s=>valid(data.records[s.id],s));
    send(200,{active:isActive,analysisHash,gateHash,eligible:eligible.length,ready:ready.length,missing:eligible.filter(s=>!valid(data.records[s.id],s)).map(s=>s.id),...series(files,data.records)});return true;
@@ -90,7 +94,7 @@ module.exports=function evidenceScores(root,readFiles){
    if(!pending.has(source.id))pending.set(source.id,prepare([source],!!payload.reanalyze).finally(()=>pending.delete(source.id)));
    await pending.get(source.id);const data=await read();send(200,{entry:series(await readFiles(),data.records).entries[source.id]});return true;
   }
-  if(!isActive&&url.pathname==='/api/note-scores/analyze'&&req.method==='POST')throw fail('Scoring is being updated. Your note is saved and will be included.',409);
+  if(!isActive&&url.pathname==='/api/note-scores/analyze'&&req.method==='POST')throw fail('Scoring is paused. Your note is saved.',409);
   return false;
  }
  return {handle};

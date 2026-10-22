@@ -1,6 +1,6 @@
 (() => {
   const base=window.BRAIN_API_BASE.replace(/\/$/,''), metrics=[{key:'voice',label:'Voice',cls:'autism'},{key:'followthrough',label:'Follow-through',cls:'adhd'},{key:'insight',label:'Insight',cls:'life'}];
-  let entries={},rubric=null; const busy=new Set(), errors=new Map(), previews=new Map();
+  let entries={},rubric=null,availability={available:false,message:'Checking scoring availability…'}; const busy=new Set(), errors=new Map(), previews=new Map();
   const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
   const dateOf=item=>Date.parse(item.sourceCreatedAt||item.createdAt||0);
   function observations(){const seen=new Set();return [...state].sort((a,b)=>dateOf(a)-dateOf(b)||a.id.localeCompare(b.id)).filter(item=>{const e=entries[item.id];if(!e||seen.has(e.sourceHash))return false;seen.add(e.sourceHash);return true;});}
@@ -37,8 +37,9 @@
     summary.append(guide);
     if(typeof renderVault==='function')renderVault();
   }
-  async function load(){try{const response=await fetch(base+'/api/note-scores',{cache:'no-store'});if(!response.ok)throw Error('Scores could not load.');const data=await response.json();rubric=data.rubric;entries=Object.fromEntries(Object.entries(data.entries).filter(([,entry])=>metrics.every(m=>entry.values?.[m.key])));refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
-  async function analyze(item){if(busy.has(item.id))return;busy.add(item.id);errors.delete(item.id);renderVault();try{const r=await fetch(base+'/api/note-scores/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sourceId:item.id})});const result=await r.json();if(!r.ok)throw Error(result.error||'Could not score this note.');entries[item.id]=result.entry;await load();}catch(e){errors.set(item.id,e.message);}finally{busy.delete(item.id);renderVault();}}
+  async function loadAvailability(){try{const response=await fetch(base+'/api/note-scores/status',{cache:'no-store'});if(!response.ok)throw Error();availability=await response.json();}catch{availability={available:false,message:'Scoring is unavailable. Your note is saved.'};}return availability;}
+  async function load(){try{const [response]=await Promise.all([fetch(base+'/api/note-scores',{cache:'no-store'}),loadAvailability()]);if(!response.ok)throw Error('Scores could not load.');const data=await response.json();rubric=data.rubric;entries=Object.fromEntries(Object.entries(data.entries).filter(([,entry])=>metrics.every(m=>entry.values?.[m.key])));refresh();}catch(e){document.getElementById('score-summary').textContent=e.message;}}
+  async function analyze(item){if(busy.has(item.id))return;await loadAvailability();if(!availability.available){renderVault();return;}if(busy.has(item.id))return;busy.add(item.id);errors.delete(item.id);renderVault();try{const r=await fetch(base+'/api/note-scores/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sourceId:item.id})});const result=await r.json();if(!r.ok){if(r.status===409||r.status===503)await loadAvailability();throw Error(result.error||'Could not score this note.');}entries[item.id]=result.entry;await load();}catch(e){errors.set(item.id,e.message);}finally{busy.delete(item.id);renderVault();}}
   window.BrainScores={
     refresh,analyze,
     score(item,key){return assessment(item,key,false)?.value.score??NaN;},
@@ -56,7 +57,7 @@
       if(value.comparisonSourceId){const link=node('a','Earlier comparison');link.href=base+'/api/files/'+encodeURIComponent(value.comparisonSourceId)+'/view';link.target='_blank';link.rel='noopener';detail.append(link);}
       section.append(score,explanation,detail);analysis.append(section);
     }main.append(analysis);if(entry.analyzedChars<entry.sourceChars)main.append(node('p','Based on the first '+entry.analyzedChars.toLocaleString()+' characters.','vault-meta'));}
-      else if(item.sourceText){const p=node('p',busy.has(item.id)?'Reading and scoring this note…':errors.get(item.id)||'Not scored yet.','vault-meta');main.append(p);if(!busy.has(item.id)&&item.source==='sync')main.append(actionButton(errors.has(item.id)?'Retry scores':'Read and score',()=>analyze(item)));}
+      else if(item.sourceText){const p=node('p',busy.has(item.id)?'Reading and scoring this note…':!availability.available?availability.message:errors.get(item.id)||'Not scored yet.','vault-meta');main.append(p);if(availability.available&&!busy.has(item.id)&&item.source==='sync')main.append(actionButton(errors.has(item.id)?'Retry scores':'Read and score',()=>analyze(item)));}
       if(item.sourceText?.length===20000&&item.analysisQualityVersion)main.append(node('p','Based on saved text; this older entry may continue in the original PDF.','vault-meta'));
     }
   };
