@@ -3,7 +3,8 @@ const {normalize,hash,dateOf,ordered,verifiedScope,pointsRound}=require('./behav
 const rubric=require('./ability-rubric.json');
 const audits=require('./ability-evidence-exclusions.json').records;
 const levels=Object.fromEntries(rubric.levels.map(l=>[l.key,l.points]));
-const dayOf=t=>new Date(t).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+const dayFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}),dayCache=new Map();
+function dayOf(t){if(dayCache.has(t))return dayCache.get(t);const value=dayFormatter.format(new Date(t));if(dayCache.size>=4096)dayCache.clear();dayCache.set(t,value);return value;}
 const fail=message=>Object.assign(new Error(message),{status:502});
 function unsupportedLowReason(o){
  if(o.level!=='developing')return false;

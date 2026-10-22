@@ -76,3 +76,9 @@ test('separated or reversed passage IDs retain the entire original context rathe
  const long={...s,sourceText:'I planned to test it. '+('The intervening setup was unavailable. '.repeat(50))+'I only sketched the design.'};
  item.values.voice.observations[0].quoteIds=['s1','s52'];assert.throws(()=>resolveItem(item,long),/quotation span is too long/);
 });
+
+test('daily evidence grouping remains in New York time across the repeated daylight-saving hour',()=>{
+ const times=['2026-11-01T05:30:00Z','2026-11-01T06:30:00Z','2026-11-02T04:30:00Z','2026-11-02T05:30:00Z'];
+ const items=times.map((date,i)=>({...observation,sourceId:String(i),quote:observation.quote+' '+i,date,time:Date.parse(date)}));
+ const first=componentEstimate(items);assert.equal(first.days,2);assert.equal(first.score,75);assert.deepEqual(componentEstimate(items),first);
+});
