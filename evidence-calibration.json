@@ -1,20 +1,23 @@
 {
   "version": "20261021-director-benchmark-v14",
-  "status": "pending",
-  "checks": [
-    "original_source_cases",
-    "held_out_source_cases",
-    "critical_classifications_repeat",
-    "director_verification_gate"
-  ],
-  "limitations": "A designed evidence rubric, not empirical validation of personality or career readiness.",
   "analysisHash": "907b751b403c049f83bb20ab507af4da3535eaf80f17424083b13addc06a1792",
-  "gateHash": "1b14659753fc0ce15e099a0790358b6ef6a97cd5783cd98e0a888666ff56de87",
-  "checkedAt": "2026-10-22T20:53:02.761Z",
-  "pending": [
-    "Verify scoring availability deployment",
-    "Run17 source cases,6 held-out cases and3 critical repeats",
-    "Reassess every current original source and inspect complete results",
-    "Activate only after source, arithmetic, preservation and rendered checks pass"
-  ]
+  "gateHash": "4407e9d92e0b06e0b5210b546282365c5673ab9dd906d1fcae657da7ef186aae",
+  "status": "passed",
+  "checkedAt": "2026-10-22T21:45:10.333Z",
+  "checks": [
+    "17_original_sources",
+    "6_held_out_sources",
+    "3_critical_repeats",
+    "director_verification_gate",
+    "309_originals_preserved",
+    "309_source_bound_independent_reviews",
+    "138_risk_and_calibration_sources_inspected",
+    "48_source_corrections_validated",
+    "all_archive_arithmetic_and_quotes",
+    "desktop_mobile_chart_and_download_rendered"
+  ],
+  "limitations": "A bounded acceptance set, not empirical validation of a psychological construct or career readiness.",
+  "archiveCount": 309,
+  "sourceCorrections": 48,
+  "renderedAt": "2026-10-22T21:45:53.605Z"
 }

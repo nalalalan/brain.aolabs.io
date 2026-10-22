@@ -39,6 +39,13 @@ rejection('keep searching.','followthrough','recovery');
 rejection('Sending a message each day is something I can guarantee without failure.','followthrough','execution');
 rejection('Sending a message each day is something I can guarantee without failure.','voice','agency');
 rejection('After that setback, I will try a different plan next week.','followthrough','recovery');
+rejection('Tomorrow I am going to send her this message.','voice','expression');
+rejection('I will tell him what I need next week.','voice','agency');
+for(const quote of ['I told her I will send the draft tomorrow.','The other day I told my stand partner I would like a quieter rehearsal.']){
+ const values=neutral();for(const v of Object.values(values))v.quote=quote;
+ values.voice.observations=[{component:'expression',outcome:'demonstrated',timeframe:'current',level:'everyday',scopeReason:'You actually communicated a concrete preference to another person.',quote,fact:'You report what you told another person.',limit:'The later action is not reported as completed.'}];
+ assert.doesNotThrow(()=>validateResult({sourceId:'delivered',values},{id:'delivered',sourceText:quote}),'Reported speech can contain a future plan without making delivery hypothetical.');
+}
 rejection("now i've done it, and i probably won't do it again because it seems like it will result in a conflict.",'followthrough','recovery');
 const {resolveItem}=require('../evidence-score-store');
 const {sourceExclusions}=require('../evidence-score-store');

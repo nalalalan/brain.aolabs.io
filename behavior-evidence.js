@@ -77,11 +77,19 @@ function validateResult(item,source,register=verifications.records){
    o.quote=normalize(o.quote);o.fact=normalize(o.fact);o.limit=normalize(o.limit);o.scopeReason=normalize(o.scopeReason);
    if(sourceAudit?.removedComponents[m.key]?.includes(o.component))throw fail(sourceAudit.reason);
    if(sourceAudit?.maxLevel&&levels[o.level]>levels[sourceAudit.maxLevel])throw fail('This exact source has been checked and does not establish a higher scope.');
+   const componentMax=sourceAudit?.componentMaxLevels?.[m.key]?.[o.component];
+   if(componentMax&&levels[o.level]>levels[componentMax])throw fail('The source review does not support this component at a higher scope.');
+   const componentTime=sourceAudit?.componentTimeframes?.[m.key]?.[o.component];
+   if(componentTime&&o.timeframe!==componentTime)throw fail('The source review identifies this observation as '+componentTime+'.');
+   if(sourceAudit?.rejectedQuoteHashes?.[m.key]?.[o.component]?.includes(hash(o.quote)))throw fail('Use the source-reviewed witness, not the rejected passage.');
    if(!(o.level in levels)||o.scopeReason.split(/\s+/).length<6)throw fail('Each observation needs a supported scope level and concrete scope reason.');
    if(levels[o.level]>=80&&!verifiedScope(source,m.key,o.component,o.level,register))throw fail('Professional and director levels require an independently inspected verification record for this exact source and component. Use a lower supported level.');
    if(!o.quote||!text.includes(o.quote)||o.quote.length>1200||!o.fact||!o.limit)throw fail('A behavior needs an exact passage, bounded fact and limitation.');
    if(text.split(/\s+/).length>20&&o.quote.split(/\s+/).length<6)throw fail('Use at least six exact words of context for each observation, not an ambiguous fragment.');
    // These are necessary exclusion checks, not a substitute for the separate source review.
+   const plannedCommunication=/\b(?:i|we)\s+(?:will|am going to|are going to|want to|hope to)\s+(?:send|tell|call|message|text|ask|explain|say)\b|\bi['’]ll\s+(?:send|tell|call|message|text|ask|explain|say)\b/i.test(o.quote);
+   const reportedCommunication=/\b(?:i|we)\s+(?:(?:have|had|already|actually|then|just|also)\s+)*(?:told|said|asked|sent|called|messaged|texted|explained|spoke|talked)\b/i.test(o.quote);
+   if(m.key==='voice'&&['expression','agency'].includes(o.component)&&o.outcome==='demonstrated'&&plannedCommunication&&!reportedCommunication)throw fail('Planned communication is not a reported delivered interaction.');
    const onlyWish=/^(?:i|we)\s+(?:would like|want|hope|wish|could|should|might|am going to|will)\b/i.test(o.quote)&&!/[.!?]\s+(?:i|we)\s+(?:did|made|built|tried|tested|finished|told|said|asked|used|changed)\b/i.test(o.quote);
    if(o.outcome==='demonstrated'&&((m.key==='followthrough'&&o.component!=='selection')||(m.key==='insight'&&o.component==='application'))&&onlyWish)throw fail('A wish or intended action cannot establish a completed behavior.');
    if(m.key==='insight'&&o.component==='application'&&/remembering.*helps.*anxiety|these thoughts make me feel/i.test(o.quote))throw fail('Reported relief alone is not tested application.');

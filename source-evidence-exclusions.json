@@ -4,8 +4,14 @@
       "sourceId": "c0795dc2-9ad4-4e22-9db0-d2f0b4b97e7d",
       "sourceHash": "3a867c3ec257e248d351380e0808bdc1df2e0537ee7afe5d4ce835ea7fc466e1",
       "removedComponents": {
-        "followthrough": ["execution", "recovery", "accumulation"],
-        "insight": ["patterns"]
+        "followthrough": [
+          "execution",
+          "recovery",
+          "accumulation"
+        ],
+        "insight": [
+          "patterns"
+        ]
       },
       "maxLevel": "everyday",
       "reason": "The source provides conceptual AI feedback and hopes it will guide later work. Continuing to give that feedback does not establish performed project work, recovery, or an accumulated result. Anticipated friction and assembly costs are predictions, not observed recurring outcomes; neither these nor declining a proposed print establish a higher-scope result."
@@ -17,7 +23,9 @@
           "execution",
           "accumulation"
         ],
-        "insight": ["patterns"]
+        "insight": [
+          "patterns"
+        ]
       },
       "reason": "The source describes a promised routine, not a completed routine. Predicted consequences of hypothetical reassurance are not an observed repeated pattern.",
       "sourceHash": "cbe3e92f44415d756d4d12fd7a9f6c781e0986c02d5cb1567d5621403d52885e"
@@ -88,6 +96,583 @@
         ]
       },
       "reason": "The source proposes stopping pictures/videos and explaining instead; it does not report actually carrying out that adjustment."
+    },
+    {
+      "sourceId": "c17d3fbf-90a0-4d7d-8dd2-ab4afe9292ff",
+      "sourceHash": "faada26c7da0319de74ecb61b3139668a1214d9d8ba2e52d4c950f0a7b9b05f1",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "One distressing situation and an untested preference for predictability do not establish an observed recurring pattern or a partly failed pattern-identification attempt."
+    },
+    {
+      "sourceId": "3790a12e-b260-423c-b673-a085eb4b78ea",
+      "sourceHash": "9b3fb2f8abf13f01b74282f3f26d1fc5fabaf43ea5b595f5554a026ffc2a2811",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "A question about a preference does not establish a conflict or an unsuccessful attempt to handle one. The actual expression of a preference remains supported."
+    },
+    {
+      "sourceId": "aa271cf6-ffc8-441f-af5d-f1c3104621bc",
+      "sourceHash": "4d47e5a861e963776aa6b18915f0840aafdaa4c3694ce158afcc628c065a0f97",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "A proposed connection between writing discomfort and explaining oneself is not established through concrete repeated observations; tentativeness alone cannot make it a partially failed pattern-identification attempt."
+    },
+    {
+      "sourceId": "83377c4b-2780-4514-903b-b0597f71e3d6",
+      "sourceHash": "c0c845006f102f78c8f141eece456ff6a9c0a98f16bd9765bf80dc53963e97b8",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Current evening planning is an actual unresolved choice attempt; however, one recalled interaction plus guesses about future reactions does not establish a recurring pattern."
+    },
+    {
+      "sourceId": "2d15d1fe-4a23-4ddf-81c1-adb00936363f",
+      "sourceHash": "922d7776a9d0e8ca9e38740898ef803144c64248a7bc54998b491f172e86f58e",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Confusion about supplied math and fears about a hypothetical independent derivation do not report an actual failed next-action selection attempt."
+    },
+    {
+      "sourceId": "70d97edf-abf1-4d61-b592-240fbdef2c58",
+      "sourceHash": "281d3e2745b15a5bb97706f9decbf9b4684fa4d472b41b3697c03db0a606b4ca",
+      "removedComponents": {
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Asking why a substitution is justified and imagining arbitrary rearrangements is not an actual comparison that checks the algebra against evidence."
+    },
+    {
+      "sourceId": "9227fa01-e73e-451b-bdad-5cdd9620e61b",
+      "sourceHash": "9cd931bcbee74e2c74a9f33a2ae29ff9a493a9ee9b272b08afb4a9b1ffe39586",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ],
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Hypothetical inability to derive the equation and a guessed missing fundamental do not establish an actual failed choice or a partly demonstrated recurring mechanism."
+    },
+    {
+      "sourceId": "c59b3f75-8d62-4158-88a1-6b0b97a0dbd9",
+      "sourceHash": "d9be7085862f59241207d64d14d447f370f4ca74cb89e64b96a1f04347acc4e8",
+      "removedComponents": {
+        "voice": [
+          "expression",
+          "disagreement",
+          "agency"
+        ]
+      },
+      "reason": "The addressed draft does not confirm delivery, spoken insults, or a completed hang-up. Its prospective statements cannot establish actual communication, conflict handling, or performed agency."
+    },
+    {
+      "sourceId": "e614cebc-adb5-4dfa-8482-7ebd707cf054",
+      "sourceHash": "7c152caa98375ea907393b0ab79c384e4a0226be53644b79958d62be9ee55020",
+      "removedComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "An unresolved interpersonal exchange is not evidence that a chosen artifact-producing task failed to leave a usable result. The source reports a coping choice, not a result-production task."
+    },
+    {
+      "sourceId": "23f1425b-04ec-490b-bdb6-6b4ca19dc09b",
+      "sourceHash": "698f9956fac9a50fcd8f65169ede01e685fd56b752aa0dea16e13f3870bb9284",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ]
+      },
+      "reason": "Future sending of the letter does not establish delivery or initiated repair. Actual expression is supported separately by the explicit report of telling her to be quiet during the game.",
+      "rejectedQuoteHashes": {
+        "voice": {
+          "expression": [
+            "b553b8aa402f2cfcbe181c6c8d6d20c0989b9f7f9abf1692e23b3ddf3b94fb47"
+          ]
+        }
+      }
+    },
+    {
+      "sourceId": "675512cc-855d-400c-a569-e898365925d8",
+      "sourceHash": "74dbd25c8d96326f8222695ef376c11904b05bfea353a234070b06d9dbca8e4b",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Asking which exercises meet stated constraints is a request for information, not a reported failed action-selection attempt."
+    },
+    {
+      "sourceId": "2b651ea2-70b2-45e3-a870-4335cc8683b3",
+      "sourceHash": "ca4e1d3766f74e4f6e0503def61b694725ac99477f71d6679c3d05b70117f524",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "The full source reports completed experimental testing and observed cycling trends, but only plans removing a sample. Planned adjustment is not recovery, including mixed recovery. Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        },
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "f92fe24f-a757-4155-aa04-fc2d0970f755",
+      "sourceHash": "e9a21084a4267cd92e64e2d9757f30c0708dd28e52c7baca15a429c3ebe0740e",
+      "removedComponents": {},
+      "reason": "Full original distinguishes drafting this new message from reported previous attempts to explain your side. Replace the undelivered draft witness with the explicit past communication report.",
+      "rejectedQuoteHashes": {
+        "voice": {
+          "expression": [
+            "1244df098f04d94926ec3d0ba95a76eca95715773a7d2044c7f11e21fa571f8e"
+          ]
+        }
+      }
+    },
+    {
+      "sourceId": "53fce7a7-a7f0-45da-8dc4-9f380c2dde6e",
+      "sourceHash": "b0a84367f8873bdf36cffaacba036efae5615be8687fe76ab08f5c555066e4a5",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "Full source reports completed prior tests and fixture observations, but proposed lower-pressure comparison is not carried out. Recovery cannot credit selecting this future workaround. Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "adb7cb09-f91b-4448-b6ac-1297e7fb8e49",
+      "sourceHash": "a06aed2f2bee6232a2f9d0dd50c08da26b8e0b660f7e7ef95b39ba4357362f24",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "Full source explicitly occurs before the advisor meeting. Completed expansion/bending tests remain valid; deciding to describe partial progress is not performed recovery."
+    },
+    {
+      "sourceId": "9bba9b09-ef35-4ce3-8885-7b878789968e",
+      "sourceHash": "d05082bf751df854b67c4a1f34521fba85c007769865bdf2c7ec614bb4a3d890",
+      "removedComponents": {
+        "voice": [
+          "expression"
+        ]
+      },
+      "reason": "Full source describes deliberately withholding an immature idea after weighing value and cost, while reporting other updates given in the meeting. Silence by choice is not evidence of unsuccessful expression."
+    },
+    {
+      "sourceId": "ba777898-1895-46f1-858d-d8cad3216109",
+      "sourceHash": "2167f621dae93acc6a9a429c59f7d486c2265c2680a213bf58916cb500911803",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Full source compares described papers, but the selected pattern predicts limitations of hypothetical PLA hinges. This is not a reported recurring observation; bounded conceptual checking remains."
+    },
+    {
+      "sourceId": "7690c722-c88e-4e41-89d3-61cc90ec00ac",
+      "sourceHash": "396ac4ff91c7f0c6e015a3e6a6e6ebe42b1358b62a177257e2a250bf7cd98bf9",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Full source chooses discussion and paper collection rather than document writing. The quote concerns hypothetical optional extra work, which does not establish failed selection."
+    },
+    {
+      "sourceId": "685dc1c0-0f99-43ba-8983-2c5a1818cd92",
+      "sourceHash": "10a447799af247e0f0944c5f4b9a9365cd265680626265d318f122b95dc37c8d",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Full source anticipates overload from hypothetical simultaneous tasks. It does not report repeated observed overload outcomes; conceptual checking and revising a perfection rule remain."
+    },
+    {
+      "sourceId": "5568e629-bf29-4883-9e07-1ad1aa6fed4c",
+      "sourceHash": "cfbf10a762de6a4721c1f3034c73406934c69326b3ee15ea48dd9170b3b6e096",
+      "removedComponents": {
+        "voice": [
+          "expression"
+        ],
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Full source contains private fears and speculative future conclusions, without an attempted disclosure or observed recurring outcome matching that conclusion. Discomfort is not failed expression, and a feared prediction is not a demonstrated or mixed pattern."
+    },
+    {
+      "sourceId": "c2a7d289-9a20-4682-a745-65637c6d3ec2",
+      "sourceHash": "53d0c783cb82eeac6700d8b9d20f8abc58c8d464227dbb977fbd9dd4e0260206",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Full source explains a chosen project's motivation and hopes for a career outcome. That single causal account is not an observed recurring pattern or evidence the strategy works."
+    },
+    {
+      "sourceId": "0d04ead6-1fd8-4a4d-9df6-4bcb62bfd6cd",
+      "sourceHash": "cb14fa5563bea6da78cbd894e582a72e297ad9425372ce17d6024ea93a4a4062",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Full original describes one recent meeting and anticipates future advisor burdens. It does not establish recurring observed effects from the imagined solo-versus-advised comparison."
+    },
+    {
+      "sourceId": "62386bd3-a4c4-48bd-9f2a-6f3f565e4d20",
+      "sourceHash": "1212675166cc42146cfbf150dc0d3bb0c393be59018d3b87c64e8b1ac573fb50",
+      "removedComponents": {},
+      "reason": "Observed strip behavior supports research checking, but the chosen future pressure mechanism and private direction do not yet have an implemented outcome. Apply the rubric's everyday scope to these planning observations.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        },
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "2423d816-8c17-4d14-a83e-5a139bbedd0f",
+      "sourceHash": "be1b95922cb20d9369f796821afe6b389feb3e4f64dd7b75b8d2aeac0e70fa05",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        },
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "080b9694-30bf-4dde-8829-588d29e49c44",
+      "sourceHash": "2dffc1c35be98882e60bf58cbd39ea4c86783a752f80be280c7a3829dd5977a6",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "9d44a2c6-2076-4bfc-878f-95ee37152770",
+      "sourceHash": "ff0e778fdc662393a27c95446d0bde121fea6c75fd89ea0e46017a8ff30c6649",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        },
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "5a2c1958-596b-4e3d-8dec-66370b61ab08",
+      "sourceHash": "7822622716b2ecb92955f6849d9ad5a8adcee7bbda804638472338b9801b3abe",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "fb706422-5965-4cf9-8190-4fa583a3bb75",
+      "sourceHash": "1664ef6c761a4ce3bb10571e1877bae69148c00ab514b208ceb19777840c4099",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "followthrough": {
+          "selection": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "72b58a5e-fbce-4b44-ae83-08b4ba429aa4",
+      "sourceHash": "680be953904ab75c2c21302e8e2f86c9c847ec4d2cb89ac1946de5ec4e02324b",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "078236ec-5937-4439-8af7-10b4be48e6b3",
+      "sourceHash": "740fbf6595646af7f5893153c309ded5463326bf1e342671b519aefd6c076b38",
+      "removedComponents": {},
+      "reason": "Scope review correction: these specific observations are private direction, future selection or conceptual comparison. Earlier technical work does not establish an implemented outcome for the new choice; use everyday scope per the fixed rubric, preserving separately evidenced completed technical work.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        },
+        "followthrough": {
+          "selection": "everyday"
+        },
+        "insight": {
+          "checking": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "836d64ee-5731-4b12-b7b0-810040373cff",
+      "sourceHash": "ea4c2af8790d16dc02ad87bf8dfb4bbde270905cd470b0f902c29ba9d4af7300",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Full original requests design options and compares ease of staged versus immediate integration. Uncertainty about which approach is easier does not establish a failed personal choice."
+    },
+    {
+      "sourceId": "51ea3519-8de4-4c04-abc0-6bae584279f9",
+      "sourceHash": "a2a802a4c5561ae23646059c24e0cb5e9a18861e27c480d087e60046687d94c1",
+      "removedComponents": {},
+      "reason": "A working strip, failed reprint, performed drying adjustment and observed geometry limitations are reported. The future three-dimensional surface remains a private next direction, so that component is everyday scope.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "7ab6261c-7f56-4126-a5a7-237ab1609b97",
+      "sourceHash": "e71e40afc100ab207898e09c698f502e9d721d2807de588df18c087a0045ae6b",
+      "removedComponents": {},
+      "reason": "Full source explicitly says the TPU array was made a long time ago. Preserve those observations as historical; current execution instead uses the explicit recent PLA cell printing/assembly report. Future automatic actuation remains everyday direction.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "everyday"
+        }
+      },
+      "componentTimeframes": {
+        "voice": {
+          "agency": "historical"
+        },
+        "followthrough": {
+          "accumulation": "historical"
+        }
+      },
+      "rejectedQuoteHashes": {
+        "followthrough": {
+          "execution": [
+            "e0d44d3ed8202e304f26d5e904f9a6db58cbc6147bc4bdfd90ade4aba55e84c9"
+          ]
+        }
+      }
+    },
+    {
+      "sourceId": "2b9bc8a3-9089-492f-90f1-a288125bad5d",
+      "sourceHash": "0c08fb23dccc0ec2c876a6d530bd7dd68b62b65a3bd1de9682be89408b4a44f4",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Full original gives constraints to AI while it generates designs. Feeling overwhelmed by theoretically plausible options alone does not establish a failed personal action-selection attempt."
+    },
+    {
+      "sourceId": "7ebd132c-7fe4-495d-9d5d-c9055a01db11",
+      "sourceHash": "6a2b28fa86368d09ebb5c764dfbb4fe38f36dbff3705c169cfaaefdc331f4916",
+      "removedComponents": {},
+      "reason": "Full original confirms a difficult real advisor exchange with pushback, supporting applied communication but not a consequential adopted research decision. Ongoing prototyping has no reported test/deliverable here and does not meet research scope.",
+      "componentMaxLevels": {
+        "voice": {
+          "direction": "applied",
+          "expression": "applied",
+          "agency": "applied"
+        },
+        "followthrough": {
+          "execution": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "5c19ad8f-84b8-445a-a926-210436cc7960",
+      "sourceHash": "d6a39c938a13d72b5c13cc9f87e8a2669e54b032512740b587c9c9ee0b3b153e",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "Recurring freezing is explicitly self-reported in surrounding source, not only predicted. Recovery quote says you need to accept the situation; no completed adjustment or effect is reported, so remove recovery."
+    },
+    {
+      "sourceId": "d2ce2067-2623-4f02-b164-3f43e7d7f44d",
+      "sourceHash": "fdfc7148274a2a662fbc8fd2984180b3497d9299b24dc8a495238be4e738fdc3",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Asking for optional additional work while ongoing tasks progress is not demonstrated selection failure; source does not identify an unmet action commitment."
+    },
+    {
+      "sourceId": "ff106461-624a-4c53-8c65-651c4451567c",
+      "sourceHash": "ebf5b69663e4e3050d7fd107299954c353f66aafff3a8dae15c9c124e4df9c09",
+      "removedComponents": {},
+      "reason": "Full source concerns AI explanatory concept videos, not observed prototype footage. Concept criticism is excluded from research tier by the fixed rubric; keep the actual private comparison at everyday.",
+      "componentMaxLevels": {
+        "insight": {
+          "checking": "everyday"
+        }
+      }
+    },
+    {
+      "sourceId": "9ece3019-1140-41d8-bd1e-30f45c3b7a81",
+      "sourceHash": "8071cc9f7d7207e56e5f0188d96d17aa3c3e1087784381d11840e489db2cee4c",
+      "removedComponents": {
+        "insight": [
+          "updating"
+        ]
+      },
+      "reason": "Additional rubric check: a reassuring alternative about another person's intent lacks new confirming observation and cannot establish updating; preserve observed internal response and clearly tentative comparison."
+    },
+    {
+      "sourceId": "1d1b9c51-4eac-4712-b344-559eae11e4d3",
+      "sourceHash": "3d5b4a253fa102635688cdc670d5d4aa2294498f80553b2bcf149b52662736e3",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ]
+      },
+      "reason": "An evolving research vision and dissatisfaction with existing solutions do not show an unsuccessful priority-choice opportunity; remove inferred direction failure."
+    },
+    {
+      "sourceId": "3f64d0c0-e7fe-4e1d-96af-b11c040508a9",
+      "sourceHash": "d89b1ef1759d5fb7d40ef6034eef53bc54a9384aaeae08e1037de30659a9e36c",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "One reported computer-versus-AI comfort contrast plus imagined historical settings does not establish repeated observations or a mixed attempted pattern check. Preserve bounded explanation without pattern credit."
+    },
+    {
+      "sourceId": "6cba1f1c-0421-4e32-877c-e1b83d8b07b2",
+      "sourceHash": "aca95aef818369aadb71b225c02234489baed5205b0c7cce28ca8021b4bc15d6",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "An unbounded possible activity expressed as a question is neither chosen action nor attempted failure; omit mixed selection."
+    },
+    {
+      "sourceId": "d3165e26-49c6-4754-87cb-ecb4863392b9",
+      "sourceHash": "dcfe5eb80ddd97ed205bf02cf6039f44447025ffb7a0ebcb8c67b410ac19e4ba",
+      "removedComponents": {
+        "followthrough": [
+          "recovery"
+        ]
+      },
+      "reason": "Full source confirms actual expression immediately before the quoted reflection and repeated self-filtering. Recovery uses can continue/can move forward, without a subsequent performed adjustment; remove recovery."
+    },
+    {
+      "sourceId": "4147038f-483f-42cb-b393-2eb8f237cd9e",
+      "sourceHash": "56c1eea2799cd50d71884a3b70c4d8834e86f6aef09eda021a07c90aefeacbf3",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Optional stance and phone-use choices during a transport delay do not establish failed priority-linked next-action selection."
+    },
+    {
+      "sourceId": "d17d6249-64d1-4968-a05b-8bcdf6c500d6",
+      "sourceHash": "1f5936503a5f69ab5687e9b4c7d5fd721295ccfa0d2b26b8d718846cfd471100",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ],
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Full source describes imagined future corporate employment. Neither a current failed action choice nor an observed repeated pattern is established."
+    },
+    {
+      "sourceId": "cf842696-fc8e-4ef4-a599-4333d7982803",
+      "sourceHash": "a66804f6e4aba0e213c72d9eb52e8a4c250959b6ea1a883eeeb6f04e0ef8bcd4",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ],
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Can choose/find my people is unbounded possibility, not chosen next action. The observation's universal honesty-as-safety indicator is hypothetical; actual conversation remains credited in voice."
+    },
+    {
+      "sourceId": "c6529ea5-0a1a-494d-9d8d-d287124fdae4",
+      "sourceHash": "d2dcc3f53df79bc42eb9ef97f830824cc940f8d62cd7c59d02cd2cca613e98d5",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Actual forthcoming meeting and unclear research direction support bounded current direction difficulty. Proposed childhood explanation is not a demonstrated or mixed observed pattern; remove pattern component."
+    },
+    {
+      "sourceId": "8ac6ee55-af71-4b89-b26d-a52603fcc6d0",
+      "sourceHash": "c6782f22ef1ff17926c09b161f667638dcad9db42869d7e884eaea65667ad6a2",
+      "removedComponents": {},
+      "reason": "Original later clarification says Facebook mostly archived and Instagram unarchived, correcting earlier inconsistent platform naming. Use that exact final witness for performed action. Posting/anxiety loop is explicitly remembered repetition; recovery remains ordinary, without demonstrated higher-scope consequence.",
+      "componentMaxLevels": {
+        "followthrough": {
+          "recovery": "everyday"
+        }
+      },
+      "rejectedQuoteHashes": {
+        "voice": {
+          "agency": [
+            "3e77099b0c1edebd9a1b482fc9c05470f45ff0227d7823f2e3ddc1195febf247"
+          ]
+        },
+        "followthrough": {
+          "execution": [
+            "3e77099b0c1edebd9a1b482fc9c05470f45ff0227d7823f2e3ddc1195febf247"
+          ]
+        }
+      }
     }
   ]
 }
