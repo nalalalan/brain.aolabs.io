@@ -7,7 +7,7 @@ const dayOf=t=>new Date(t).toLocaleDateString('en-CA',{timeZone:'America/New_Yor
 const fail=message=>Object.assign(new Error(message),{status:502});
 function unsupportedLowReason(o){
  if(o.level!=='developing')return false;
- const absence=/\b(?:tentative|unsettled|uncertain|hedging|uncommitted|sparse|too unclear|not yet|lacks?|without enough|without a committed|no resolution|no concrete|no specific|does not show|do not show|not show)\b/i.test(o.reason);
+ const absence=/\b(?:tentativ\w*|unsettled|uncertain|unresolved|underspecified|underexplained|unsure|hypothetical|unverified|hedging|uncommitted|sparse|too unclear|not yet|cannot yet|stops short|lacks?|without enough|without a committed|no resolution|no concrete|no specific|no actual|does not show|do not show|not show)\b|\bno\b[^.]{0,65}\b(?:appears?|shown)\b/i.test(o.reason);
  const difficulty=/\b(?:breakdown|failed|fails|failure|escalat\w*|contradict\w*|bias|refusal|pushes back|harmful|ineffective|unsafe|unworkable|violat\w*|dismiss\w*|ignores?\b[^.]*\bboundar\w*)\b/i.test(o.reason);
  return absence&&!difficulty;
 }

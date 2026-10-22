@@ -61,6 +61,9 @@ test('technical diagnosis is allowed without allowing clinical diagnosis in an a
 test('exploratory uncertainty cannot be the sole reason for a low rating, while actual failure remains rateable',()=>{
  const exploratory={...observation,level:'developing',reason:'You describe a possible direction, but the choice remains tentative and lacks a final decision.'};
  assert.throws(()=>validateResult(makeRecord(source,{voice:[exploratory]}),source),/low rating needs a demonstrated weakness/);
+ for(const reason of ['You identify a real preference, but the final choice remains unresolved.','You name a plausible next action, but you present it tentatively without committing.','You compare your preference with another context, but no actual negotiated difference appears.']){
+  assert.throws(()=>validateResult(makeRecord(source,{voice:[{...exploratory,reason}]}),source),/low rating needs a demonstrated weakness/);
+ }
  const difficult={...source,sourceText:'I ignored the agreed constraint and chose an incompatible design, so the assembly failed.'};
  const actual={...observation,quote:difficult.sourceText,level:'developing',evidenceType:'reported_difficulty',reason:'You report an actual incompatible choice that failed to respect the agreed assembly constraint.'};
  assert.doesNotThrow(()=>validateResult(makeRecord(difficult,{voice:[actual]}),difficult));

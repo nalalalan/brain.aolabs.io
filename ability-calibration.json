@@ -1,1 +1,16 @@
-{"version":"20261022-ability-benchmark-v15","status":"pending"}
+{
+  "version": "20261022-ability-benchmark-v15",
+  "analysisHash": "56d1a66504ece7578119c24d083be2c22998a6cf932be66f546a63d43ca2eb96",
+  "gateHash": "36fb4011e252a44026ce425bb1a8b6c9d4225131cc9506d28f3ec769ef56e27c",
+  "archiveHash": "235806018a9291821f7bda63a203509569de4f3f204efc38e44b1a8a69dc83d9",
+  "recordsHash": "b3c91dc924dcd564d725500f263fed90d7aee802892165fe030ee98ad242ecd4",
+  "status": "passed",
+  "sourceAuditPassed": true,
+  "renderedPassed": true,
+  "count": 310,
+  "checkedAt": "2026-10-22T23:46:43.086Z",
+  "calibrationCases": 17,
+  "originalRepeatRuns": 3,
+  "targetedAgentSourceReviews": 175,
+  "rawArithmeticTolerance": 1e-10
+}

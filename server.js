@@ -39,8 +39,9 @@ function setCors(res) {
 
 function sendJson(res, status, payload) {
   setCors(res);
-  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-  res.end(JSON.stringify(payload));
+  const encoded = require('./json-response')(payload, res.req?.headers['accept-encoding']);
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...encoded.headers });
+  res.end(encoded.body);
 }
 
 async function readBody(req) {
