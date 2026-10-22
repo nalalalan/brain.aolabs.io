@@ -110,10 +110,14 @@
       "sourceHash": "b280358b05fbe57cf15a8613aa64de3fc537e3114935fe8f8861515fc32c5297",
       "removedComponents": {
         "followthrough": [
-          "accumulation"
+          "accumulation",
+          "selection"
+        ],
+        "voice": [
+          "agency"
         ]
       },
-      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+      "reason": "Asking how to choose a practice routine does not itself establish poor agency or an attempted selection. No chosen bounded next step is present. Actual practice difficulty may be assessed only in the appropriate performed-action component; no accumulated result is established."
     },
     {
       "sourceId": "fc1ea378-a7cc-4a12-94a5-d45074a7bb04",
@@ -148,6 +152,17 @@
         ]
       },
       "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+    },
+    {
+      "sourceId": "26873976-ecee-42e7-999c-cbdf9eae0273",
+      "sourceHash": "25a8ce5b47685543987056f0c95f35912c9d0986c5d4ae1000c2cbf8f58b4353",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reviewGuidance": "The opening and middle paragraphs explicitly report completed pressure tests and repeated cycles (I pressurized it; I did a lot of cycles for each cell, and then I kind of tested it). Assess that performed work separately from a possible future redo. Select its exact performed-action passage and a quality rating justified by it. Do not claim the method was validated or the corrected experiment completed.",
+      "reason": "Source review found performed pressure tests omitted. Preserve actual execution without treating it as verified scientific quality."
     }
   ]
 }

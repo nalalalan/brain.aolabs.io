@@ -67,6 +67,7 @@ function validateResult(item,source,register){
    if(m.key==='followthrough'&&o.component!=='selection'&&o.evidenceType==='reported_action'&&/\b(?:guarantee|promise|swear)\b/i.test(o.quote)&&!reportedDone)throw fail('A promise or guarantee does not establish that a routine was actually carried out. Select explicit performed action or omit it.');
    observations.push(o);
   }catch(e){e.metric=m.key;e.component=o.component;throw e;}}
+  for(const component of audit?.requiredComponents?.[m.key]||[])if(!observations.some(o=>o.component===component))throw fail(audit.reviewGuidance||'Re-read the original for the explicitly reported action that was omitted.');
   values[m.key]={quote,explanation,observations};
  }
  return values;
