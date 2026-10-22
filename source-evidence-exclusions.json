@@ -4,10 +4,11 @@
       "sourceId": "c0795dc2-9ad4-4e22-9db0-d2f0b4b97e7d",
       "sourceHash": "3a867c3ec257e248d351380e0808bdc1df2e0537ee7afe5d4ce835ea7fc466e1",
       "removedComponents": {
-        "followthrough": ["accumulation"]
+        "followthrough": ["accumulation"],
+        "insight": ["patterns"]
       },
       "maxLevel": "everyday",
-      "reason": "The source provides conceptual feedback and hopes it will guide later work. Producing feedback for an AI is not a completed project result; technical subject matter and declining a proposed print do not establish a tested or completed higher-scope outcome."
+      "reason": "The source provides conceptual feedback and hopes it will guide later work. Feedback is not a completed project result. Anticipated friction and assembly costs are predictions, not observed recurring outcomes; neither these nor declining a proposed print establish a higher-scope result."
     },
     {
       "sourceId": "a459caed-65bb-4b70-aedf-701575b62b2d",
@@ -15,19 +16,21 @@
         "followthrough": [
           "execution",
           "accumulation"
-        ]
+        ],
+        "insight": ["patterns"]
       },
-      "reason": "The source describes a promised routine, not a completed routine.",
+      "reason": "The source describes a promised routine, not a completed routine. Predicted consequences of hypothetical reassurance are not an observed repeated pattern.",
       "sourceHash": "cbe3e92f44415d756d4d12fd7a9f6c781e0986c02d5cb1567d5621403d52885e"
     },
     {
       "sourceId": "8ec84eb7-1fae-4725-9db3-7f83f9cef70b",
       "removedComponents": {
         "voice": [
-          "expression"
+          "expression",
+          "disagreement"
         ]
       },
-      "reason": "Delivery of the addressed message is not established by this source.",
+      "reason": "Delivery of the addressed message is not established. Feeling unengaged in past conversations does not report an actual disagreement and an attempt to handle it.",
       "sourceHash": "d75cc41302cc8368caf971a231bd7b4f0f8fd4569bd67be051d487c59a171182"
     },
     {

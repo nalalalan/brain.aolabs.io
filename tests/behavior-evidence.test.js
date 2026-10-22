@@ -34,6 +34,7 @@ rejection('i would like a dial that changes the amount of compression.','insight
 rejection('i guess remembering that i can leave helps my anxiety.','insight','application');
 rejection('i hope my thoughts help move the project along.','followthrough','accumulation');
 rejection('i hope my feedback helps.','followthrough','accumulation');
+rejection('If I responded with reassurance, it would help briefly but might exhaust me later.','insight','patterns');
 rejection('keep searching.','followthrough','recovery');
 rejection('Sending a message each day is something I can guarantee without failure.','followthrough','execution');
 rejection('Sending a message each day is something I can guarantee without failure.','voice','agency');
