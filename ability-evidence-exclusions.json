@@ -114,10 +114,11 @@
           "selection"
         ],
         "voice": [
-          "agency"
+          "agency",
+          "direction"
         ]
       },
-      "reason": "Asking how to choose a practice routine does not itself establish poor agency or an attempted selection. No chosen bounded next step is present. Actual practice difficulty may be assessed only in the appropriate performed-action component; no accumulated result is established."
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
     },
     {
       "sourceId": "fc1ea378-a7cc-4a12-94a5-d45074a7bb04",
@@ -163,6 +164,1079 @@
       },
       "reviewGuidance": "The opening and middle paragraphs explicitly report completed pressure tests and repeated cycles (I pressurized it; I did a lot of cycles for each cell, and then I kind of tested it). Assess that performed work separately from a possible future redo. Select its exact performed-action passage and a quality rating justified by it. Do not claim the method was validated or the corrected experiment completed.",
       "reason": "Source review found performed pressure tests omitted. Preserve actual execution without treating it as verified scientific quality."
+    },
+    {
+      "sourceId": "7ea50001-e059-435b-9b8c-b7d23ccb0a83",
+      "sourceHash": "251b88e956769fdf4dce6a51c0db1952d9ebb7c9892bcc1dd356971cb303aa01",
+      "removedComponents": {
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "996e1032-0d34-4824-b126-847267c600e9",
+      "sourceHash": "fe07c4884ddc4fe2db783c27eec98d36453216f8d0561e9f4c0d1155015d401e",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "3790a12e-b260-423c-b673-a085eb4b78ea",
+      "sourceHash": "9b3fb2f8abf13f01b74282f3f26d1fc5fabaf43ea5b595f5554a026ffc2a2811",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "e623783c-e299-47aa-9b2d-0b3b5fd175df",
+      "sourceHash": "1ae790d510fd2075c936c668036d317815fb795d11c1e8ddcaff9ba28ec79338",
+      "removedComponents": {
+        "voice": [
+          "agency",
+          "disagreement"
+        ]
+      },
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "83377c4b-2780-4514-903b-b0597f71e3d6",
+      "sourceHash": "c0c845006f102f78c8f141eece456ff6a9c0a98f16bd9765bf80dc53963e97b8",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "insight": [
+          "revising"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "c17d3fbf-90a0-4d7d-8dd2-ab4afe9292ff",
+      "sourceHash": "faada26c7da0319de74ecb61b3139668a1214d9d8ba2e52d4c950f0a7b9b05f1",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "a14288a8-ef27-4fb5-b73f-299316dc0e50",
+      "sourceHash": "6e1bd168f064849ec4c9dfe136ebf6a8040152f04fad03f6ce7367870cb46a5d",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "fbc4baa1-7948-4b5d-ac0a-e8c6daafda24",
+      "sourceHash": "9736d4203d29fd57649977c99fd80f2f4d2a0b3e82db99e1e8baf05d1f198ecc",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "e9a84828-7cfa-4d51-b8e6-a1fc0f49a0eb",
+      "sourceHash": "5a04b7e7da43aa22aac2c86383b0375b3df3ecba6cdf93d96f3f9caf9558daaf",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "b2cde8bd-093f-4f82-a00b-f4966d35043d",
+      "sourceHash": "5f7c91f280996f85ce8723435b743c7258f3b123448284d0b776480b38b46cf6",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "b5799034-2ecc-4d34-8d18-aec2744ad601",
+      "sourceHash": "d1f8e904df74eabd25ff80db4919692b9ee0c3e19f0de0435a2cbe89e3b7d1bb",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "533aaa2b-d7bd-4075-81b2-8cdbfa496e24",
+      "sourceHash": "1be41498c0a944b6ee777035a28356b21de4f01c70353eb04752fec6b1c42ba9",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "de6a2d81-f706-4940-a67e-590ccfac238f",
+      "sourceHash": "9e78d76109c1784fb2727668b16ead4233decff0df3caaf239edde9c8182b284",
+      "removedComponents": {
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "6094a5aa-b9f4-454e-b3e9-708a0a758fae",
+      "sourceHash": "de1c010ac418f59507cca5444f3f630e97872040580d6627e10e60195b6e5659",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "fd1dff05-28f3-4843-8a28-fd231f950f6e",
+      "sourceHash": "c0fd20ec398e39193ff28ac4d7793008dfd8a7f6cf3f4fde5f3eff01dc509c33",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ],
+        "insight": [
+          "revising"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "0e5fb309-c1d6-4203-9687-b9d14406eed3",
+      "sourceHash": "4059532623c8453f663d341a22faa21b74ec95f3d60a6f9702660b72e5148c94",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "9227fa01-e73e-451b-bdad-5cdd9620e61b",
+      "sourceHash": "9cd931bcbee74e2c74a9f33a2ae29ff9a493a9ee9b272b08afb4a9b1ffe39586",
+      "removedComponents": {
+        "insight": [
+          "patterns",
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "91e00a9e-ace4-4937-b5e1-0a611931024b",
+      "sourceHash": "b01cf1386b47df9c3ede1bc7c65328baee607a68bf8ebecb8ba8c3eecc942dea",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "insight": [
+          "revising"
+        ]
+      },
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "39959818-7ab0-4d93-ad86-26aba16ae6ca",
+      "sourceHash": "dda269f9c40d72ad969fcc65d0dd838b390e13840a149cb0833008112c858c6e",
+      "removedComponents": {
+        "voice": [
+          "direction",
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "2d15d1fe-4a23-4ddf-81c1-adb00936363f",
+      "sourceHash": "922d7776a9d0e8ca9e38740898ef803144c64248a7bc54998b491f172e86f58e",
+      "removedComponents": {
+        "voice": [
+          "direction",
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "b25e6905-961d-4e2b-861f-40551adec95f",
+      "sourceHash": "116fa54bc1ce7cee054b72d322fb4b9bb5a7b936d8d45f2c720ce3826171fb05",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "c0af6642-3283-4518-9c19-2ff702984b17",
+      "sourceHash": "f6e2308a0b5224765f39ae479bc5859b8aa8ddff3722f371a8d0add8d3d56382",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "7fc73941-3a96-4a3e-bd7e-48cb626858ef",
+      "sourceHash": "1a1832389123fe0f39a54affef39ed65d55016909322ac94e8639d7b59bd6245",
+      "requiredComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "23f1425b-04ec-490b-bdb6-6b4ca19dc09b",
+      "sourceHash": "698f9956fac9a50fcd8f65169ede01e685fd56b752aa0dea16e13f3870bb9284",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "requiredComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "675512cc-855d-400c-a569-e898365925d8",
+      "sourceHash": "74dbd25c8d96326f8222695ef376c11904b05bfea353a234070b06d9dbca8e4b",
+      "removedComponents": {
+        "voice": [
+          "direction",
+          "agency"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "741f42de-2293-4d69-b921-d04d85978364",
+      "sourceHash": "f683cd5a36628ac6546378667dcdfbfc6cba5fbdb01b8a00e472750bb6a7fa57",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "22dc0d15-7fea-4653-887d-342afba3c643",
+      "sourceHash": "eb4dfcf21369a4676a45453f280b1a0a59ac075059663b4546f31588125f17b3",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "e9c36178-460b-4680-9d09-4bc60c4aeb45",
+      "sourceHash": "1fbf5628ccd904dcd572f9bafb9cd0fa24459445c262e4d0f596b337de8f3230",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "537cca7b-2b33-4ac7-846a-d58400c13f99",
+      "sourceHash": "f34932209677be19d3cb5fccfbf73f0630410b8bf0c7574f38a002cfaf691130",
+      "removedComponents": {
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "2423d816-8c17-4d14-a83e-5a139bbedd0f",
+      "sourceHash": "be1b95922cb20d9369f796821afe6b389feb3e4f64dd7b75b8d2aeac0e70fa05",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "adb7cb09-f91b-4448-b6ac-1297e7fb8e49",
+      "sourceHash": "a06aed2f2bee6232a2f9d0dd50c08da26b8e0b660f7e7ef95b39ba4357362f24",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "c5e81d0a-794a-4b01-98af-05c4a403b9bc",
+      "sourceHash": "bcea449fd3e1b3d67cd368bf2273941732a902c9920414fec6842758e82ddc9a",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "7c55e93b-a4bb-40eb-b462-2ca12e81f5a9",
+      "sourceHash": "6b5395c5de7c484d1ff81ccf7067d39e3b9c81c3bc5c2f44698e14abfc56b064",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "e8f51981-3d51-47fd-a221-6323b3e9253d",
+      "sourceHash": "9f8efc82d79465968e1cdc5e5b6e4f43b92d75f8820e9770fdcf5e6568242714",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "9bba9b09-ef35-4ce3-8885-7b878789968e",
+      "sourceHash": "d05082bf751df854b67c4a1f34521fba85c007769865bdf2c7ec614bb4a3d890",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "aa867a89-e303-4691-8452-290b647d0700",
+      "sourceHash": "696b0ca418ee2aa3c4542672e15eda4fe98f61b5f4a2a188e084e9a9f17accea",
+      "requiredComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "ba777898-1895-46f1-858d-d8cad3216109",
+      "sourceHash": "2167f621dae93acc6a9a429c59f7d486c2265c2680a213bf58916cb500911803",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "562201ce-f020-4ebb-a178-134c00d5132e",
+      "sourceHash": "b17bebc6ab3488d8b3818304879449f8f14136a65b3db2a553013a4bc9110e19",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "f26159d7-7bd1-446a-b289-45d4a17c6cd0",
+      "sourceHash": "6f69c3909a4cc127a95879071032f9f456e3c7b4c34b1322d81549fde56c521e",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "3a15eb10-361c-4b58-b541-4b5d476bd028",
+      "sourceHash": "20c9831ca54ac71313b899d4afa7aded56df956ca8c89c0b0654d7ca002f2a86",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "5a2c1958-596b-4e3d-8dec-66370b61ab08",
+      "sourceHash": "7822622716b2ecb92955f6849d9ad5a8adcee7bbda804638472338b9801b3abe",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "e82c87ee-e284-4c88-85d7-5f8dec9506d4",
+      "sourceHash": "1e1336900a268ece73bc2e5eae40e2732231cb9cebb2d3d0f16bafa7538fa11d",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "7f4c3915-17e8-4a28-a36d-f44d061615cc",
+      "sourceHash": "9a15ff449652cdbb3d10bd2cccb8172eac0bbb74d6770cd6a0d21f403818f4c8",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "5e009706-402c-4825-b54c-9adb58786a3f",
+      "sourceHash": "e8e16f72ea5889aa33d2e8d57d9b0c32cbee5c752d39ee18d45e4765d7befc5a",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "7dca1783-025c-444b-98a6-c02f6002cdc1",
+      "sourceHash": "8a3c14524f981a3dcc1c89341c102c47a5c5f9c370338a454b1789ef81baf97d",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "3e295f7d-d795-4178-acec-2d91cb1d45d2",
+      "sourceHash": "c7afd31f8cb069835f6e7db2aa427b00a044b5ad3737c78f46ecbf7d0db004f6",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "cb42b375-dd24-4323-996e-8167648e6241",
+      "sourceHash": "9a00010bd8637adf5f369e216f004d555ed3d05e7140efa4e8383efae30c4dfc",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "b3211f08-cf69-46d2-a82d-8083529b4355",
+      "sourceHash": "e31507cc9d8e2585a86fadcdc47e292d9176597dcfee18988da76ce5bc170e96",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "cce02df6-f1ac-4a2c-b59d-7fe821f0885d",
+      "sourceHash": "d983283945d749df3a148ae9b501aa81e425ba560175f09bc43e5339ea4ebb2b",
+      "removedComponents": {
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "10d2ca98-03c2-4896-8499-66b1df049350",
+      "sourceHash": "d5b5d8d9c713088fb51e2943c21e056e4f7926253d2090ccfeb88762ecb8e875",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "72921a91-7cab-4bc8-9bc6-c368e2890779",
+      "sourceHash": "0896e5a01da79b82cb5b066e6cd27a3448a6fceeac056815caf5ff3d630cfdb9",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "ecd466c0-a256-4eaf-a9bb-f50836072adb",
+      "sourceHash": "541cf510e0fc908beb03eee4f381b5322c6332cfc30bf4f0f770f757f5f1d120",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "9692d4bc-f764-4534-af9a-4eddd9ace914",
+      "sourceHash": "fce71cfda399fda5b76051d1e9a9a1296df45264340489850c8c24ba0f4ca5e2",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "13409f68-db64-4dc9-8bce-09409ba959d1",
+      "sourceHash": "8d416f4118c4da29eb6428214928604d3154998eae6b82307edb0787336f18ce",
+      "requiredComponents": {
+        "followthrough": [
+          "execution",
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "fbcddfdc-46dc-4a39-a286-0a2d8b8d79ef",
+      "sourceHash": "c23de7c3ab039f6cb32861e2e32c6e017f818f5d85979cbd4a56b61166bdceb1",
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "28ddc570-7350-495a-9f63-4880e3e596a6",
+      "sourceHash": "0abc9b5a46aa7fb9e81a6ec5ebcb5c951737d217626f2120dbefca982ff7b748",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "2b651ea2-70b2-45e3-a870-4335cc8683b3",
+      "sourceHash": "ca4e1d3766f74e4f6e0503def61b694725ac99477f71d6679c3d05b70117f524",
+      "requiredComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "5a635e1c-2fd2-4a4a-b58b-8cb1acaef48b",
+      "sourceHash": "88110aa4d8cc19fa31a420075b3a5581254a7a15b64e74b2ac2cac88f82bf5bc",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "9d44a2c6-2076-4bfc-878f-95ee37152770",
+      "sourceHash": "ff0e778fdc662393a27c95446d0bde121fea6c75fd89ea0e46017a8ff30c6649",
+      "requiredComponents": {
+        "followthrough": [
+          "execution",
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "3e998522-7fc2-45e8-b843-820c47f3d785",
+      "sourceHash": "a1a164a3aa50a415d64ade9c525938af1e5e7f51581547034e87736f83c64135",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "cef91ada-6889-4971-bbfd-4154b021492f",
+      "sourceHash": "5d046706d9de82ce9964b35696e4d90d75e096670dc0bae202677ab527611da9",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "33f82ee0-7eeb-44a0-84b5-f100d81324b2",
+      "sourceHash": "7dac010c018b70e2e9051865ef42e70653b5b7c61ec7240ad509edc31fbfa7cb",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "insight": [
+          "revising"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "62386bd3-a4c4-48bd-9f2a-6f3f565e4d20",
+      "sourceHash": "1212675166cc42146cfbf150dc0d3bb0c393be59018d3b87c64e8b1ac573fb50",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "40ff8093-a0c0-4c18-973a-437a33348e38",
+      "sourceHash": "fda7f8c83c025faf647504d29523684849adf12bc098e82c1e42ecc004204494",
+      "removedComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "4823934f-9530-45c6-b64b-e197f3376e26",
+      "sourceHash": "0de6aaa6e7160fbff304034dfe4cdabd876695ddf662a19e3b59c49c0e396214",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "628fa0ea-77cc-4f38-8fd9-9660685845c8",
+      "sourceHash": "0177c28a3cb0315c381780360a4698c18b7a1e06b7fbfd60d11200390b6e9a45",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "0284ed8d-b576-4e60-bc9e-17d472fd5cb5",
+      "sourceHash": "661b9757b4ad82b1dadfff105f24abb49c2eb9b85409828e05ad0a3e7e66e2e8",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "dd20ed8f-c37e-4442-a068-6b0abf58d3be",
+      "sourceHash": "81796275f33836e98b4f6a6433ab88f999674d6cec696e7ea35ef1e4b5b95c9c",
+      "removedComponents": {
+        "voice": [
+          "direction",
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "17b2d506-0447-4920-bcab-6c7aae3e4ec8",
+      "sourceHash": "663de27daa7bb52862002ee62f4050dbd4c199a190acf823c1d0fd4c1af50463",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "3b53ae2e-9293-473f-b903-ccc0e6278094",
+      "sourceHash": "685a1b367c372f268b2003dfd477545a3f479f9944bdae7ace68389f1ee6351a",
+      "removedComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "11d0e1fa-2926-40b1-99e2-1f8987d22670",
+      "sourceHash": "d9939f8526b1012265b88bb9c048fefab609130601bc73105964a2272eb41f46",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "requiredComponents": {
+        "voice": [
+          "expression"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "00b263e2-773d-41fc-a5b2-8b7c84564d50",
+      "sourceHash": "a5d44c2abd265c5817f42ff5ec5f3db3a5ef02385ff188bdfe6ae42ca69cd301",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "8ec84eb7-1fae-4725-9db3-7f83f9cef70b",
+      "sourceHash": "d75cc41302cc8368caf971a231bd7b4f0f8fd4569bd67be051d487c59a171182",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "51ea3519-8de4-4c04-abc0-6bae584279f9",
+      "sourceHash": "a2a802a4c5561ae23646059c24e0cb5e9a18861e27c480d087e60046687d94c1",
+      "requiredComponents": {
+        "followthrough": [
+          "execution",
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "55b39d4a-7def-4bb4-a486-c1457419d26d",
+      "sourceHash": "7241763f4e2a587bc874e2f1865ae8430318fca3a65a719d906bfedb752c0a4f",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "787a0162-11c8-4067-9aa1-c298fb848ac9",
+      "sourceHash": "0159e5d037bdd500f86869f08feadaa1a4f9f17c78dbe66c9c2d90143b7f2408",
+      "removedComponents": {
+        "voice": [
+          "disagreement",
+          "agency"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "be135c2e-0880-4ce4-8766-7f35208d9066",
+      "sourceHash": "c5a3e8f545d3bd5a9e49590e43fc1ac1f0dabcfe30ec09f7e178c0da493fecd5",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "259287c3-371b-4480-af3c-00c59ccce0bc",
+      "sourceHash": "2fd9b43ed28464668b94273a2a20c11c022a03f09b23d5fd744ad931e8561f43",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "followthrough": [
+          "selection"
+        ],
+        "insight": [
+          "patterns"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "01a9b2ce-2141-4ec7-82a1-03c3f4ba297a",
+      "sourceHash": "3a81fcc42c9dec9ba59851929708ba9db6e369f7ea0513d9a8121751c4f5bd49",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "84aa98d9-6526-4875-a4a2-822b8c3d2ed8",
+      "sourceHash": "f3be8fe0b21684676bd7163cc5e3c761d213d20cffb8f61dee2782f15c0c8468",
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "c02cfaae-24de-42cc-8e32-4298ae69df5e",
+      "sourceHash": "5618248a416dc239dd623c66ff0f9757ee7187f8542df878f3c1bcd37eda3048",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "d2ce2067-2623-4f02-b164-3f43e7d7f44d",
+      "sourceHash": "fdfc7148274a2a662fbc8fd2984180b3497d9299b24dc8a495238be4e738fdc3",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ],
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "cf0dc63a-961b-435b-82ea-a4f7ee929a01",
+      "sourceHash": "83aa2e81427f4eb774e5508313a73a077e901ea80a92d5a89a1b0c85d40f4471",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ],
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "7f9d1aec-5af5-45af-9327-9427eb7029a2",
+      "sourceHash": "6f930f10e0461b9889416370b94b9fb1e8c0c09ecab2532a1e1b2b951a84e35b",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "72b58a5e-fbce-4b44-ae83-08b4ba429aa4",
+      "sourceHash": "680be953904ab75c2c21302e8e2f86c9c847ec4d2cb89ac1946de5ec4e02324b",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "1c6a4461-8e4b-4f6e-b1fe-4349d2810efb",
+      "sourceHash": "552527bf7f0ab55e2ec1c30fc5b5ef0a9b8261668246b96375927f54aac01ccd",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "91269cd5-12d2-47aa-87df-666855d5306d",
+      "sourceHash": "d3b7c8ce0756b8a2a8ae025ff8c128cb650094768002f0d8e7c42f14bc5d728f",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "69cca9a6-5ffa-4058-bdf3-43657ab3b9a5",
+      "sourceHash": "a796af29bae35bb39db702f2736132f2be83dfa7bb3442192f3a2276f7055055",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "ea5d220b-bd3d-4dfd-83b8-a606b7789734",
+      "sourceHash": "7069d6651b8e2500a374df3031ae5eb23124662d18c7793f6a3b9ef5e399068b",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "7ebd132c-7fe4-495d-9d5d-c9055a01db11",
+      "sourceHash": "6a2b28fa86368d09ebb5c764dfbb4fe38f36dbff3705c169cfaaefdc331f4916",
+      "removedComponents": {
+        "followthrough": [
+          "selection"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "955bc15c-f105-4f79-b483-791bf9031132",
+      "sourceHash": "dd2edbdbfe1463eeb2a5b041cb081391a49029de3e72084e53aa8e6af50c6b5b",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "e708bcf1-353a-4bc6-976d-547c2adcf95a",
+      "sourceHash": "f0712a0f12606a19e5b08ba98881df5fb7436731dc5b335a3e35f438bc146ce0",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "d81761c7-3361-4516-85d2-6f6d9dac1dc8",
+      "sourceHash": "c1db2a5f1ff5b2ac7ab84488f53225be0bc9ba6c29bed9c538fdf719bc6227a5",
+      "requiredComponents": {
+        "followthrough": [
+          "accumulation"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+    },
+    {
+      "sourceId": "ddb3afc4-c5c5-46e5-b521-e651450a6cc0",
+      "sourceHash": "10d9e2014649a487d4e8eeb55d4c479fa95e6ec3c92aadad4dba8b32ddeac3ff",
+      "removedComponents": {
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "1d1b9c51-4eac-4712-b344-559eae11e4d3",
+      "sourceHash": "3d5b4a253fa102635688cdc670d5d4aa2294498f80553b2bcf149b52662736e3",
+      "removedComponents": {
+        "voice": [
+          "direction"
+        ],
+        "insight": [
+          "checking"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "d3165e26-49c6-4754-87cb-ecb4863392b9",
+      "sourceHash": "dcfe5eb80ddd97ed205bf02cf6039f44447025ffb7a0ebcb8c67b410ac19e4ba",
+      "removedComponents": {
+        "voice": [
+          "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "e946f522-1197-4201-8ac0-7bf0ce5859f9",
+      "sourceHash": "68f579849ec74d876153e642a342d13391cb10aa558ef83d512ecac63067ae0d",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
     }
   ]
 }

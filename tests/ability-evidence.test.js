@@ -1,6 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {componentEstimate,buildSeries,validateResult,rubric,hash}=require('../ability-evidence');
 const {schemaFor}=require('../ability-score-store');
+const {resolveItem}=require('../ability-score-store');
 const source={id:'a',createdAt:'2026-10-01T00:00:00Z',sourceText:'I chose the simpler design because it removes the coupled adjustment while preserving the intended motion.'};
 const observation={component:'direction',evidenceType:'direct_writing',timeframe:'current',level:'strong',certainty:'clear',reason:'You identify a concrete competing constraint and justify the independent design choice.',quote:source.sourceText,fact:'You choose the simpler design for a specific functional reason.',limit:'This choice does not establish the finished system or its performance.'};
 const makeRecord=(s,obs={})=>({sourceId:s.id,sourceHash:hash(s.sourceText),version:rubric.version,createdAt:s.createdAt,reviewed:true,values:Object.fromEntries(rubric.metrics.map(m=>[m.key,{quote:s.sourceText.slice(0,140),explanation:'You make a concrete design choice by separating the coupled adjustment from the motion you want to preserve. This reasoning identifies a useful tradeoff, while implementation and performance remain untested.',observations:obs[m.key]||[]}]))});
@@ -48,4 +49,27 @@ test('a guarantee is not a performed routine, while an explicit completed routin
  const done={...source,sourceText:'I sent one message every day this week. I kept the promise through the trip.'};
  const actual=makeRecord(done,{followthrough:[{...observation,component:'execution',evidenceType:'reported_action',quote:done.sourceText}]});
  assert.equal(validateResult(actual,done).followthrough.observations.length,1);
+});
+
+test('technical diagnosis is allowed without allowing clinical diagnosis in an ability explanation',()=>{
+ const r=makeRecord(source);r.values.insight.explanation='You diagnose a concrete layout problem by comparing the cropping across pressure panels and preserving a common scale. This identifies the visible defect, while the actual correction and its rendered result remain unverified.';
+ assert.doesNotThrow(()=>validateResult(r,source));
+ r.values.insight.explanation='You diagnose a mental disorder from the way the message is written and connect that claim to the problem. This explanation describes a clinical conclusion rather than the specific design reasoning available in the note.';
+ assert.throws(()=>validateResult(r,source),/clinical diagnosis/);
+});
+
+test('exploratory uncertainty cannot be the sole reason for a low rating, while actual failure remains rateable',()=>{
+ const exploratory={...observation,level:'developing',reason:'You describe a possible direction, but the choice remains tentative and lacks a final decision.'};
+ assert.throws(()=>validateResult(makeRecord(source,{voice:[exploratory]}),source),/low rating needs a demonstrated weakness/);
+ const difficult={...source,sourceText:'I ignored the agreed constraint and chose an incompatible design, so the assembly failed.'};
+ const actual={...observation,quote:difficult.sourceText,level:'developing',evidenceType:'reported_difficulty',reason:'You report an actual incompatible choice that failed to respect the agreed assembly constraint.'};
+ assert.doesNotThrow(()=>validateResult(makeRecord(difficult,{voice:[actual]}),difficult));
+});
+
+test('separated or reversed passage IDs retain the entire original context rather than fabricate a stitched quote',()=>{
+ const s={...source,sourceText:'I planned to test it. The fixture was not ready. I only sketched the design.'};
+ const item={sourceId:s.id,values:Object.fromEntries(rubric.metrics.map(m=>[m.key,{quoteId:'s1',explanation:makeRecord(s).values[m.key].explanation,observations:m.key==='voice'?[{...observation,quoteIds:['s3','s1']}]:[]}]))};
+ const resolved=resolveItem(item,s);assert.equal(resolved.values.voice.observations[0].quote,s.sourceText);assert.doesNotThrow(()=>validateResult(resolved,s));
+ const long={...s,sourceText:'I planned to test it. '+('The intervening setup was unavailable. '.repeat(50))+'I only sketched the design.'};
+ item.values.voice.observations[0].quoteIds=['s1','s52'];assert.throws(()=>resolveItem(item,long),/quotation span is too long/);
 });

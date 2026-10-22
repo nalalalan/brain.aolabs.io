@@ -5,6 +5,12 @@ const audits=require('./ability-evidence-exclusions.json').records;
 const levels=Object.fromEntries(rubric.levels.map(l=>[l.key,l.points]));
 const dayOf=t=>new Date(t).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 const fail=message=>Object.assign(new Error(message),{status:502});
+function unsupportedLowReason(o){
+ if(o.level!=='developing')return false;
+ const absence=/\b(?:tentative|unsettled|uncertain|hedging|uncommitted|sparse|too unclear|not yet|lacks?|without enough|without a committed|no resolution|no concrete|no specific|does not show|do not show|not show)\b/i.test(o.reason);
+ const difficulty=/\b(?:breakdown|failed|fails|failure|escalat\w*|contradict\w*|bias|refusal|pushes back|harmful|ineffective|unsafe|unworkable|violat\w*|dismiss\w*|ignores?\b[^.]*\bboundar\w*)\b/i.test(o.reason);
+ return absence&&!difficulty;
+}
 function componentEstimate(observations){
  if(!observations.length)return {score:null,raw:null,days:0,weight:0,weightedPoints:0,observations:[],sourceId:null};
  const last=observations.at(-1),recent=observations.filter(o=>o.time>=last.time-56*86400000),seen=new Set(),days=new Map();
@@ -62,6 +68,7 @@ function validateResult(item,source,register){
    if(o.level==='benchmark'&&!verifiedScope(source,m.key,o.component,'director',register))throw fail('100 requires independently corroborated sustained research leadership for this exact component.');
    if(m.key==='followthrough'&&o.component!=='selection'&&o.evidenceType==='direct_writing')throw fail('Writing a request or plan cannot establish completed execution, recovery or results.');
    if(o.level==='struggling'&&o.evidenceType!=='reported_difficulty')throw fail('Zero requires concrete difficulty, not missing evidence or uncertainty.');
+   if(unsupportedLowReason(o))throw Object.assign(fail('A low rating needs a demonstrated weakness, not merely a tentative or unfinished choice, missing detail or absent resolution. Identify the actual difficulty from the source, or omit the unknown component; do not automatically raise the rating.'),{preserveComponent:true});
    const future=/^(?:i|we)\s+(?:would like|want|hope|wish|could|should|might|am going to|will)\b/i.test(o.quote);
    const actual=/[.!?]\s+(?:i|we)\s+(?:did|made|built|tried|tested|finished|told|said|asked|used|changed)\b/i.test(o.quote);
    if(m.key==='followthrough'&&o.component!=='selection'&&future&&!actual)throw fail('An intended action cannot establish completed follow-through.');
