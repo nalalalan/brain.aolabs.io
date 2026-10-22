@@ -1,6 +1,15 @@
 {
   "records": [
     {
+      "sourceId": "c0795dc2-9ad4-4e22-9db0-d2f0b4b97e7d",
+      "sourceHash": "3a867c3ec257e248d351380e0808bdc1df2e0537ee7afe5d4ce835ea7fc466e1",
+      "removedComponents": {
+        "followthrough": ["accumulation"]
+      },
+      "maxLevel": "everyday",
+      "reason": "The source provides conceptual feedback and hopes it will guide later work. Producing feedback for an AI is not a completed project result; technical subject matter and declining a proposed print do not establish a tested or completed higher-scope outcome."
+    },
+    {
       "sourceId": "a459caed-65bb-4b70-aedf-701575b62b2d",
       "removedComponents": {
         "followthrough": [
