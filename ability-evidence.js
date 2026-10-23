@@ -68,7 +68,7 @@ function validateResult(item,source,register){
    if(audit?.removedComponents?.[m.key]?.includes(o.component))throw fail(audit.reason);
    if(o.level==='benchmark'&&!verifiedScope(source,m.key,o.component,'director',register))throw fail('100 requires independently corroborated sustained research leadership for this exact component.');
    if(m.key==='followthrough'&&o.component!=='selection'&&o.evidenceType==='direct_writing')throw fail('Writing a request or plan cannot establish completed execution, recovery or results.');
-   if(o.level==='struggling'&&o.evidenceType!=='reported_difficulty')throw fail('Zero requires concrete difficulty, not missing evidence or uncertainty.');
+   if(o.level==='struggling'&&(!/\b(?:knowingly|knowing|deliberat\w*|fabricat\w*|deceiv\w*|decept\w*|conceal\w*)\b/i.test(o.reason+' '+o.fact)||!['reported_difficulty','reported_action'].includes(o.evidenceType)))throw Object.assign(fail('The Holmes zero requires explicit knowing deception, fabricated success or deliberate disregard of known contrary evidence. An honest failure or missing evidence is not zero. Re-read the source without inferring intent.'),{preserveComponent:true});
    if(unsupportedLowReason(o))throw Object.assign(fail('A low rating needs a demonstrated weakness, not merely a tentative or unfinished choice, missing detail or absent resolution. Identify the actual difficulty from the source, or omit the unknown component; do not automatically raise the rating.'),{preserveComponent:true});
    const future=/^(?:i|we)\s+(?:would like|want|hope|wish|could|should|might|am going to|will)\b/i.test(o.quote);
    const actual=/[.!?]\s+(?:i|we)\s+(?:did|made|built|tried|tested|finished|told|said|asked|used|changed)\b/i.test(o.quote);

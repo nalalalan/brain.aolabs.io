@@ -1,39 +1,162 @@
 {
-  "version": "20261022-ability-benchmark-v15",
+  "version": "20261023-holmes-moritz-v16",
   "kind": "ability-estimate",
-  "zero": "Repeatedly demonstrated inability in the particular skill despite a real opportunity. Missing evidence is unknown, not zero. Housing, income, status, diagnosis and personal worth are not scoring anchors.",
+  "zero": "Our chosen Elizabeth Holmes at Theranos reference: knowingly misleading communication, claimed outcomes that conceal known failures, and refusal to correct claims against contrary evidence. This defines the counterproductive endpoint for these behaviors, not her entire character or an assertion that she has no abilities. Honest mistakes, uncertainty, a failed attempt, limited opportunity and missing evidence are not this endpoint.",
   "hundred": "Our chosen Moritz Bacher benchmark: sustained, independently supported research-leadership ability in communicating and choosing direction, carrying difficult work through, and developing and testing original understanding. This is our aspirational reference, not a claim that we have psychometrically measured him. A score of 100 requires the independent research-leadership evidence gate.",
-  "method": "These are interpretive estimates of abilities revealed by your messages and reported actions. Direct writing can show clarity, self-direction, reasoning, alternatives and revision. Requests, plans and ideas do not establish completed work. We judge the quality of the demonstrated skill rather than award points for job title or career stage; an everyday context has no automatic 20-point ceiling. The anchors are 0 struggling, 25 developing, 50 capable, 75 strong, 90 exceptional and 100 our Moritz benchmark. These are ordinal reference points, not percentages of a person's ability or success. Each component averages relevant observations from up to 56 days with a 28-day half-life and at most one day of weight per date. Repeated passages add nothing. Missing components remain unknown and are excluded from the average, reducing confidence instead. Silence carries the previous estimate. Scores may rise or fall with evidence; confidence reflects coverage and observed days, not a statistically calibrated certainty.",
+  "method": "Our chosen endpoints are 0 = Elizabeth Holmes's documented deceptive conduct at Theranos and 100 = the sustained research-leadership standard represented by Moritz Bacher. Between them, we rate the quality of your truthful communication, grounded execution and evidence-responsive reasoning shown in messages and reported actions. The anchors are 0 deceptive or evidence-defying, 25 persistently counterproductive, 50 genuine but partial, 75 independently effective and adaptive, 90 exceptional, and 100 our Moritz benchmark. These are interpretive ordinal judgments, not measured distances between people or percentages of their ability, success or worth. Absence of deception does not itself earn points; each positive rating needs demonstrated skill. Requests, plans and ideas do not establish completed work. Job title and career stage impose no ceiling. Each component averages relevant observations from up to 56 days with a 28-day half-life and at most one day of weight per date. Repeated passages add nothing. Missing components remain unknown and are excluded from the average, reducing confidence instead. Silence carries the previous estimate. Scores may rise or fall; confidence reflects coverage and observed days, not statistically calibrated certainty.",
   "sources": [
-    {"title": "Moritz Bacher: chosen research-leadership benchmark", "url": "https://www.baecher.info/"},
-    {"title": "Moritz Bacher: research contributions", "url": "https://www.baecher.info/publications/"}
+    {
+      "title": "Elizabeth Holmes: documented investor-fraud conduct used for our zero reference",
+      "url": "https://www.justice.gov/usao-ndca/pr/theranos-founder-elizabeth-holmes-found-guilty-investor-fraud"
+    },
+    {
+      "title": "Moritz Bacher: chosen research-leadership benchmark",
+      "url": "https://www.baecher.info/"
+    },
+    {
+      "title": "Moritz Bacher: research contributions",
+      "url": "https://www.baecher.info/publications/"
+    }
   ],
   "levels": [
-    {"key":"struggling","points":0,"label":"Struggling in this example","criterion":"A concrete applicable example shows the skill breaking down despite a real opportunity. Distress, uncertainty, informal grammar and missing evidence do not qualify."},
-    {"key":"developing","points":25,"label":"Developing","criterion":"The skill is partly present, but the example shows a consequential unresolved gap, dependence on direction, contradiction, or difficulty carrying it out."},
-    {"key":"capable","points":50,"label":"Capable","criterion":"The example shows an independently usable, coherent choice, explanation or action. It meets the task at hand but has limited demonstrated handling of complexity, alternatives, feedback or transfer."},
-    {"key":"strong","points":75,"label":"Strong","criterion":"The example shows independent skill handling meaningful competing constraints, alternatives, feedback or obstacles, with a concrete rationale or result. Specific evidence of this quality is required; fluency or a technical topic alone is insufficient."},
-    {"key":"exceptional","points":90,"label":"Exceptional","criterion":"An unusually demanding example shows original synthesis, precise judgment across competing constraints, or reliable difficult execution with concrete supporting detail. Do not infer this from ambition, confident prose, prestige or an unsupported self-claim."},
-    {"key":"benchmark","points":100,"label":"Our Moritz benchmark","criterion":"Sustained independently corroborated research-leadership ability across projects, people and outcomes. Requires a source-bound independent verification record."}
+    {
+      "key": "struggling",
+      "points": 0,
+      "label": "Our Holmes-at-Theranos reference",
+      "criterion": "Concrete evidence shows knowing deception, fabricated success or deliberate disregard of known contrary evidence in this component. Mere failure, an incorrect belief, distress, limited skill or silence cannot establish this endpoint. Rate documented behavior, not a whole person."
+    },
+    {
+      "key": "developing",
+      "points": 25,
+      "label": "Persistently counterproductive",
+      "criterion": "The source shows a consequential pattern of actions or reasoning that undermines the stated goal: repeated escalation, dismissal of a clear constraint, or continuing a demonstrably ineffective approach without engaging the feedback. Intentional deception is not required. A single honest failed attempt or an unfilled evidence gap is insufficient."
+    },
+    {
+      "key": "capable",
+      "points": 50,
+      "label": "Genuine but partial",
+      "criterion": "The source shows a real, grounded attempt or understandable choice, communication, action or explanation, but also limited demonstrated skill or an unresolved concrete difficulty. A simple clear request may fit here. Honesty alone and absence of misconduct do not establish a skill observation."
+    },
+    {
+      "key": "strong",
+      "points": 75,
+      "label": "Independently effective and adaptive",
+      "criterion": "The source shows independently usable communication, reasoning or performed action with a concrete rationale or result, and meaningful engagement with a constraint, alternative, obstacle or corrective evidence. A reasoned bounded choice can qualify in an everyday setting; fluency, insistence or a technical topic alone cannot."
+    },
+    {
+      "key": "exceptional",
+      "points": 90,
+      "label": "Exceptional",
+      "criterion": "An unusually demanding example shows original synthesis, precise judgment across competing constraints, or reliable difficult execution with concrete detail. Do not infer this from ambition, prestige, an unsupported self-claim or merely not resembling the zero reference."
+    },
+    {
+      "key": "benchmark",
+      "points": 100,
+      "label": "Our Moritz benchmark",
+      "criterion": "Sustained independently corroborated research-leadership ability across projects, people and outcomes. Requires a source-bound independent verification record."
+    }
   ],
   "metrics": [
-    {"key":"voice","label":"Voice","components":[
-      {"key":"direction","label":"Knowing your direction","criterion":"You identify your own priorities, preferences or values and distinguish them from competing demands. A reasoned choice in the message is direct evidence; a bare wish gives little basis for estimating skill."},
-      {"key":"expression","label":"Expressing your meaning","criterion":"Your message itself communicates a specific need, idea, boundary or disagreement with understandable reasoning and context. Private writing and messages to AI can demonstrate expression; do not pretend a draft was delivered to another person. Ignore polish, grammar, verbosity and social status."},
-      {"key":"disagreement","label":"Handling different perspectives","criterion":"You engage a concrete alternative or another person's stated perspective, distinguish agreement from disagreement, examine your contribution, negotiate or maintain a reasoned boundary. A written comparison can show perspective-taking; it does not prove a conflict was resolved. Unsupported claims about others' motives are not insight."},
-      {"key":"agency","label":"Owning your decisions","criterion":"You make a considered choice, give a reason, set a boundary or take responsibility in the message or reported action. Clear direction to an assistant can show your own decision-making when the choice is yours; it cannot establish that the requested work was performed. Insistence alone is insufficient."}
-    ]},
-    {"key":"followthrough","label":"Follow-through","components":[
-      {"key":"selection","label":"Choosing a workable next action","criterion":"You choose a bounded next action tied to a priority and, where relevant, specify constraints or order. A concrete plan can show planning ability, but cannot establish execution, recovery or results."},
-      {"key":"execution","label":"Doing the chosen work","criterion":"You report personally carrying out an identifiable task or commitment. Judge initiative, complexity, consistency and obstacles from actual details. Requests to AI, plans, supplying prompt material and merely sending links in an argument are not project execution."},
-      {"key":"recovery","label":"Adapting after setbacks","criterion":"You report an actual adjustment, restart, tested alternative or reasoned stop after a real obstacle. Proposed adjustments and asking an assistant to keep trying do not establish your own recovery."},
-      {"key":"accumulation","label":"Leaving usable results","criterion":"Your reported work leaves an identifiable completed result, functioning prototype, usable output or demonstrated skill applied to a task. Judge the actual result and its constraints. Claimed talent, hoped-for benefit, AI instructions and intended outcomes do not count as completed results."}
-    ]},
-    {"key":"insight","label":"Insight","components":[
-      {"key":"patterns","label":"Building explanations","criterion":"You connect concrete observations, distinguish concepts, identify mechanisms or construct a reasoned hypothesis. The reasoning in your message is direct evidence even before an experiment. State hypotheses as hypotheses; do not promote guessed motives or speculative consequences to observed facts."},
-      {"key":"checking","label":"Examining alternatives","criterion":"You compare a claim with an observation, alternative explanation, counterexample or explicit constraint. Careful conceptual checking in writing counts; do not call it a physical experiment unless one was performed. Merely saying maybe is insufficient."},
-      {"key":"revising","label":"Updating your understanding","criterion":"You actually revise a belief, interpretation or design judgment in response to a reason, comparison or evidence. The revision may occur in the message itself. Wanting feedback or saying you will reconsider is not an observed revision."},
-      {"key":"application","label":"Using your understanding","criterion":"You explicitly use a particular explanation to work through a concrete problem, choice or design in the message or reported action. Reasoned conceptual application counts as thinking; it is not proof of implementation or successful results. A feeling of relief or an unreasoned intention alone is insufficient."}
-    ]}
-  ]
+    {
+      "key": "voice",
+      "label": "Voice",
+      "components": [
+        {
+          "key": "direction",
+          "label": "Knowing your direction",
+          "criterion": "You identify your own priorities, preferences or values and distinguish them from competing demands. A reasoned choice in the message is direct evidence; a bare wish gives little basis for estimating skill."
+        },
+        {
+          "key": "expression",
+          "label": "Expressing your meaning",
+          "criterion": "Your message itself communicates a specific need, idea, boundary or disagreement with understandable reasoning and context. Private writing and messages to AI can demonstrate expression; do not pretend a draft was delivered to another person. Ignore polish, grammar, verbosity and social status."
+        },
+        {
+          "key": "disagreement",
+          "label": "Handling different perspectives",
+          "criterion": "You engage a concrete alternative or another person's stated perspective, distinguish agreement from disagreement, examine your contribution, negotiate or maintain a reasoned boundary. A written comparison can show perspective-taking; it does not prove a conflict was resolved. Unsupported claims about others' motives are not insight."
+        },
+        {
+          "key": "agency",
+          "label": "Owning your decisions",
+          "criterion": "You make a considered choice, give a reason, set a boundary or take responsibility in the message or reported action. Clear direction to an assistant can show your own decision-making when the choice is yours; it cannot establish that the requested work was performed. Insistence alone is insufficient."
+        }
+      ]
+    },
+    {
+      "key": "followthrough",
+      "label": "Follow-through",
+      "components": [
+        {
+          "key": "selection",
+          "label": "Choosing a workable next action",
+          "criterion": "You choose a bounded next action tied to a priority and, where relevant, specify constraints or order. A concrete plan can show planning ability, but cannot establish execution, recovery or results."
+        },
+        {
+          "key": "execution",
+          "label": "Doing the chosen work",
+          "criterion": "You report personally carrying out an identifiable task or commitment. Judge initiative, complexity, consistency and obstacles from actual details. Requests to AI, plans, supplying prompt material and merely sending links in an argument are not project execution."
+        },
+        {
+          "key": "recovery",
+          "label": "Adapting after setbacks",
+          "criterion": "You report an actual adjustment, restart, tested alternative or reasoned stop after a real obstacle. Proposed adjustments and asking an assistant to keep trying do not establish your own recovery."
+        },
+        {
+          "key": "accumulation",
+          "label": "Leaving usable results",
+          "criterion": "Your reported work leaves an identifiable completed result, functioning prototype, usable output or demonstrated skill applied to a task. Judge the actual result and its constraints. Claimed talent, hoped-for benefit, AI instructions and intended outcomes do not count as completed results."
+        }
+      ]
+    },
+    {
+      "key": "insight",
+      "label": "Insight",
+      "components": [
+        {
+          "key": "patterns",
+          "label": "Building explanations",
+          "criterion": "You connect concrete observations, distinguish concepts, identify mechanisms or construct a reasoned hypothesis. The reasoning in your message is direct evidence even before an experiment. State hypotheses as hypotheses; do not promote guessed motives or speculative consequences to observed facts."
+        },
+        {
+          "key": "checking",
+          "label": "Examining alternatives",
+          "criterion": "You compare a claim with an observation, alternative explanation, counterexample or explicit constraint. Careful conceptual checking in writing counts; do not call it a physical experiment unless one was performed. Merely saying maybe is insufficient."
+        },
+        {
+          "key": "revising",
+          "label": "Updating your understanding",
+          "criterion": "You actually revise a belief, interpretation or design judgment in response to a reason, comparison or evidence. The revision may occur in the message itself. Wanting feedback or saying you will reconsider is not an observed revision."
+        },
+        {
+          "key": "application",
+          "label": "Using your understanding",
+          "criterion": "You explicitly use a particular explanation to work through a concrete problem, choice or design in the message or reported action. Reasoned conceptual application counts as thinking; it is not proof of implementation or successful results. A feeling of relief or an unreasoned intention alone is insufficient."
+        }
+      ]
+    }
+  ],
+  "endpointEvidence": {
+    "zero": {
+      "person": "Elizabeth Holmes",
+      "scope": "Documented Theranos investor-fraud conduct; chosen reference, not a psychometric assessment",
+      "facts": [
+        "A jury convicted Holmes of conspiracy and three counts of investor wire fraud.",
+        "Trial evidence showed she knowingly misrepresented analyzer capabilities despite known accuracy, reliability and test-range limitations.",
+        "Theranos used third-party machines for much of its testing while investors received misleading claims about its proprietary technology."
+      ],
+      "excludedClaims": [
+        "No inference about vocal pitch, eye contact or inner capacity.",
+        "No claim that every part of her life or every result was fraudulent or nonexistent.",
+        "No diagnosis and no claim that all blood testing with small samples is physically impossible."
+      ],
+      "source": "https://www.justice.gov/usao-ndca/pr/theranos-founder-elizabeth-holmes-found-guilty-investor-fraud"
+    },
+    "hundred": {
+      "person": "Moritz Bacher",
+      "scope": "Chosen sustained research-leadership reference; not a measured perfect human",
+      "source": "https://www.baecher.info/"
+    },
+    "verifiedAt": "2026-10-23T01:35:12.551Z"
+  }
 }

@@ -1,0 +1,39 @@
+{
+  "version": "20261022-ability-benchmark-v15",
+  "kind": "ability-estimate",
+  "zero": "Repeatedly demonstrated inability in the particular skill despite a real opportunity. Missing evidence is unknown, not zero. Housing, income, status, diagnosis and personal worth are not scoring anchors.",
+  "hundred": "Our chosen Moritz Bacher benchmark: sustained, independently supported research-leadership ability in communicating and choosing direction, carrying difficult work through, and developing and testing original understanding. This is our aspirational reference, not a claim that we have psychometrically measured him. A score of 100 requires the independent research-leadership evidence gate.",
+  "method": "These are interpretive estimates of abilities revealed by your messages and reported actions. Direct writing can show clarity, self-direction, reasoning, alternatives and revision. Requests, plans and ideas do not establish completed work. We judge the quality of the demonstrated skill rather than award points for job title or career stage; an everyday context has no automatic 20-point ceiling. The anchors are 0 struggling, 25 developing, 50 capable, 75 strong, 90 exceptional and 100 our Moritz benchmark. These are ordinal reference points, not percentages of a person's ability or success. Each component averages relevant observations from up to 56 days with a 28-day half-life and at most one day of weight per date. Repeated passages add nothing. Missing components remain unknown and are excluded from the average, reducing confidence instead. Silence carries the previous estimate. Scores may rise or fall with evidence; confidence reflects coverage and observed days, not a statistically calibrated certainty.",
+  "sources": [
+    {"title": "Moritz Bacher: chosen research-leadership benchmark", "url": "https://www.baecher.info/"},
+    {"title": "Moritz Bacher: research contributions", "url": "https://www.baecher.info/publications/"}
+  ],
+  "levels": [
+    {"key":"struggling","points":0,"label":"Struggling in this example","criterion":"A concrete applicable example shows the skill breaking down despite a real opportunity. Distress, uncertainty, informal grammar and missing evidence do not qualify."},
+    {"key":"developing","points":25,"label":"Developing","criterion":"The skill is partly present, but the example shows a consequential unresolved gap, dependence on direction, contradiction, or difficulty carrying it out."},
+    {"key":"capable","points":50,"label":"Capable","criterion":"The example shows an independently usable, coherent choice, explanation or action. It meets the task at hand but has limited demonstrated handling of complexity, alternatives, feedback or transfer."},
+    {"key":"strong","points":75,"label":"Strong","criterion":"The example shows independent skill handling meaningful competing constraints, alternatives, feedback or obstacles, with a concrete rationale or result. Specific evidence of this quality is required; fluency or a technical topic alone is insufficient."},
+    {"key":"exceptional","points":90,"label":"Exceptional","criterion":"An unusually demanding example shows original synthesis, precise judgment across competing constraints, or reliable difficult execution with concrete supporting detail. Do not infer this from ambition, confident prose, prestige or an unsupported self-claim."},
+    {"key":"benchmark","points":100,"label":"Our Moritz benchmark","criterion":"Sustained independently corroborated research-leadership ability across projects, people and outcomes. Requires a source-bound independent verification record."}
+  ],
+  "metrics": [
+    {"key":"voice","label":"Voice","components":[
+      {"key":"direction","label":"Knowing your direction","criterion":"You identify your own priorities, preferences or values and distinguish them from competing demands. A reasoned choice in the message is direct evidence; a bare wish gives little basis for estimating skill."},
+      {"key":"expression","label":"Expressing your meaning","criterion":"Your message itself communicates a specific need, idea, boundary or disagreement with understandable reasoning and context. Private writing and messages to AI can demonstrate expression; do not pretend a draft was delivered to another person. Ignore polish, grammar, verbosity and social status."},
+      {"key":"disagreement","label":"Handling different perspectives","criterion":"You engage a concrete alternative or another person's stated perspective, distinguish agreement from disagreement, examine your contribution, negotiate or maintain a reasoned boundary. A written comparison can show perspective-taking; it does not prove a conflict was resolved. Unsupported claims about others' motives are not insight."},
+      {"key":"agency","label":"Owning your decisions","criterion":"You make a considered choice, give a reason, set a boundary or take responsibility in the message or reported action. Clear direction to an assistant can show your own decision-making when the choice is yours; it cannot establish that the requested work was performed. Insistence alone is insufficient."}
+    ]},
+    {"key":"followthrough","label":"Follow-through","components":[
+      {"key":"selection","label":"Choosing a workable next action","criterion":"You choose a bounded next action tied to a priority and, where relevant, specify constraints or order. A concrete plan can show planning ability, but cannot establish execution, recovery or results."},
+      {"key":"execution","label":"Doing the chosen work","criterion":"You report personally carrying out an identifiable task or commitment. Judge initiative, complexity, consistency and obstacles from actual details. Requests to AI, plans, supplying prompt material and merely sending links in an argument are not project execution."},
+      {"key":"recovery","label":"Adapting after setbacks","criterion":"You report an actual adjustment, restart, tested alternative or reasoned stop after a real obstacle. Proposed adjustments and asking an assistant to keep trying do not establish your own recovery."},
+      {"key":"accumulation","label":"Leaving usable results","criterion":"Your reported work leaves an identifiable completed result, functioning prototype, usable output or demonstrated skill applied to a task. Judge the actual result and its constraints. Claimed talent, hoped-for benefit, AI instructions and intended outcomes do not count as completed results."}
+    ]},
+    {"key":"insight","label":"Insight","components":[
+      {"key":"patterns","label":"Building explanations","criterion":"You connect concrete observations, distinguish concepts, identify mechanisms or construct a reasoned hypothesis. The reasoning in your message is direct evidence even before an experiment. State hypotheses as hypotheses; do not promote guessed motives or speculative consequences to observed facts."},
+      {"key":"checking","label":"Examining alternatives","criterion":"You compare a claim with an observation, alternative explanation, counterexample or explicit constraint. Careful conceptual checking in writing counts; do not call it a physical experiment unless one was performed. Merely saying maybe is insufficient."},
+      {"key":"revising","label":"Updating your understanding","criterion":"You actually revise a belief, interpretation or design judgment in response to a reason, comparison or evidence. The revision may occur in the message itself. Wanting feedback or saying you will reconsider is not an observed revision."},
+      {"key":"application","label":"Using your understanding","criterion":"You explicitly use a particular explanation to work through a concrete problem, choice or design in the message or reported action. Reasoned conceptual application counts as thinking; it is not proof of implementation or successful results. A feeling of relief or an unreasoned intention alone is insufficient."}
+    ]}
+  ]
+}

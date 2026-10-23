@@ -23,7 +23,7 @@
   }
   function refresh(){
     const rows=observations(),last=rows.at(-1),end=last?dateOf(last):0,ability=rubric?.kind==='ability-estimate';
-    if(ability)document.querySelector('.document-intro > p').textContent='100 = our Moritz Bacher benchmark. Ability estimates from your messages and actions.';
+    if(ability)document.querySelector('.document-intro > p').textContent=rubric?.endpointEvidence?'0 = Holmes at Theranos · 100 = Moritz Bacher. Ability estimates from your messages and actions.':'100 = our Moritz Bacher benchmark. Ability estimates from your messages and actions.';
     for(const m of metrics){const badge=document.getElementById('score-'+m.key);if(!badge)continue;const current=last?assessment(last,m.key,false):null;badge.replaceChildren(node('span',m.label.toLowerCase()+(ability?' estimate':'')),node('strong',current?current.value.score+'/100':'Awaiting assessment'));}
     const graph=document.getElementById('brain-progress-history');graph.replaceChildren();
     if(rows.length)graph.append(buildScoreHistoryPlot(rows));else graph.append(node('p','Your scores will appear after your notes are read.','score-history-empty'));

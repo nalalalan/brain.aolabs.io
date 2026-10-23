@@ -5,6 +5,17 @@ const {resolveItem}=require('../ability-score-store');
 const source={id:'a',createdAt:'2026-10-01T00:00:00Z',sourceText:'I chose the simpler design because it removes the coupled adjustment while preserving the intended motion.'};
 const observation={component:'direction',evidenceType:'direct_writing',timeframe:'current',level:'strong',certainty:'clear',reason:'You identify a concrete competing constraint and justify the independent design choice.',quote:source.sourceText,fact:'You choose the simpler design for a specific functional reason.',limit:'This choice does not establish the finished system or its performance.'};
 const makeRecord=(s,obs={})=>({sourceId:s.id,sourceHash:hash(s.sourceText),version:rubric.version,createdAt:s.createdAt,reviewed:true,values:Object.fromEntries(rubric.metrics.map(m=>[m.key,{quote:s.sourceText.slice(0,140),explanation:'You make a concrete design choice by separating the coupled adjustment from the motion you want to preserve. This reasoning identifies a useful tradeoff, while implementation and performance remain untested.',observations:obs[m.key]||[]}]))});
+
+test('the Holmes endpoint requires knowing deception or evidence-defiance, not an honest failed attempt',()=>{
+ const honest={...source,sourceText:'I tested the prototype and it failed. I wrote down the failed measurements and stopped claiming that it worked.'};
+ const observationOfFailure={...observation,component:'execution',quote:honest.sourceText,evidenceType:'reported_difficulty',level:'struggling',fact:'You report a failed prototype test and acknowledge its outcome.',reason:'You attempted the actual test but the prototype did not work.'};
+ assert.throws(()=>validateResult(makeRecord(honest,{followthrough:[observationOfFailure]}),honest),/Holmes zero/);
+ const deception={...source,sourceText:'I knew the device had failed its accuracy tests, but I deliberately told investors it had passed and concealed the failed measurements.'};
+ const deceptiveObservation={...observationOfFailure,quote:deception.sourceText,evidenceType:'reported_action',fact:'You report knowingly concealing failed measurements and claiming success to investors.',reason:'You describe deliberate deception about an outcome contradicted by known test evidence.'};
+ assert.doesNotThrow(()=>validateResult(makeRecord(deception,{followthrough:[deceptiveObservation]}),deception));
+ assert(rubric.zero.includes('Elizabeth Holmes'));
+ assert(rubric.method.includes('Absence of deception does not itself earn points'));
+});
 test('unknown components stay unknown and never become fabricated low ability',()=>{
  assert.equal(componentEstimate([]).score,null);
  const series=buildSeries([source],{a:makeRecord(source,{voice:[observation]})});

@@ -1175,6 +1175,7 @@ const life = require("./life-store")(storageRoot, readIndex);
 const noteScores = require("./note-score-store")(storageRoot, readIndex);
 const evidenceScores = require("./evidence-score-store")(storageRoot, readIndex);
 const abilityScores = require("./ability-score-store")(storageRoot, readIndex);
+const acceptedAbilityV15 = require("./ability-v15-score-store")(storageRoot, readIndex);
 
 const server = http.createServer(async (req, res) => {
   setCors(res);
@@ -1188,6 +1189,7 @@ const server = http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
     if (await abilityScores.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
+    if (req.method === "GET" && requestUrl.pathname === "/api/note-scores" && await acceptedAbilityV15.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (await evidenceScores.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (await noteScores.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
     if (await life.handle(req, requestUrl, readJson, (status, payload) => sendJson(res, status, payload))) return;
