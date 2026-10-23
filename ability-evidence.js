@@ -60,7 +60,8 @@ function validateResult(item,source,register){
   if(prohibited||clinicalDiagnosis)throw fail('Explain the specific ability evidence without social ranking, clinical diagnosis or boilerplate'+(prohibited?' (rejected wording: '+prohibited[0]+')':'')+'. Technical diagnosis of a mechanism or figure problem is allowed.');
   const used=new Set(),observations=[];
   for(const original of v.observations){const o={...original};try{
-   if(!m.components.some(c=>c.key===o.component)||used.has(o.component))throw fail('Invalid or repeated component.');used.add(o.component);
+   if(!m.components.some(c=>c.key===o.component))throw fail('Invalid component '+m.key+'.'+o.component+'.');
+   if(used.has(o.component))throw Object.assign(fail('Repeated component '+m.key+'.'+o.component+'. Keep at most one best-supported observation for this component.'),{preserveComponent:true});used.add(o.component);
    if(!(o.level in levels)||!['current','historical'].includes(o.timeframe)||!['direct_writing','reported_action','reported_difficulty'].includes(o.evidenceType)||!['clear','limited'].includes(o.certainty))throw fail('Invalid ability evidence fields.');
    for(const k of ['quote','fact','limit','reason'])o[k]=normalize(o[k]);
    if(!o.quote||!text.includes(o.quote)||o.quote.length>1200||!o.fact||!o.limit||o.reason.split(/\s+/).length<6)throw fail('Evidence requires an exact passage, bounded fact, limitation and rating reason.');

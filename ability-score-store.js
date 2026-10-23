@@ -27,6 +27,7 @@ const analysisHash=hash(instructions+JSON.stringify(observation)+schemaFor.toStr
 const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence.js'),'utf8')+JSON.stringify(rubric)+require('node:fs').readFileSync(path.join(__dirname,'benchmark-verifications.json'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence-exclusions.json'),'utf8'));
 const archiveHash=files=>hash(JSON.stringify(ordered(files).map(s=>[s.id,hash(s.sourceText)])));
 const recordsHash=(files,records)=>hash(JSON.stringify(ordered(files).map(s=>[s.id,records[s.id]?.sourceHash,records[s.id]?.values])));
+const repairExclusions=(error,audit)=>error.metric&&error.component&&!error.preserveComponent&&!audit?.requiredComponents?.[error.metric]?.includes(error.component)?[{metric:error.metric,component:error.component,reason:error.message}]:[];
 module.exports=function abilityScores(root,readFiles){
  const file=path.join(root,'.brain-ability-evidence-v16.json'),activeFile=path.join(root,'.brain-ability-v16-active.json');
  let writes=Promise.resolve();const pending=new Map();
@@ -53,7 +54,7 @@ module.exports=function abilityScores(root,readFiles){
   const candidate=await model({notes,verifiedReferences,excludedComponents});let reviewed=await model({notes,verifiedReferences,candidate,excludedComponents},true),record;
   for(let attempt=0;attempt<3;attempt++){
    try{const item=reviewed.entries?.find(e=>e.sourceId===source.id);if(!item)throw Error('Missing source assessment.');record={sourceId:source.id,sourceHash:hash(source.sourceText),version:rubric.version,analysisHash,createdAt:new Date().toISOString(),model:process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4',reviewed:true,values:validateResult(resolveItem(item,source),source)};break;}
-   catch(error){if(attempt===2)throw fail(error.message,502);if(error.metric&&error.component&&!error.preserveComponent)excludedComponents.push({sourceId:source.id,metric:error.metric,component:error.component,reason:error.message});reviewed=await model({notes,verifiedReferences,candidate:reviewed,excludedComponents,correction:error.message},true);}
+   catch(error){if(attempt===2)throw fail(error.message,502);excludedComponents.push(...repairExclusions(error,audit).map(item=>({sourceId:source.id,...item})));reviewed=await model({notes,verifiedReferences,candidate:reviewed,excludedComponents,correction:error.message},true);}
   }await save([record]);return record;
  }
  async function runtime(){
@@ -90,4 +91,4 @@ module.exports=function abilityScores(root,readFiles){
  }
  return {handle};
 };
-Object.assign(module.exports,{analysisHash,gateHash,schemaFor,resolveItem,archiveHash,recordsHash});
+Object.assign(module.exports,{analysisHash,gateHash,schemaFor,resolveItem,archiveHash,recordsHash,repairExclusions});

@@ -282,7 +282,13 @@
           "disagreement"
         ]
       },
-      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
+      "requiredComponents": {
+        "followthrough": [
+          "execution"
+        ]
+      },
+      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
     },
     {
       "sourceId": "b5799034-2ecc-4d34-8d18-aec2744ad601",
@@ -428,7 +434,8 @@
       "sourceHash": "1a1832389123fe0f39a54affef39ed65d55016909322ac94e8639d7b59bd6245",
       "requiredComponents": {
         "followthrough": [
-          "accumulation"
+          "accumulation",
+          "execution"
         ]
       },
       "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
@@ -448,7 +455,7 @@
         ]
       },
       "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties.",
-      "reviewGuidance": "Re-read the complete original for the explicitly demonstrated or reported action. Assess only what it supports, with its limitations; do not infer a successful outcome."
+      "reviewGuidance": "The source explicitly finishes a letter after about an hour of writing: no more writing, me voice my thoughts for a good hour. Assess that completed draft as a reported writing artifact, not a delivered message or repaired relationship. The intention to send remains only a plan. This is why accumulation is required; preserve its limits."
     },
     {
       "sourceId": "675512cc-855d-400c-a569-e898365925d8",
@@ -1583,6 +1590,26 @@
     {
       "sourceId": "2a7bff74-66f8-4fc7-9aa2-0fe29d738778",
       "sourceHash": "c843a94db9e09b07dca7530b9b8e8d31ca8d949001ebbf090eb5e7a164e260f8",
+      "removedComponents": {
+        "insight": [
+          "application"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "d5a57992-4038-4b04-b9d0-3afd8d87995f",
+      "sourceHash": "3b471e5677738f18f7c2aa0ec68e00d18617b29e98716570c70b6a85be34388e",
+      "removedComponents": {
+        "voice": [
+          "agency"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "f0ee763e-3d8a-4f95-9e81-b71899ba166a",
+      "sourceHash": "8bfe94a7f29c2a506c13ff2a2f58e952bc9f52bdd3e173d2f1ab6618be5b59b1",
       "removedComponents": {
         "insight": [
           "application"
