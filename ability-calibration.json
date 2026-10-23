@@ -1,5 +1,16 @@
 {
   "version": "20261023-holmes-moritz-v16",
-  "status": "pending",
-  "reason": "User changed both-endpoint calibration. Full original-source rescore and acceptance required."
+  "analysisHash": "1b609b0cf6c01c832ce5e203b7f6ff9ab770203a3c2aa013bf75616c24d55b6f",
+  "gateHash": "51d76d143563a00833c3ff353ad6bbb3503877e9a43833d6ae135a517f402501",
+  "archiveHash": "235806018a9291821f7bda63a203509569de4f3f204efc38e44b1a8a69dc83d9",
+  "recordsHash": "aeac1473b20734f9489e05d96e3fa37ff2bd28ba0c1609c5917e24ad89fbd70c",
+  "status": "passed",
+  "sourceAuditPassed": true,
+  "renderedPassed": true,
+  "count": 310,
+  "checkedAt": "2026-10-23T02:35:11.135Z",
+  "calibrationCases": 17,
+  "originalRepeatRuns": 3,
+  "targetedAgentSourceReviews": 117,
+  "rawArithmeticTolerance": 1e-10
 }
