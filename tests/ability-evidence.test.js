@@ -25,6 +25,14 @@ test('unknown components stay unknown and never become fabricated low ability',(
  assert.equal(series.entries.a.values.followthrough.score,null);
  assert.equal(series.entries.a.values.voice.components.expression.score,null);
 });
+
+test('source-review omissions name the exact required component so bounded repair can find the evidence',()=>{
+ const records=require('../ability-evidence-exclusions.json').records;
+ const rule={sourceId:source.id,sourceHash:hash(source.sourceText),requiredComponents:{voice:['expression']}};
+ records.push(rule);
+ try{assert.throws(()=>validateResult(makeRecord(source),source),/voice\.expression is explicitly/)}
+ finally{records.splice(records.indexOf(rule),1)}
+});
 test('actual contrary evidence lowers estimates; duplicate passages and status labels do not inflate them',()=>{
  const event=(o,n)=>({...o,sourceId:String(n),date:'2026-10-0'+n+'T00:00:00Z',time:Date.parse('2026-10-0'+n+'T00:00:00Z')});
  const good=event(observation,1),bad=event({...observation,quote:'I could not choose between the two options despite having the information.',level:'developing',evidenceType:'reported_difficulty'},2);

@@ -47,7 +47,7 @@ module.exports=function abilityScores(root,readFiles){
   const data=await read();if(!repeat&&valid(data.records[source.id],source))return data.records[source.id];
   if(source.sourceText.length>180000)throw fail('This source needs a separate long-document review.',422);
   const audit=require('./ability-evidence-exclusions.json').records.find(a=>a.sourceId===source.id&&a.sourceHash===hash(source.sourceText));
-  const notes=[{sourceId:source.id,sourceHash:hash(source.sourceText),date:source.sourceCreatedAt||source.createdAt,passages:passages(source.sourceText),...(audit?.reviewGuidance?{sourceReviewGuidance:audit.reviewGuidance}:{})}];
+  const notes=[{sourceId:source.id,sourceHash:hash(source.sourceText),date:source.sourceCreatedAt||source.createdAt,passages:passages(source.sourceText),...(audit?.reviewGuidance?{sourceReviewGuidance:audit.reviewGuidance}:{}),...(audit?.requiredComponents?{sourceReviewRequirements:audit.requiredComponents}:{})}];
   const excludedComponents=Object.entries(audit?.removedComponents||{}).flatMap(([metric,components])=>components.map(component=>({sourceId:source.id,metric,component,reason:audit.reason})));
   const verifiedReferences=require('./benchmark-verifications.json').records.filter(v=>v.sourceId===source.id&&hash(source.sourceText)===v.sourceHash);
   const candidate=await model({notes,verifiedReferences,excludedComponents});let reviewed=await model({notes,verifiedReferences,candidate,excludedComponents},true),record;

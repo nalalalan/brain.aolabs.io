@@ -19,9 +19,12 @@
           "execution",
           "recovery",
           "accumulation"
+        ],
+        "insight": [
+          "application"
         ]
       },
-      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
     },
     {
       "sourceId": "f1aeeafe-30ba-4fe3-9a94-67472d5b197f",
@@ -67,7 +70,7 @@
           "accumulation"
         ]
       },
-      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
     },
     {
       "sourceId": "b7c7254b-ec01-4e97-8d23-9f340a1e6163",
@@ -150,9 +153,12 @@
           "execution",
           "recovery",
           "accumulation"
+        ],
+        "insight": [
+          "checking"
         ]
       },
-      "reason": "The original source does not establish this completed action or result; preserve the distinction between plans, requested work, reflection and performed work."
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
     },
     {
       "sourceId": "26873976-ecee-42e7-999c-cbdf9eae0273",
@@ -1570,6 +1576,16 @@
       "removedComponents": {
         "voice": [
           "disagreement"
+        ]
+      },
+      "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
+    },
+    {
+      "sourceId": "2a7bff74-66f8-4fc7-9aa2-0fe29d738778",
+      "sourceHash": "c843a94db9e09b07dca7530b9b8e8d31ca8d949001ebbf090eb5e7a164e260f8",
+      "removedComponents": {
+        "insight": [
+          "application"
         ]
       },
       "reason": "Original-source review found this component unsupported. Missing evidence is unknown; a proposed action is not a completed action. Preserve supported abilities and actual difficulties."
