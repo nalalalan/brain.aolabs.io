@@ -44,8 +44,8 @@ test('a newly saved note clears the previous note impact while its assessment is
   vm.runInNewContext(fs.readFileSync(require.resolve('../score-impact.js'),'utf8'),context);
   vm.runInNewContext(fs.readFileSync(require.resolve('../scores.js'),'utf8'),context);
   await new Promise(setImmediate);
-  assert.equal(elements.get('score-voice').children.at(-1).textContent,'Latest note: First estimate');
+  assert.equal(elements.get('score-voice').children.at(-1).textContent,'new');
   context.state.push(latest);await context.window.BrainScores.analyze(latest);
-  assert.equal(elements.get('score-voice').children.at(-1).textContent,'Latest note: Awaiting assessment');
+  assert.equal(elements.get('score-voice').children.at(-1).textContent,'pending');
   assert.equal(elements.get('score-voice').children[1].textContent,'60/100','The current estimate stays visible while the new note is pending');
 });

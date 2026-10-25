@@ -27,9 +27,9 @@
   <link rel="stylesheet" href="./styles.css?v=20261021-evidence-v13">
   <script src="./config.js?v=20261021-evidence-v13"></script>
   <script src="./app.js?v=20261021-evidence-v13" defer></script>
-  <link rel="stylesheet" href="./scores.css?v=20261025-note-impact">
-  <script src="./score-impact.js?v=20261025-note-impact" defer></script>
-  <script src="./scores.js?v=20261025-note-impact" defer></script>
+  <link rel="stylesheet" href="./scores.css?v=20261025-compact-average">
+  <script src="./score-impact.js?v=20261025-compact-average" defer></script>
+  <script src="./scores.js?v=20261025-compact-average" defer></script>
 </head>
 <body>
   <header class="suite-topbar" aria-label="brain navigation">
@@ -47,6 +47,10 @@
   <main class="shell document-shell">
     <section class="document-intro" aria-label="document summary">
       <p>100 = our Moritz Bacher benchmark. Scores reflect the evidence in your notes.</p>
+      <div id="score-average" class="overall-score average-overall" aria-live="polite">
+        <span>average</span>
+        <strong>loading</strong>
+      </div>
       <div id="score-voice" class="overall-score" aria-live="polite">
         <span>voice</span>
         <strong>loading</strong>

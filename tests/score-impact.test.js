@@ -42,3 +42,16 @@ test('unknown earlier notes and pending latest notes cannot borrow a later score
   const result=impact.index(files,{a:{values:{voice:{score:null,components:{}}}},b:{values:{voice:value(60)}}});
   assert.equal(result.a.voice.kind,'unknown');assert.equal(result.b.voice.kind,'first');assert.equal(result.pending,undefined);
 });
+
+test('compact deltas and an equal displayed-score average retain unknown states',()=>{
+  assert.equal(impact.compact(impact.compare(value(60.18),value(60.09))),'−0.09');
+  assert.equal(impact.compact(impact.compare(value(60),value(60))),'0.00');
+  assert.equal(impact.compact(impact.compare(null,value(60))),'new');
+  assert.equal(impact.compact(null),'pending');
+  assert.equal(impact.average([62,60,67]),63);
+  assert.equal(impact.averageLabel([62,60,68]),'63.3/100');
+  assert.equal(impact.averageLabel([62,60,67]),'63/100');
+  assert.equal(impact.averageLabel([0,0,0]),'0/100');
+  assert.equal(impact.averageLabel([62,null,67]),'—');
+  assert.equal(impact.averageLabel([62,60]),'—');
+});

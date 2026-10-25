@@ -56,5 +56,14 @@
     if(impact.kind==='up'||impact.kind==='down')return signed(impact.delta)+' points';
     return {first:'First estimate',unknown:'Not yet estimated',mixed:'No net change · mixed effects',supports:'No change · supports estimate',repeated:'No change · repeated evidence',historical:'No change · past experience only','no-evidence':'No change · no new evidence','baseline-unavailable':'Earlier comparison unavailable'}[impact.kind];
   }
-  return {estimate,signed,ordered,compare,index,label};
+  function compact(impact){
+    if(!impact)return 'pending';
+    if(Number.isFinite(impact.delta))return signed(impact.delta);
+    return impact.kind==='first'?'new':'—';
+  }
+  function average(scores){
+    return scores.length===3&&scores.every(Number.isFinite)?scores.reduce((sum,n)=>sum+n,0)/3:null;
+  }
+  function averageLabel(scores){const result=average(scores);return result===null?'—':Number(result.toFixed(1))+'/100';}
+  return {estimate,signed,ordered,compare,index,label,compact,average,averageLabel};
 });
