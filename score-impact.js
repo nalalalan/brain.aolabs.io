@@ -78,14 +78,6 @@
     const delta=after-before;
     return {kind:Math.abs(delta)<epsilon?(changes.length?'mixed':'supports'):delta>0?'up':'down',before,after,delta:Math.abs(delta)<epsilon?0:delta,changes};
   }
-  function averageReason(impact){
-    if(!impact)return 'Awaiting assessment.';
-    if(impact.delta===null)return impact.kind==='first'?'First complete average.':impact.kind==='unknown'?'Three scores needed.':'Earlier comparison unavailable.';
-    if(!impact.changes.length)return 'Whole-point scores held.';
-    if(impact.delta===0)return 'Gains and drops balanced.';
-    const names={voice:'Voice',followthrough:'Follow-through',insight:'Insight'};
-    return impact.changes.map(c=>names[c.key]+(c.delta>0?' rose':' fell')).join('; ')+'.';
-  }
   function reason(impact,current,sourceId){
     if(!impact||!['up','down'].includes(impact.kind))return '';
     const sign=Math.sign(impact.delta),changes=[...impact.changes].filter(c=>Math.sign(c.delta===null?c.after-impact.before:c.delta)===sign).sort((a,b)=>Math.abs(b.delta??(b.after-impact.before))-Math.abs(a.delta??(a.after-impact.before)));
@@ -93,9 +85,9 @@
     if(dominant&&current.observed!==false){
       const contribution=current.components?.[dominant.key]?.observations?.find(o=>o.sourceId===sourceId&&Math.sign(o.points-(dominant.before??impact.before))===sign);
       const observation=contribution&&current.observations?.find(o=>o.component===dominant.key&&o.timeframe==='current'&&o.level===contribution.level);
-      if(observation?.reason&&observation.reason.length<=280)return (sign>0?'Up: ':'Down: ')+observation.reason.replace(/^You\b/,'you').replace(/^Your\b/,'your');
+      if(observation?.reason&&observation.reason.length<=280)return [observation.reason,observation.limit&&!observation.reason.includes(observation.limit)?observation.limit:''].filter(Boolean).join(' ');
     }
-    return (sign>0?'Up':'Down')+': the balance and age of your evidence changed.';
+    return [current.explanation,'The balance and age of your evidence changed.'].filter(Boolean).join(' ');
   }
-  return {estimate,signed,ordered,compare,index,label,compact,average,averageLabel,compareAverage,averageReason,reason};
+  return {estimate,signed,ordered,compare,index,label,compact,average,averageLabel,compareAverage,reason};
 });
