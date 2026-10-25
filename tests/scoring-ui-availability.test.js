@@ -18,6 +18,7 @@ test('paused cards and save callbacks cannot offer or submit futile score retrie
       if(options.method==='POST'){writes.push(url);return {ok:false,status:502,json:async()=>({error:'Temporary scoring failure'})};}
       return {ok:true,json:async()=>url.endsWith('/status')?{available,message:available?'':'Scoring is paused. Your note is saved.'}:{entries:{},rubric:null}};
     }};
+  vm.runInNewContext(fs.readFileSync(require.resolve('../score-impact.js'),'utf8'),context);
   vm.runInNewContext(fs.readFileSync(require.resolve('../scores.js'),'utf8'),context);
   await new Promise(setImmediate);
   const item={id:'saved-note',source:'sync',sourceText:'My original saved note.'};

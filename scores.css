@@ -10,6 +10,10 @@
 summary { cursor:pointer; }
 .score-analysis { display:grid;gap:10px; }
 .score-metric { display:grid;grid-template-rows:auto auto auto;gap:6px;align-items:start;align-content:start; }
+.score-metric .score-impact { margin:0;font-size:12px;line-height:1.4;font-weight:700;color:var(--muted); }
+.score-metric .score-impact.impact-up { color:#27614d; }
+.score-metric .score-impact.impact-down { color:#943e32; }
+.score-impact-range { display:block;font-size:11px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums; }
 .score-metric .score-excerpt { overflow:visible;text-align:left; }
 .score-details { color:var(--muted);font-size:11px!important;line-height:1.35; }
 .score-details p { margin:5px 0; }
