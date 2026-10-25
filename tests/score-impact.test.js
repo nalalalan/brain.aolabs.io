@@ -55,3 +55,32 @@ test('compact deltas and an equal displayed-score average retain unknown states'
   assert.equal(impact.averageLabel([62,null,67]),'—');
   assert.equal(impact.averageLabel([62,60]),'—');
 });
+
+test('average changes follow displayed scores without rounding the baseline or inventing unknown scores',()=>{
+  const up=impact.compareAverage([61,60,67],[62,60,67]);
+  assert.equal(impact.compact(up),'+0.33');assert.equal(impact.averageReason(up),'Voice rose.');
+  const down=impact.compareAverage([62,60,67],[62,59,67]);
+  assert.equal(impact.compact(down),'−0.33');assert.equal(impact.averageReason(down),'Follow-through fell.');
+  assert.equal(impact.averageReason(impact.compareAverage([62,60,67],[63,59,67])),'Gains and drops balanced.');
+  assert.equal(impact.averageReason(impact.compareAverage([62,60,67],[62,60,67])),'Whole-point scores held.');
+  assert.equal(impact.compareAverage(null,[62,60,67]).delta,null);
+  assert.equal(impact.compareAverage([62,60,67],[62,null,67]).kind,'unknown');
+});
+
+test('average history carries only earlier established scores and never crosses versions',()=>{
+  const files=['a','b','c','d'].map((id,i)=>({id,createdAt:'2026-10-0'+(i+1)}));
+  const entries={a:{version:'v16',values:{voice:value(60)}},b:{version:'v16',values:{followthrough:value(60),insight:value(60)}},c:{version:'v16',values:{voice:value(63)}},d:{version:'new',values:{voice:value(65),followthrough:value(65),insight:value(65)}}};
+  const result=impact.index(files,entries);
+  assert.equal(result.a.average.kind,'unknown');assert.equal(result.b.average.kind,'first');
+  assert.equal(result.c.average.delta,1);assert.equal(result.d.average.kind,'baseline-unavailable');assert.equal(result.d.average.delta,null);
+});
+
+test('concise reasons use the dominant accepted observation, not an unrelated quote or invented improvement',()=>{
+  const old=value(60),current=value(61,{observations:[{component:'a',timeframe:'current',level:'strong',reason:'You explain the competing priorities.'}],components:{a:{raw:61,observations:[{sourceId:'new',points:75,level:'strong'}]}}});
+  assert.equal(impact.reason(impact.compare(old,current),current,'new'),'Up: you explain the competing priorities.');
+  const lower=value(59,{observations:[{component:'a',timeframe:'current',level:'capable',reason:'You outline a choice but leave the next action undecided.'}],components:{a:{raw:59,observations:[{sourceId:'new',points:50,level:'capable'}]}}});
+  assert.equal(impact.reason(impact.compare(old,lower),lower,'new'),'Down: you outline a choice but leave the next action undecided.');
+  assert.equal(impact.reason(impact.compare(old,current),current,'unrelated'),'Up: the balance and age of your evidence changed.');
+  current.observed=false;
+  assert.equal(impact.reason(impact.compare(old,current),current,'new'),'Up: the balance and age of your evidence changed.');
+});
