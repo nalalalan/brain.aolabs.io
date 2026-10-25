@@ -29,7 +29,7 @@
     });
     const delta=after-before;
     let kind=Math.abs(delta)>=epsilon?(delta>0?'up':'down'):
-      changes.length?'mixed':current.observed?'supports':duplicate||current.observations?.some(o=>o.timeframe==='current')?'repeated':
+      changes.some(c=>c.delta!==null)?'mixed':current.observed?'supports':duplicate||current.observations?.some(o=>o.timeframe==='current')?'repeated':
       current.observations?.length&&current.observations.every(o=>o.timeframe==='historical')?'historical':'no-evidence';
     return {kind,before,after,delta:Math.abs(delta)<epsilon?0:delta,changes};
   }

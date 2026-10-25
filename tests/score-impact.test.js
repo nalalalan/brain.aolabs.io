@@ -26,6 +26,8 @@ test('unchanged distinguishes supporting, repeated, historical, absent and offse
   assert.equal(impact.compare(old,value(60,{observed:false,observations:[]})).kind,'no-evidence');
   const mixed=impact.compare(value(60,{components:{a:{raw:50},b:{raw:70}}}),value(60,{components:{a:{raw:55},b:{raw:65}}}));
   assert.equal(mixed.kind,'mixed');assert.equal(mixed.delta,0);assert.deepEqual(mixed.changes.map(c=>c.delta),[5,-5]);
+  const addedCoverage=impact.compare(value(60,{coverage:1}),value(60,{coverage:2,components:{a:{raw:60},b:{raw:60}}}));
+  assert.equal(addedCoverage.kind,'supports','Newly established evidence at the same estimate is not offsetting evidence');
 });
 test('index follows original source dates and id tie-breaks, not upload order; versions do not mix',()=>{
   const files=[{id:'b',sourceCreatedAt:'2026-10-02',createdAt:'2026-10-01'},{id:'a',sourceCreatedAt:'2026-10-01',createdAt:'2026-10-03'},{id:'c',sourceCreatedAt:'2026-10-02'},{id:'d',sourceCreatedAt:'2026-10-03'}];
