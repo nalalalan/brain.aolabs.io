@@ -24,7 +24,7 @@ function schemaFor(notes,excluded=[]){
  });return {...object({entries:{type:'array',items:{anyOf:variants}}}),$defs:defs};
 }
 const analysisHash=hash(instructions+JSON.stringify(observation)+schemaFor.toString());
-const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence.js'),'utf8')+JSON.stringify(rubric)+require('node:fs').readFileSync(path.join(__dirname,'benchmark-verifications.json'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence-exclusions.json'),'utf8'));
+const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence.js'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-estimate.js'),'utf8')+JSON.stringify(rubric)+require('node:fs').readFileSync(path.join(__dirname,'benchmark-verifications.json'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence-exclusions.json'),'utf8'));
 const archiveHash=files=>hash(JSON.stringify(ordered(files).map(s=>[s.id,hash(s.sourceText)])));
 const recordsHash=(files,records)=>hash(JSON.stringify(ordered(files).map(s=>[s.id,records[s.id]?.sourceHash,records[s.id]?.values])));
 const repairExclusions=(error,audit)=>error.metric&&error.component&&!error.preserveComponent&&!audit?.requiredComponents?.[error.metric]?.includes(error.component)?[{metric:error.metric,component:error.component,reason:error.message}]:[];
@@ -65,7 +65,7 @@ module.exports=function abilityScores(root,readFiles){
  async function handle(req,url,readJson,send){
   const internal=url.pathname.startsWith('/api/ability-scores'),publicRoute=url.pathname.startsWith('/api/note-scores');if(!internal&&!publicRoute)return false;
   const route=url.pathname.replace(/^\/api\/(?:ability|note)-scores/,''),isActive=await active();
-  if(route==='/status'&&req.method==='GET'){const available=isActive&&Boolean(process.env.OPENAI_API_KEY);send(200,{version:rubric.version,active:isActive,available,pending:pending.size,message:available?'':isActive?'Scoring is unavailable. Your note is saved.':'Scoring is being updated. Your note is saved.',...(internal?{analysisHash,gateHash,runtime:await runtime()}: {})});return true;}
+  if(route==='/status'&&req.method==='GET'){const available=isActive&&Boolean(process.env.OPENAI_API_KEY);send(200,{version:rubric.version,estimationVersion:require('./ability-estimate').version,active:isActive,available,pending:pending.size,message:available?'':isActive?'Scoring is unavailable. Your note is saved.':'Scoring is being updated. Your note is saved.',...(internal?{analysisHash,gateHash,runtime:await runtime()}: {})});return true;}
   if(internal&&route==='/candidates'&&req.method==='GET'){const [data,files]=await Promise.all([read(),readFiles()]),eligible=ordered(files),ready=eligible.filter(s=>valid(data.records[s.id],s));send(200,{active:isActive,analysisHash,gateHash,archiveHash:archiveHash(files),recordsHash:recordsHash(files,data.records),eligible:eligible.length,ready:ready.length,missing:eligible.filter(s=>!valid(data.records[s.id],s)).map(s=>s.id),...series(files,data.records)});return true;}
   if(internal&&route==='/records'&&req.method==='GET'){const data=await read();send(200,{version:rubric.version,analysisHash,gateHash,records:data.records});return true;}
   if((internal&&route==='/prepare'||publicRoute&&route==='/analyze')&&req.method==='POST'){

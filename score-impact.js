@@ -37,21 +37,21 @@
     const result={},prior={},seen=new Set();let priorAverage=null;
     for(const file of ordered(files)){
       const entry=entries[file.id];if(!entry)continue;
-      const duplicate=Boolean(entry.sourceHash&&seen.has(entry.sourceHash));
+      const duplicate=Boolean(entry.sourceHash&&seen.has(entry.sourceHash)),version=entry.version+'|'+(entry.estimationVersion||'');
       result[file.id]={};
-      const scores=keys.map(key=>Number.isFinite(entry.values?.[key]?.score)?entry.values[key].score:prior[key]&&prior[key].version===entry.version?prior[key].value.score:null);
-      const previousScores=priorAverage&&priorAverage.version===entry.version?priorAverage.scores:null;
+      const scores=keys.map(key=>Number.isFinite(entry.values?.[key]?.score)?entry.values[key].score:prior[key]&&prior[key].version===version?prior[key].value.score:null);
+      const previousScores=priorAverage&&priorAverage.version===version?priorAverage.scores:null;
       const averageImpact=compareAverage(previousScores,scores);
       if(priorAverage&&!previousScores&&averageImpact.kind==='first')averageImpact.kind='baseline-unavailable';
       result[file.id].average=averageImpact;
-      if(averageImpact.after!==null)priorAverage={scores,version:entry.version};
+      if(averageImpact.after!==null)priorAverage={scores,version};
       for(const key of keys){
         const value=entry.values?.[key];
-        const previous=prior[key]&&prior[key].version===entry.version?prior[key].value:null;
+        const previous=prior[key]&&prior[key].version===version?prior[key].value:null;
         const impact=compare(previous,value,{duplicate});
         if(!previous&&prior[key]&&impact.kind==='first')impact.kind='baseline-unavailable';
         result[file.id][key]=impact;
-        if(impact.after!==null)prior[key]={value,version:entry.version};
+        if(impact.after!==null)prior[key]={value,version};
       }
       if(entry.sourceHash)seen.add(entry.sourceHash);
     }

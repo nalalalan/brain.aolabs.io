@@ -1,5 +1,6 @@
 'use strict';
-const {normalize,hash,dateOf,ordered,verifiedScope,pointsRound}=require('./behavior-evidence');
+const {normalize,hash,dateOf,ordered,verifiedScope}=require('./behavior-evidence');
+const {version:estimationVersion,estimateDays,pointsRound}=require('./ability-estimate');
 const rubric=require('./ability-rubric.json');
 const audits=require('./ability-evidence-exclusions.json').records;
 const levels=Object.fromEntries(rubric.levels.map(l=>[l.key,l.points]));
@@ -16,16 +17,17 @@ function componentEstimate(observations){
  if(!observations.length)return {score:null,raw:null,days:0,weight:0,weightedPoints:0,observations:[],sourceId:null};
  const last=observations.at(-1),recent=observations.filter(o=>o.time>=last.time-56*86400000),seen=new Set(),days=new Map();
  for(const o of recent){const fingerprint=normalize(o.quote).toLowerCase();if(seen.has(fingerprint))continue;seen.add(fingerprint);const day=dayOf(o.time),bucket=days.get(day)||[];bucket.push(o);days.set(day,bucket);}
- let weight=0,weightedPoints=0;
+ let weight=0,weightedPoints=0;const dailyEvidence=[];
  for(const bucket of days.values()){
   const time=Math.max(...bucket.map(o=>o.time)),w=2**(-(last.time-time)/(28*86400000));
   const quality=o=>o.certainty==='clear'?1:0.5,q=bucket.reduce((s,o)=>s+quality(o),0);
   const daily=bucket.reduce((s,o)=>s+levels[o.level]*quality(o),0)/q;
   const evidenceWeight=w*Math.max(...bucket.map(quality));weight+=evidenceWeight;weightedPoints+=daily*evidenceWeight;
+  dailyEvidence.push({points:daily,weight:evidenceWeight,contraryPattern:bucket.some(o=>levels[o.level]<=25)});
  }
- const allTop=recent.every(o=>o.level==='benchmark'),raw=allTop?100:Math.min(99.999999,weightedPoints/weight);
+ const overall=estimateDays(dailyEvidence),raw=overall.raw;
  const representative=[...recent].sort((a,b)=>Math.abs(levels[a.level]-raw)-Math.abs(levels[b.level]-raw)||b.time-a.time)[0];
- return {score:pointsRound(raw),raw,days:days.size,weight:+weight.toFixed(4),weightedPoints:+weightedPoints.toFixed(4),quote:representative.quote,fact:representative.fact,limit:representative.limit,sourceId:representative.sourceId,date:representative.date,observations:[...days.values()].flat().map(o=>({sourceId:o.sourceId,date:o.date,outcome:o.evidenceType,level:o.level,points:levels[o.level],certainty:o.certainty,scopeReason:o.reason}))};
+ return {score:pointsRound(raw),raw,days:days.size,weight:+weight.toFixed(4),weightedPoints:+weightedPoints.toFixed(4),estimateMethod:overall.method,retainedWeight:overall.retainedWeight,retainedPoints:overall.retainedPoints,quote:representative.quote,fact:representative.fact,limit:representative.limit,sourceId:representative.sourceId,date:representative.date,observations:[...days.values()].flat().map(o=>({sourceId:o.sourceId,date:o.date,outcome:o.evidenceType,level:o.level,points:levels[o.level],certainty:o.certainty,scopeReason:o.reason}))};
 }
 function buildSeries(files,records){
  const entries={},streams=Object.fromEntries(rubric.metrics.map(m=>[m.key,Object.fromEntries(m.components.map(c=>[c.key,[]]))])),seenSources=new Set(),prefix=[];
@@ -40,12 +42,12 @@ function buildSeries(files,records){
    const known=Object.values(components).filter(c=>Number.isFinite(c.raw)),coverage=known.length,minDays=known.length?Math.min(...known.map(c=>c.days)):0;
    const days=new Set(known.flatMap(c=>c.observations.map(o=>dayOf(Date.parse(o.date))))).size;
    const raw=coverage?known.reduce((s,c)=>s+c.raw,0)/coverage:null;
-   const score=raw===null?null:raw===100&&coverage<4?99:pointsRound(raw);
+   const score=raw===null?null:coverage<4?Math.min(99,pointsRound(raw)):pointsRound(raw);
    values[metric.key]={score,components,coverage,observed:accepted.length>0,confidence:coverage<4||minDays<3?'limited':minDays<7?'developing':'broader',evidenceDays:days,quote:evidence.quote,explanation:evidence.explanation,comparisonSourceId:null,observations:evidence.observations,change:'assessment'};
   }
-  entries[source.id]={sourceId:source.id,sourceHash,historyHash,version:rubric.version,rubricHash:hash(JSON.stringify(rubric)),createdAt:record.createdAt,sourceChars:source.sourceText.length,analyzedChars:source.sourceText.length,model:record.model,reviewed:true,values};
+  entries[source.id]={sourceId:source.id,sourceHash,historyHash,version:rubric.version,estimationVersion,rubricHash:hash(JSON.stringify(rubric)),createdAt:record.createdAt,sourceChars:source.sourceText.length,analyzedChars:source.sourceText.length,model:record.model,reviewed:true,values};
  }
- return {version:rubric.version,metrics:rubric.metrics,rubric,entries};
+ return {version:rubric.version,estimationVersion,metrics:rubric.metrics,rubric,entries};
 }
 function validateResult(item,source,register){
  if(item.sourceId!==source.id)throw fail('Evidence source mismatch.');
