@@ -1,6 +1,7 @@
 'use strict';
 const {normalize,hash,dateOf,ordered,verifiedScope}=require('./behavior-evidence');
 const {version:estimationVersion,estimateDays,pointsRound}=require('./ability-estimate');
+const {supportingWriting,unsupportedDifficulty,contextExplanation}=require('./ability-context');
 const rubric=require('./ability-rubric.json');
 const audits=require('./ability-evidence-exclusions.json').records;
 const levels=Object.fromEntries(rubric.levels.map(l=>[l.key,l.points]));
@@ -30,20 +31,34 @@ function componentEstimate(observations){
  return {score:pointsRound(raw),raw,days:days.size,weight:+weight.toFixed(4),weightedPoints:+weightedPoints.toFixed(4),estimateMethod:overall.method,retainedWeight:overall.retainedWeight,retainedPoints:overall.retainedPoints,quote:representative.quote,fact:representative.fact,limit:representative.limit,sourceId:representative.sourceId,date:representative.date,observations:[...days.values()].flat().map(o=>({sourceId:o.sourceId,date:o.date,outcome:o.evidenceType,level:o.level,points:levels[o.level],certainty:o.certainty,scopeReason:o.reason}))};
 }
 function buildSeries(files,records){
- const entries={},streams=Object.fromEntries(rubric.metrics.map(m=>[m.key,Object.fromEntries(m.components.map(c=>[c.key,[]]))])),seenSources=new Set(),prefix=[];
+ const entries={},streams=Object.fromEntries(rubric.metrics.map(m=>[m.key,Object.fromEntries(m.components.map(c=>[c.key,[]]))])),seenObservations=Object.fromEntries(rubric.metrics.map(m=>[m.key,Object.fromEntries(m.components.map(c=>[c.key,new Set()]))])),seenSources=new Set(),prefix=[];
  for(const source of ordered(files)){
   const sourceHash=hash(source.sourceText),record=records[source.id],historyHash=hash(JSON.stringify(prefix));prefix.push([source.id,sourceHash]);
   if(!record||record.sourceHash!==sourceHash||record.version!==rubric.version||record.reviewed!==true)continue;
   const duplicate=seenSources.has(sourceHash);seenSources.add(sourceHash);const values={};
   for(const metric of rubric.metrics){
-   const evidence=record.values[metric.key],accepted=duplicate?[]:evidence.observations.filter(o=>o.timeframe==='current'&&!streams[metric.key][o.component].some(old=>normalize(old.quote).toLowerCase()===normalize(o.quote).toLowerCase()));
-   for(const o of accepted)streams[metric.key][o.component].push({...o,sourceId:source.id,date:source.sourceCreatedAt||source.createdAt,time:dateOf(source)});
+   const evidence=record.values[metric.key],accepted=[],evidenceUse=[];
+   const prior=Object.fromEntries(metric.components.map(c=>[c.key,componentEstimate(streams[metric.key][c.key])]));
+   const priorKnown=Object.values(prior).map(c=>c.raw).filter(Number.isFinite),priorMean=priorKnown.length?priorKnown.reduce((a,b)=>a+b,0)/priorKnown.length:null;
+   for(const o of evidence.observations){
+    const fingerprint=normalize(o.quote).toLowerCase(),seen=seenObservations[metric.key][o.component];
+    if(duplicate||o.timeframe!=='current'||seen.has(fingerprint))continue;
+    seen.add(fingerprint);
+    const observation={...o,sourceId:source.id,date:source.sourceCreatedAt||source.createdAt,time:dateOf(source)},stream=streams[metric.key][o.component];
+    const supporting=supportingWriting(o),baseline=prior[o.component].raw??priorMean;
+    const candidate=supporting?componentEstimate([...stream,observation]):null;
+    // Do not convert a limited demonstration into an upper bound on ability.
+    // Leave it in the source record, without letting it age/reweight the score.
+    // This also handles new components and same-day averaging consistently.
+    if(supporting&&baseline!==null&&candidate.raw<baseline-1e-10){evidenceUse.push({component:o.component,use:'context-only',reason:'A partial demonstration does not establish lower ability.'});continue;}
+    stream.push(observation);accepted.push(o);evidenceUse.push({component:o.component,use:supporting?'supporting':'performance'});
+   }
    const components=Object.fromEntries(metric.components.map(c=>[c.key,componentEstimate(streams[metric.key][c.key])]));
    const known=Object.values(components).filter(c=>Number.isFinite(c.raw)),coverage=known.length,minDays=known.length?Math.min(...known.map(c=>c.days)):0;
    const days=new Set(known.flatMap(c=>c.observations.map(o=>dayOf(Date.parse(o.date))))).size;
    const raw=coverage?known.reduce((s,c)=>s+c.raw,0)/coverage:null;
    const score=raw===null?null:coverage<4?Math.min(99,pointsRound(raw)):pointsRound(raw);
-   values[metric.key]={score,components,coverage,observed:accepted.length>0,confidence:coverage<4||minDays<3?'limited':minDays<7?'developing':'broader',evidenceDays:days,quote:evidence.quote,explanation:evidence.explanation,comparisonSourceId:null,observations:evidence.observations,change:'assessment'};
+   values[metric.key]={score,components,coverage,observed:accepted.length>0,confidence:coverage<4||minDays<3?'limited':minDays<7?'developing':'broader',evidenceDays:days,quote:evidence.quote,explanation:evidence.explanation,contextExplanation:contextExplanation(evidence.observations),evidenceUse,comparisonSourceId:null,observations:evidence.observations,change:'assessment'};
   }
   entries[source.id]={sourceId:source.id,sourceHash,historyHash,version:rubric.version,estimationVersion,rubricHash:hash(JSON.stringify(rubric)),createdAt:record.createdAt,sourceChars:source.sourceText.length,analyzedChars:source.sourceText.length,model:record.model,reviewed:true,values};
  }
@@ -66,6 +81,7 @@ function validateResult(item,source,register){
    if(used.has(o.component))throw Object.assign(fail('Repeated component '+m.key+'.'+o.component+'. Keep at most one best-supported observation for this component.'),{preserveComponent:true});used.add(o.component);
    if(!(o.level in levels)||!['current','historical'].includes(o.timeframe)||!['direct_writing','reported_action','reported_difficulty'].includes(o.evidenceType)||!['clear','limited'].includes(o.certainty))throw fail('Invalid ability evidence fields.');
    for(const k of ['quote','fact','limit','reason'])o[k]=normalize(o[k]);
+   if(unsupportedDifficulty(o))throw Object.assign(fail('Uncertainty or an unfinished idea is not reported difficulty. Assess the thinking as direct writing, or omit an unobserved component. A difficulty needs a specific adverse event or demonstrated reasoning problem in the original, not an absent decision, test or result.'),{preserveComponent:true});
    if(!o.quote||!text.includes(o.quote)||o.quote.length>1200||!o.fact||!o.limit||o.reason.split(/\s+/).length<6)throw fail('Evidence requires an exact passage, bounded fact, limitation and rating reason.');
    if(text.split(/\s+/).length>20&&o.quote.split(/\s+/).length<6)throw fail('Use at least six exact source words of context.');
    if(audit?.removedComponents?.[m.key]?.includes(o.component))throw fail(audit.reason);

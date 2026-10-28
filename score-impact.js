@@ -79,6 +79,7 @@
     return {kind:Math.abs(delta)<epsilon?(changes.length?'mixed':'supports'):delta>0?'up':'down',before,after,delta:Math.abs(delta)<epsilon?0:delta,changes};
   }
   function reason(impact,current,sourceId){
+    if(current?.contextExplanation)return current.contextExplanation;
     if(!impact||!['up','down'].includes(impact.kind))return '';
     const sign=Math.sign(impact.delta),changes=[...impact.changes].filter(c=>Math.sign(c.delta===null?c.after-impact.before:c.delta)===sign).sort((a,b)=>Math.abs(b.delta??(b.after-impact.before))-Math.abs(a.delta??(a.after-impact.before)));
     const dominant=changes[0];

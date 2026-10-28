@@ -23,8 +23,11 @@ function schemaFor(notes,excluded=[]){
   return object({sourceId:{type:'string',enum:[note.sourceId]},values:object(values)});
  });return {...object({entries:{type:'array',items:{anyOf:variants}}}),$defs:defs};
 }
-const analysisHash=hash(instructions+JSON.stringify(observation)+schemaFor.toString());
-const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence.js'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-estimate.js'),'utf8')+JSON.stringify(rubric)+require('node:fs').readFileSync(path.join(__dirname,'benchmark-verifications.json'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence-exclusions.json'),'utf8'));
+const analysisHash=hash(instructions+require('./ability-context').modelInstructions+JSON.stringify(observation)+schemaFor.toString());
+// Reuse source-bound V16 records through the new context gate; never pay to
+// recompute an accepted record solely because the prompt guidance improved.
+const compatibleAnalysisHashes=new Set([analysisHash,'1b609b0cf6c01c832ce5e203b7f6ff9ab770203a3c2aa013bf75616c24d55b6f']);
+const gateHash=hash(require('node:fs').readFileSync(__filename,'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence.js'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-estimate.js'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-context.js'),'utf8')+JSON.stringify(rubric)+require('node:fs').readFileSync(path.join(__dirname,'benchmark-verifications.json'),'utf8')+require('node:fs').readFileSync(path.join(__dirname,'ability-evidence-exclusions.json'),'utf8'));
 const archiveHash=files=>hash(JSON.stringify(ordered(files).map(s=>[s.id,hash(s.sourceText)])));
 const recordsHash=(files,records)=>hash(JSON.stringify(ordered(files).map(s=>[s.id,records[s.id]?.sourceHash,records[s.id]?.values])));
 const repairExclusions=(error,audit)=>error.metric&&error.component&&!error.preserveComponent&&!audit?.requiredComponents?.[error.metric]?.includes(error.component)?[{metric:error.metric,component:error.component,reason:error.message}]:[];
@@ -34,12 +37,12 @@ module.exports=function abilityScores(root,readFiles){
  const fail=(message,status=400)=>Object.assign(new Error(message),{status});
  async function read(){try{return JSON.parse(await fs.readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;return {records:{}};}}
  async function active(){try{return JSON.parse(await fs.readFile(activeFile,'utf8')).version===rubric.version;}catch{return false;}}
- const valid=(r,s)=>{if(!(r?.version===rubric.version&&r.analysisHash===analysisHash&&r.sourceHash===hash(s.sourceText)&&r.reviewed===true))return false;try{validateResult(r,s);return true;}catch{return false;}};
+ const valid=(r,s)=>{if(!(r?.version===rubric.version&&compatibleAnalysisHashes.has(r.analysisHash)&&r.sourceHash===hash(s.sourceText)&&r.reviewed===true))return false;try{validateResult(r,s);return true;}catch{return false;}};
  const series=(files,records)=>buildSeries(files,Object.fromEntries(ordered(files).filter(s=>valid(records[s.id],s)).map(s=>[s.id,records[s.id]])));
  async function save(records){const task=writes.then(async()=>{const data=await read();for(const r of records)data.records[r.sourceId]=r;const temp=file+'.'+crypto.randomUUID()+'.tmp';await fs.mkdir(root,{recursive:true});await fs.writeFile(temp,JSON.stringify(data));await fs.rename(temp,file);return records;});writes=task.catch(()=>{});return task;}
  async function model(input,review=false){
   const apiKey=process.env.OPENAI_API_KEY;if(!apiKey)throw fail('Scoring is unavailable. Your original is saved.',503);
-  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:AbortSignal.timeout(180000),headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4',store:false,reasoning:{effort:'low'},max_output_tokens:14000,instructions:instructions+(review?'\nINDEPENDENT REVIEW: Re-read the original. Check both undercredit and overcredit against the same anchors. Direct writing may legitimately demonstrate Voice and Insight; do not impose the old career-stage ceiling. Remove invented execution, speculative outcomes stated as facts, unobserved failures, historical/current confusions and unjustified high ratings. Examine each rating reason against its quote and the anchor. Keep supported content unchanged; do not search for more praise. Follow explicit excludedComponents. Return the complete corrected result.':''),input:JSON.stringify(input),text:{format:{type:'json_schema',name:'ability_evidence',strict:true,schema:schemaFor(input.notes,input.excludedComponents)}}})});
+  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:AbortSignal.timeout(180000),headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.BRAIN_OPENAI_MODEL||process.env.OPENAI_MODEL||'gpt-5.4',store:false,reasoning:{effort:'low'},max_output_tokens:14000,instructions:instructions+require('./ability-context').modelInstructions+(review?'\nINDEPENDENT REVIEW: Re-read the original. Check both undercredit and overcredit against the same anchors. Direct writing may legitimately demonstrate Voice and Insight; do not impose the old career-stage ceiling. Remove invented execution, speculative outcomes stated as facts, unobserved failures, historical/current confusions and unjustified high ratings. Examine each rating reason against its quote and the anchor. Keep supported content unchanged; do not search for more praise. Follow explicit excludedComponents. Return the complete corrected result.':''),input:JSON.stringify(input),text:{format:{type:'json_schema',name:'ability_evidence',strict:true,schema:schemaFor(input.notes,input.excludedComponents)}}})});
   if(!response.ok){console.error('Ability provider failure',response.status);throw fail('Scoring could not finish ('+response.status+'). Your original is saved.',502);}
   const body=await response.json(),output=body.output?.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('')||'';
   try{return JSON.parse(output);}catch{throw fail('Scoring returned incomplete text.',502);}
@@ -91,4 +94,4 @@ module.exports=function abilityScores(root,readFiles){
  }
  return {handle};
 };
-Object.assign(module.exports,{analysisHash,gateHash,schemaFor,resolveItem,archiveHash,recordsHash,repairExclusions});
+Object.assign(module.exports,{analysisHash,compatibleAnalysisHashes,gateHash,schemaFor,resolveItem,archiveHash,recordsHash,repairExclusions});

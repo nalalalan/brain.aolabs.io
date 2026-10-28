@@ -2,7 +2,7 @@
 
 // Estimate the typical pattern, not a perfect streak or the best observed day.
 // Symmetric trimming cannot make one unusually strong day establish ability.
-const version='20261027-overall-ability-v17';
+const version='20261028-exploration-context-v18';
 function estimateDays(days){
  const weight=days.reduce((sum,d)=>sum+d.weight,0);
  if(!weight)return {raw:null,retainedWeight:0,retainedPoints:0,method:'unknown'};
